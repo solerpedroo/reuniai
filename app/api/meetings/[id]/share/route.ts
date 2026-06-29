@@ -47,17 +47,20 @@ export async function POST(
   const body = (await request.json().catch(() => ({}))) as {
     scope?: ShareScope;
     days?: number;
+    redact_pii?: boolean;
   };
 
   const scope: ShareScope = body.scope === "full_transcript" ? "full_transcript" : "summary_only";
   const days = Math.min(Math.max(body.days ?? DEFAULT_DAYS, 1), 30);
   const expiresAt = new Date(Date.now() + days * 86_400_000).toISOString();
+  const redactPii = body.redact_pii !== false;
 
   const row: TablesInsert<"share_tokens"> = {
     meeting_id: id,
     user_id: user.id,
     scope,
     expires_at: expiresAt,
+    redact_pii: redactPii,
   };
 
   const admin = createAdminClient();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { MeetingCommentsPanel } from "@/components/meetings/meeting-comments-panel";
 import { MeetingLiveStatus } from "@/components/meetings/meeting-live-status";
 import { MeetingTabs } from "@/components/meetings/meeting-tabs";
 import { RecordingPlayer } from "@/components/meetings/recording-player";
@@ -8,7 +9,7 @@ import { SummaryView } from "@/components/meetings/summary-view";
 import type { Citation } from "@/lib/meetings/chat";
 import { computeTalkTime } from "@/lib/meetings/talk-time";
 import type { ActionItem, Meeting, MeetingSummary, TranscriptSegment } from "@/lib/supabase/types";
-import type { MeetingFollowUp } from "@/lib/workflow/types";
+import type { MeetingFollowUp, MeetingComment } from "@/lib/workflow/types";
 import type { ChatUiMessage } from "@/components/meetings/meeting-tabs";
 
 export function MeetingReview({
@@ -21,6 +22,7 @@ export function MeetingReview({
   llmEnabled,
   initialSeekMs,
   followUp,
+  comments,
 }: {
   meeting: Meeting;
   hasRecording: boolean;
@@ -31,6 +33,7 @@ export function MeetingReview({
   llmEnabled: boolean;
   initialSeekMs?: number;
   followUp?: MeetingFollowUp | null;
+  comments: MeetingComment[];
 }) {
   const [currentTimeMs, setCurrentTimeMs] = useState(initialSeekMs ?? 0);
   const [highlightMs, setHighlightMs] = useState<number | null>(initialSeekMs ?? null);
@@ -72,6 +75,13 @@ export function MeetingReview({
       )}
 
       <MeetingLiveStatus meeting={meeting} />
+
+      <MeetingCommentsPanel
+        meetingId={meeting.id}
+        initialComments={comments}
+        currentTimeMs={currentTimeMs}
+        onSeek={seek}
+      />
 
       <MeetingTabs
         meetingId={meeting.id}

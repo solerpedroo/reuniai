@@ -1,5 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { buildMeetingMarkdown } from "@/lib/meetings/export";
+import {
+  buildMeetingJsonFromData,
+  buildMeetingMarkdownFromData,
+  buildMeetingPdfFromData,
+  loadMeetingExportData,
+} from "@/lib/meetings/export";
+import { logExportAudit } from "@/lib/privacy/export-audit";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Meeting } from "@/lib/supabase/types";
 
@@ -21,8 +28,9 @@ export async function GET(
 ) {
   const { id: meetingId } = await params;
   const format = request.nextUrl.searchParams.get("format") ?? "md";
+  const redact = request.nextUrl.searchParams.get("redact") !== "0";
 
-  if (format !== "md") {
+  if (!["md", "json", "pdf"].includes(format)) {
     return NextResponse.json({ error: "Formato não suportado" }, { status: 400 });
   }
 
@@ -45,13 +53,46 @@ export async function GET(
     return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
   }
 
-  const markdown = await buildMeetingMarkdown(supabase, meeting);
-  const filename = `${slugify(meeting.title) || "reuniao"}.md`;
+  const data = await loadMeetingExportData(supabase, meeting, {
+    redact,
+    useLlm: redact,
+  });
 
+  const admin = createAdminClient();
+  await logExportAudit(admin, {
+    userId: user.id,
+    meetingId: meeting.id,
+    format,
+    audit: data.redactionAudit,
+  });
+
+  const baseName = slugify(meeting.title) || "reuniao";
+
+  if (format === "json") {
+    const json = buildMeetingJsonFromData(data);
+    return new NextResponse(json, {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${baseName}.json"`,
+      },
+    });
+  }
+
+  if (format === "pdf") {
+    const pdf = await buildMeetingPdfFromData(data);
+    return new NextResponse(new Uint8Array(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${baseName}.pdf"`,
+      },
+    });
+  }
+
+  const markdown = buildMeetingMarkdownFromData(data);
   return new NextResponse(markdown, {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="${baseName}.md"`,
     },
   });
 }

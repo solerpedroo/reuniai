@@ -8,7 +8,19 @@ export type ShareToken = {
   scope: ShareScope;
   expires_at: string;
   revoked_at: string | null;
+  redact_pii: boolean;
   created_at: string;
+};
+
+export type MeetingComment = {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  start_ms: number;
+  end_ms: number | null;
+  label: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Tag = {
