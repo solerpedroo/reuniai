@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PaperPlaneTilt, Quotes, Sparkle } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Quotes, Robot, Sparkle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import type { Citation } from "@/lib/meetings/chat";
 import { formatTimestamp } from "@/lib/meetings/transcript";
@@ -42,9 +43,12 @@ export function MeetingChat({
 
   if (!llmEnabled) {
     return (
-      <p className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-        Configure um provedor de IA (Groq, OpenAI ou Anthropic) para usar o chat.
-      </p>
+      <EmptyState
+        icon={Robot}
+        tone="brand"
+        title="Chat indisponível"
+        description="Configure um provedor de IA (Groq, OpenAI ou Anthropic) nas variáveis de ambiente para conversar sobre esta reunião."
+      />
     );
   }
 
@@ -95,24 +99,26 @@ export function MeetingChat({
     <div className="flex flex-col gap-4">
       <div className="min-h-[280px] space-y-4">
         {messages.length === 0 && (
-          <div className="space-y-4 py-6 text-center">
-            <Sparkle size={28} className="mx-auto text-brand" />
-            <p className="text-sm text-muted-foreground">
-              Pergunte qualquer coisa sobre esta reunião.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
+          <EmptyState
+            icon={Sparkle}
+            tone="brand"
+            title="Pergunte sobre esta reunião"
+            description="A IA usa a transcrição e o resumo como contexto. Experimente um dos prompts abaixo."
+            className="py-8"
+          >
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
               {MEETING_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   onClick={() => send(prompt)}
-                  className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-brand/50 hover:text-foreground"
+                  className="rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-brand/40 hover:text-foreground hover:shadow-sm"
                 >
                   {prompt}
                 </button>
               ))}
             </div>
-          </div>
+          </EmptyState>
         )}
 
         {messages.map((msg) => (
@@ -123,7 +129,7 @@ export function MeetingChat({
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-brand text-white"
+                  ? "bg-brand text-brand-foreground"
                   : "border border-border bg-card text-foreground"
               }`}
             >

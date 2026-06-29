@@ -8,9 +8,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
-import { getNavItem, NAV_ITEMS, PRODUCT } from "@/components/shell/nav-config";
+import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
+import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
-import { MeetingSearch } from "@/components/shell/meeting-search";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,7 +19,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <CommandPaletteProvider>
+      <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <SidebarBrand />
         <nav className="flex-1 px-3 py-4" aria-label="Menu principal">
@@ -43,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-[2px] lg:hidden"
+            className="fixed inset-0 z-50 bg-foreground/25 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-hidden
           />
@@ -84,41 +85,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-screen flex-1 flex-col lg:pl-[260px]">
         <header className="glass sticky top-0 z-30 border-b border-border/70">
-          <div className="flex h-[52px] items-center gap-3 px-4 lg:px-8">
+          <div className="flex h-14 items-center gap-3 px-4 lg:px-8">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="shrink-0 lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menu"
             >
               <List size={20} />
             </Button>
-            <div className="flex min-w-0 flex-1 items-center gap-4">
-              <div className="min-w-0 flex-1">
-                <motion.p
-                  key={current.label}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="truncate text-sm font-semibold"
-                >
-                  {current.label}
-                </motion.p>
-                <p className="truncate text-xs text-muted-foreground">{current.description}</p>
-              </div>
-              <MeetingSearch />
+
+            <div className="min-w-0 flex-1 lg:hidden">
+              <motion.p
+                key={current.label}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="truncate text-sm font-semibold"
+              >
+                {current.label}
+              </motion.p>
+              <p className="truncate text-xs text-muted-foreground">{current.description}</p>
             </div>
-            <div className="hidden items-center gap-2 md:flex">
-              <JoinMeetingDialog triggerClassName="h-8 px-3 text-xs" />
+
+            <div className="hidden max-w-md flex-1 justify-end lg:flex">
+              <CommandTrigger />
             </div>
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-success status-pulse" />
-                Online
-              </span>
-              <span className="hidden h-4 w-px bg-border lg:block" />
-              <span className="hidden text-xs text-muted-foreground lg:inline">{PRODUCT.context}</span>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <JoinMeetingDialog triggerClassName="h-9 px-3.5 text-xs" />
             </div>
           </div>
         </header>
@@ -128,10 +124,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </PageTransition>
 
         <footer className="mt-auto border-t border-border/70 px-4 py-4 lg:px-8">
-          <p className="text-xs text-muted-foreground">{PRODUCT.name} · {PRODUCT.tagline}</p>
+          <p className="text-xs text-muted-foreground">ReuniAI · Inteligência de reuniões</p>
         </footer>
       </div>
     </div>
+    </CommandPaletteProvider>
   );
 }
 

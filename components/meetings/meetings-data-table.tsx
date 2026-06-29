@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, MagnifyingGlass, VideoCamera } from "@phosphor-icon
 import { BotActions } from "@/components/meetings/bot-actions";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -75,7 +76,7 @@ export function MeetingsDataTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="surface-toolbar flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <MagnifyingGlass
             size={16}
@@ -119,7 +120,7 @@ export function MeetingsDataTable({
         </Select>
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="surface-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -143,24 +144,33 @@ export function MeetingsDataTable({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="py-12 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <VideoCamera size={28} className="text-muted-foreground/60" aria-hidden />
-                    <p className="text-sm text-muted-foreground">
-                      {hasFilters
-                        ? "Nenhuma reunião corresponde aos filtros."
-                        : "Nenhuma reunião ainda. Use Nova reunião para colar um link ou conecte seu calendário."}
-                    </p>
-                  </div>
+                <TableCell colSpan={6} className="p-4">
+                  <EmptyState
+                    icon={VideoCamera}
+                    tone={hasFilters ? "default" : "brand"}
+                    title={
+                      hasFilters
+                        ? "Nenhuma reunião corresponde aos filtros"
+                        : "Sua biblioteca está vazia"
+                    }
+                    description={
+                      hasFilters
+                        ? "Ajuste os filtros ou limpe a busca para ver mais resultados."
+                        : "Use Nova reunião para colar um link ou conecte seu calendário nas configurações."
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((meeting) => (
-                <TableRow key={meeting.id} className="cursor-pointer">
+                <TableRow
+                  key={meeting.id}
+                  className="group cursor-pointer transition-colors hover:bg-brand/5"
+                >
                   <TableCell className="font-medium">
                     <Link
                       href={`/reunioes/${meeting.id}`}
-                      className="block max-w-[28ch] truncate hover:underline"
+                      className="block max-w-[28ch] truncate transition-colors group-hover:text-brand"
                     >
                       {meeting.title}
                     </Link>

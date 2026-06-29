@@ -11,9 +11,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
 
   return (
-    <Card className="shadow-sm">
+    <div>
+      <div className="mb-4 lg:hidden">
+        <ReuniaiLogo compact />
+      </div>
+      <Card>
       <CardHeader className="space-y-4">
-        <ReuniaiLogo />
         <div>
           <CardTitle className="text-xl">Entrar</CardTitle>
           <CardDescription>Acesse suas reuniões e insights com IA</CardDescription>
@@ -34,5 +37,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       </CardContent>
     </Card>
+    </div>
   );
 }
