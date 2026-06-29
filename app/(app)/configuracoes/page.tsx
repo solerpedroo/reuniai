@@ -1,11 +1,27 @@
 import type { Profile } from "@/lib/supabase/types";
 import { PageHeader } from "@/components/layout/page-header";
 import { AccountActions } from "@/components/settings/account-actions";
-import { Badge } from "@/components/ui/badge";
+import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
+import { CalendarConnection } from "@/components/settings/calendar-connection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ConfiguracoesPage() {
+const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
+  connected: { tone: "ok", text: "Google Calendar conectado e sincronizado." },
+  error: { tone: "error", text: "Não foi possível conectar o Google Calendar. Tente novamente." },
+  no_refresh: {
+    tone: "error",
+    text: "O Google não retornou um token de atualização. Remova o acesso do app na sua conta Google e tente novamente.",
+  },
+};
+
+export default async function ConfiguracoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ calendar?: string }>;
+}) {
+  const { calendar } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,7 +41,9 @@ export default async function ConfiguracoesPage() {
     }
   }
 
+  const connection = await getCalendarConnection(supabase);
   const email = user?.email ?? "—";
+  const banner = calendar ? CALENDAR_MESSAGES[calendar] : undefined;
 
   return (
     <div>
@@ -34,6 +52,19 @@ export default async function ConfiguracoesPage() {
         description="Calendário, regras de auto-join, retenção de dados e conta."
         meta="Conta"
       />
+
+      {banner && (
+        <div
+          role="status"
+          className={
+            banner.tone === "ok"
+              ? "mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
+              : "mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          }
+        >
+          {banner.text}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="shadow-sm">
@@ -52,9 +83,12 @@ export default async function ConfiguracoesPage() {
             <CardTitle>Google Calendar</CardTitle>
             <CardDescription>Conectar calendário para sync automático</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center gap-2">
-            <Badge variant="secondary">Onda 5</Badge>
-            <span className="text-sm text-muted-foreground">Não conectado</span>
+          <CardContent>
+            <CalendarConnection
+              connected={Boolean(connection)}
+              email={connection?.email ?? null}
+              lastSyncedAt={connection?.last_synced_at ?? null}
+            />
           </CardContent>
         </Card>
 
@@ -64,12 +98,7 @@ export default async function ConfiguracoesPage() {
             <CardDescription>ReuniAI entra automaticamente nas calls agendadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <Badge variant={autoJoin ? "default" : "secondary"}>
-              {autoJoin ? "Ativado" : "Desativado"}
-            </Badge>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Alteração na UI disponível na Onda 5.
-            </p>
+            <AutoJoinToggle initialEnabled={autoJoin} />
           </CardContent>
         </Card>
       </div>
