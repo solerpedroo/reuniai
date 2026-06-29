@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "gen:types": "supabase gen types typescript --local > lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
