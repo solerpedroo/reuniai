@@ -25,7 +25,7 @@ export function PageHeader({ title, description, meta, actions }: PageHeaderProp
             {meta}
           </p>
         )}
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.875rem] sm:leading-tight">
+        <h1 className="text-display text-3xl font-semibold sm:text-[2rem] sm:leading-tight">
           {title}
         </h1>
         {description && (
