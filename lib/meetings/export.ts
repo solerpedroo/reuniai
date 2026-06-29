@@ -15,11 +15,17 @@ import type { ActionItem, Meeting, MeetingSummary, TranscriptSegment } from "@/l
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
+export type MeetingHighlightExport = {
+  label: string;
+  start_ms: number;
+};
+
 export type MeetingExportData = {
   meeting: Meeting;
   summary: MeetingSummary | null;
   actionItems: ActionItem[];
   segments: TranscriptSegment[];
+  highlights: MeetingHighlightExport[];
   redactionAudit: RedactionAudit;
 };
 
@@ -28,7 +34,7 @@ export async function loadMeetingExportData(
   meeting: Meeting,
   options: { redact?: boolean; useLlm?: boolean } = {}
 ): Promise<MeetingExportData> {
-  const [summaryRes, actionItemsRes, segmentsRes] = await Promise.all([
+  const [summaryRes, actionItemsRes, segmentsRes, highlightsRes] = await Promise.all([
     supabase
       .from("meeting_summaries")
       .select("*")
@@ -45,14 +51,20 @@ export async function loadMeetingExportData(
       .select("*")
       .eq("meeting_id", meeting.id)
       .order("sequence", { ascending: true }),
+    supabase
+      .from("meeting_highlights")
+      .select("label, start_ms")
+      .eq("meeting_id", meeting.id)
+      .order("start_ms", { ascending: true }),
   ]);
 
   const summary = summaryRes.data;
   const actionItems = (actionItemsRes.data ?? []) as ActionItem[];
   const segments = (segmentsRes.data ?? []) as TranscriptSegment[];
+  const highlights = (highlightsRes.data ?? []) as MeetingHighlightExport[];
 
   if (!options.redact) {
-    return { meeting, summary, actionItems, segments, redactionAudit: { count: 0, types: [] } };
+    return { meeting, summary, actionItems, segments, highlights, redactionAudit: { count: 0, types: [] } };
   }
 
   const textsToRedact: string[] = [];
@@ -69,6 +81,10 @@ export async function loadMeetingExportData(
   for (const item of actionItems) {
     textsToRedact.push(item.title);
     if (item.assignee) textsToRedact.push(item.assignee);
+  }
+
+  for (const highlight of highlights) {
+    textsToRedact.push(highlight.label);
   }
 
   for (const segment of segments) {
@@ -102,6 +118,11 @@ export async function loadMeetingExportData(
     assignee: item.assignee ? next() : item.assignee,
   }));
 
+  const redactedHighlights = highlights.map((item) => ({
+    ...item,
+    label: next(),
+  }));
+
   const redactedSegments = segments.map((segment) => ({
     ...segment,
     text: next(),
@@ -113,12 +134,13 @@ export async function loadMeetingExportData(
     summary: redactedSummary,
     actionItems: redactedActionItems,
     segments: redactedSegments,
+    highlights: redactedHighlights,
     redactionAudit: audit,
   };
 }
 
 export function buildMeetingMarkdownFromData(data: MeetingExportData): string {
-  const { meeting, summary, actionItems, segments } = data;
+  const { meeting, summary, actionItems, segments, highlights } = data;
   const lines: string[] = [
     `# ${meeting.title}`,
     "",
@@ -160,6 +182,14 @@ export function buildMeetingMarkdownFromData(data: MeetingExportData): string {
     lines.push("");
   }
 
+  if (highlights.length > 0) {
+    lines.push("## Momentos marcados", "");
+    for (const item of highlights) {
+      lines.push(`- [${formatTimestamp(item.start_ms)}] ${item.label}`);
+    }
+    lines.push("");
+  }
+
   if (segments.length > 0) {
     lines.push("## Transcrição", "");
     for (const segment of segments) {
@@ -175,7 +205,7 @@ export function buildMeetingMarkdownFromData(data: MeetingExportData): string {
 }
 
 export function buildMeetingJsonFromData(data: MeetingExportData): string {
-  const { meeting, summary, actionItems, segments } = data;
+  const { meeting, summary, actionItems, segments, highlights } = data;
   const payload = {
     meeting: {
       id: meeting.id,
@@ -199,6 +229,10 @@ export function buildMeetingJsonFromData(data: MeetingExportData): string {
       status: item.status,
       source: item.source,
     })),
+    highlights: highlights.map((item) => ({
+      start_ms: item.start_ms,
+      label: item.label,
+    })),
     transcript: segments.map((segment) => ({
       start_ms: segment.start_ms,
       end_ms: segment.end_ms,
@@ -213,7 +247,7 @@ export function buildMeetingJsonFromData(data: MeetingExportData): string {
 }
 
 export async function buildMeetingPdfFromData(data: MeetingExportData): Promise<Buffer> {
-  const { meeting, summary, actionItems, segments } = data;
+  const { meeting, summary, actionItems, segments, highlights } = data;
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: "A4" });
@@ -275,6 +309,15 @@ export async function buildMeetingPdfFromData(data: MeetingExportData): Promise<
       doc.moveDown();
     }
 
+    if (highlights.length > 0) {
+      doc.fontSize(14).text("Momentos marcados", { underline: true });
+      doc.moveDown(0.3);
+      for (const item of highlights) {
+        doc.fontSize(11).text(`• [${formatTimestamp(item.start_ms)}] ${item.label}`);
+      }
+      doc.moveDown();
+    }
+
     if (segments.length > 0) {
       doc.addPage();
       doc.fontSize(14).text("Transcrição", { underline: true });
@@ -296,7 +339,6 @@ export async function buildMeetingPdfFromData(data: MeetingExportData): Promise<
   });
 }
 
-// Compat: export MD direto do supabase client
 export async function buildMeetingMarkdown(
   supabase: Client,
   meeting: Meeting,
