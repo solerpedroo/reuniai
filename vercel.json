@@ -4,6 +4,14 @@
     {
       "path": "/api/cron/calendar-sync",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/schedule-bots",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-bots",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
