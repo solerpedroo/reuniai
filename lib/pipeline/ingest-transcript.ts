@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
+import { applySpeakerMappingsToMeeting } from "@/lib/speakers/mappings";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { getTranscript, type VexaTranscriptSegment } from "@/lib/vexa/client";
 
@@ -70,6 +71,20 @@ export async function ingestMeetingTranscript(
   if (rows.length > 0) {
     const { error } = await admin.from("transcript_segments").insert(rows);
     if (error) throw error;
+  }
+
+  const { data: meeting } = await admin
+    .from("meetings")
+    .select("user_id")
+    .eq("id", input.meetingId)
+    .maybeSingle();
+
+  if (rows.length > 0 && meeting) {
+    try {
+      await applySpeakerMappingsToMeeting(admin, input.meetingId, meeting.user_id);
+    } catch (err) {
+      console.error("Falha ao aplicar speaker mappings (não bloqueante):", err);
+    }
   }
 
   const status: IngestResult["status"] = rows.length > 0 ? "completed" : "partial";
