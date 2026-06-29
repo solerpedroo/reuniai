@@ -1,13 +1,20 @@
+import type { Icon } from "@phosphor-icons/react";
 import type { Profile } from "@/lib/supabase/types";
+import {
+  CalendarBlank,
+  ClockCounterClockwise,
+  Robot,
+  User,
+} from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnection } from "@/components/settings/calendar-connection";
 import { RetentionSettings } from "@/components/settings/retention-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
   connected: { tone: "ok", text: "Google Calendar conectado e sincronizado." },
@@ -17,6 +24,35 @@ const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> 
     text: "O Google não retornou um token de atualização. Remova o acesso do app na sua conta Google e tente novamente.",
   },
 };
+
+function SettingsSection({
+  icon: Icon,
+  title,
+  description,
+  children,
+  className,
+}: {
+  icon: Icon;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("surface-card overflow-hidden", className)}>
+      <div className="flex items-start gap-3 border-b border-border/70 px-5 py-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+          <Icon size={18} weight="duotone" />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold">{title}</h2>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="px-5 py-4">{children}</div>
+    </section>
+  );
+}
 
 export default async function ConfiguracoesPage({
   searchParams,
@@ -63,7 +99,7 @@ export default async function ConfiguracoesPage({
           role="status"
           className={
             banner.tone === "ok"
-              ? "mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
+              ? "mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success"
               : "mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
           }
         >
@@ -72,51 +108,43 @@ export default async function ConfiguracoesPage({
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Conta</CardTitle>
-            <CardDescription>E-mail da sessão atual</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <SettingsSection icon={User} title="Conta" description="E-mail da sessão atual">
+          <div className="space-y-4">
             <p className="text-sm font-medium">{email}</p>
             <AccountActions />
-          </CardContent>
-        </Card>
+          </div>
+        </SettingsSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Google Calendar</CardTitle>
-            <CardDescription>Conectar calendário para sync automático</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CalendarConnection
-              connected={Boolean(connection)}
-              email={connection?.email ?? null}
-              lastSyncedAt={connection?.last_synced_at ?? null}
-            />
-          </CardContent>
-        </Card>
+        <SettingsSection
+          icon={CalendarBlank}
+          title="Google Calendar"
+          description="Conectar calendário para sync automático"
+        >
+          <CalendarConnection
+            connected={Boolean(connection)}
+            email={connection?.email ?? null}
+            lastSyncedAt={connection?.last_synced_at ?? null}
+          />
+        </SettingsSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Auto-join do bot</CardTitle>
-            <CardDescription>ReuniAI entra automaticamente nas calls agendadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AutoJoinToggle initialEnabled={autoJoin} />
-          </CardContent>
-        </Card>
+        <SettingsSection
+          icon={Robot}
+          title="Auto-join do bot"
+          description="ReuniAI entra automaticamente nas calls agendadas"
+        >
+          <AutoJoinToggle initialEnabled={autoJoin} />
+        </SettingsSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacidade e dados</CardTitle>
-            <CardDescription>Retenção automática e aparência</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <SettingsSection
+          icon={ClockCounterClockwise}
+          title="Privacidade e dados"
+          description="Retenção automática e aparência"
+        >
+          <div className="space-y-6">
             <RetentionSettings initialDays={retentionDays} />
             <ThemeToggle />
-          </CardContent>
-        </Card>
+          </div>
+        </SettingsSection>
       </div>
     </div>
   );
