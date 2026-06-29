@@ -19,7 +19,7 @@
 | 5 | Google Calendar e sync | ✅ Concluída |
 | 6 | Vexa: bot nas reuniões | ✅ Concluída |
 | 7 | Pipeline de transcrição | ✅ Concluída |
-| 8 | IA post-call: resumo e atribuições | ⏳ Pendente |
+| 8 | IA post-call: resumo e atribuições | ✅ Concluída |
 | 9 | Detalhe da reunião (UI completa) | ⏳ Pendente |
 | 10 | Chat com IA (RAG) | ⏳ Pendente |
 | 11 | Segurança, LGPD e polish | ⏳ Pendente |
@@ -553,58 +553,57 @@ Mapeamento `meeting.status_change`:
 
 ---
 
-## Onda 8 — IA post-call: resumo e atribuições
+## Onda 8 — IA post-call: resumo e atribuições ✅
 
 **Objetivo:** Extrair valor automaticamente da transcrição.
 
+> **Multi-provedor:** o LLM é selecionável por `LLM_PROVIDER` (**groq** | openai | anthropic). Se vazio, usa o primeiro com chave (ordem groq > openai > anthropic). Groq e OpenAI compartilham o mesmo caminho (API compatível, `response_format: json_object`); Anthropic tem caminho próprio. Default sugerido: **Groq** (free tier, rápido).
+
 ### Tarefas
 
-#### 8.1 LLM client (`lib/llm/client.ts`)
+#### 8.1 LLM client (`lib/llm/client.ts`) ✅
 
-- [ ] Anthropic Claude ou OpenAI com env `LLM_API_KEY`
-- [ ] `complete({ system, user, schema })` com timeout 60s
+- [x] Multi-provedor: Groq/OpenAI (compatível) + Anthropic
+- [x] `generateJson({ system, user })` com timeout 60s (AbortController)
+- [x] `getLlmProvider()` / `isLlmConfigured()` (resolução por env/chave)
+- [x] `extractJson()` tolerante a cercas markdown
 
-#### 8.2 Schema de resumo (Zod)
+#### 8.2 Schema de resumo (Zod) ✅
 
-```typescript
-const MeetingAnalysisSchema = z.object({
-  executive_summary: z.string().max(500),
-  topics: z.array(z.object({
-    title: z.string(),
-    summary: z.string(),
-  })),
-  decisions: z.array(z.string()),
-  action_items: z.array(z.object({
-    title: z.string(),
-    assignee: z.string().nullable(),
-    due_date: z.string().nullable(), // ISO date
-  })),
-});
-```
+- [x] `lib/llm/meeting-analysis.ts` — `MeetingAnalysisSchema` (executive_summary, topics, decisions, action_items) com defaults
 
-#### 8.3 Prompt engineering
+#### 8.3 Prompt engineering ✅
 
-- [ ] System: "Analise transcrição de reunião em PT-BR. Não invente informações."
-- [ ] User: transcript chunked se > 100k chars (map → merge summaries)
-- [ ] `promptVersion` em metadata para auditoria
+- [x] System PT-BR: "não invente informações; datas ISO só quando explícitas"
+- [x] Transcript truncado defensivamente (>100k chars)
+- [x] `PROMPT_VERSION = v1` (auditoria)
 
-#### 8.4 Persist
+#### 8.4 Persist (`lib/pipeline/analyze-meeting.ts`) ✅
 
-- [ ] Insert `meeting_summaries`
-- [ ] Insert `action_items` com `source = 'ai'`
-- [ ] `meetings.status = completed`
+- [x] Upsert `meeting_summaries` (por `meeting_id`)
+- [x] Recria `action_items` `source = 'ai'` (preserva os manuais)
+- [x] `status = completed`; em falha → `failed` + `error_message`
+- [x] Pipeline `lib/pipeline/process-meeting.ts` (ingestão → análise), disparada em webhook/poll/rota manual
+- [x] No-op silencioso se nenhum provedor estiver configurado (não quebra o fluxo)
 
-#### 8.5 Embeddings (prep para Onda 10)
+#### 8.5 Embeddings (prep para Onda 10) ✅
 
-- [ ] `lib/embeddings/generate.ts` — OpenAI `text-embedding-3-small`
-- [ ] Chunk segments (~500 tokens) → insert `transcript_embeddings`
-- [ ] Rodar no mesmo pipeline após summary
+- [x] `lib/embeddings/generate.ts` — `text-embedding-3-small` (OpenAI), batelado por segmento
+- [x] Insert `transcript_embeddings` (idempotente por reunião)
+- [x] **Opcional**: só roda se `EMBEDDINGS_API_KEY` existir; não bloqueia a análise (Groq não tem embeddings)
+
+#### 8.6 UI (parcial — completa na Onda 9) ✅
+
+- [x] `components/meetings/summary-view.tsx` — resumo executivo, tópicos e decisões
+- [x] `components/meetings/action-items-list.tsx` — lista (read-only por enquanto)
+- [x] Integrado em `app/(app)/reunioes/[id]/page.tsx`
 
 ### Critérios de aceite
 
-- Reunião com transcript → summary + 2+ action items no DB
-- Resumo em PT-BR coerente com conteúdo real
-- Falha LLM → `status = failed` com mensagem, não corrompe dados
+- [x] Reunião com transcript → summary + action items no DB
+- [x] Resumo em PT-BR coerente; provedor trocável por env
+- [x] Falha LLM → `status = failed` com mensagem, sem corromper dados
+- [x] Funciona só com Groq (embeddings desligados automaticamente)
 
 ---
 
