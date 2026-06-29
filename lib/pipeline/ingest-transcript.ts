@@ -86,7 +86,7 @@ export async function ingestByNativeId(
   admin: AdminClient,
   platform: BotPlatform,
   nativeMeetingId: string
-): Promise<IngestResult | null> {
+): Promise<(IngestResult & { meetingId: string }) | null> {
   const { data: meeting } = await admin
     .from("meetings")
     .select("id")
@@ -96,9 +96,10 @@ export async function ingestByNativeId(
     .maybeSingle();
 
   if (!meeting) return null;
-  return ingestMeetingTranscript(admin, {
+  const result = await ingestMeetingTranscript(admin, {
     meetingId: meeting.id,
     platform,
     nativeMeetingId,
   });
+  return { ...result, meetingId: meeting.id };
 }
