@@ -3,7 +3,7 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { parseDecisions } from "@/lib/meetings/insights";
 import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
-import type { NotificationPrefs } from "@/lib/workflow/types";
+import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { ActionItem, MeetingSummary } from "@/lib/supabase/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -34,15 +34,8 @@ export async function sendMeetingCompletedEmail(
   const email = authUser.user?.email;
   if (!email) return;
 
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("notification_prefs")
-    .eq("id", meeting.user_id)
-    .maybeSingle();
-
-  const prefs = (profile as { notification_prefs?: NotificationPrefs } | null)
-    ?.notification_prefs;
-  if (prefs && (!prefs.email || !prefs.completed)) return;
+  const prefs = await getUserNotificationPrefs(admin, meeting.user_id);
+  if (!prefs.email || !prefs.completed) return;
 
   const [summaryRes, actionItemsRes] = await Promise.all([
     admin
