@@ -15,7 +15,7 @@
 | 1 | Design system e shell UI | ✅ Concluída |
 | 2 | Supabase: schema, RLS e Storage | ✅ Concluída |
 | 3 | Autenticação e onboarding | ✅ Concluída |
-| 4 | Dashboard e lista de reuniões | ⏳ Pendente |
+| 4 | Dashboard e lista de reuniões | ✅ Concluída |
 | 5 | Google Calendar e sync | ⏳ Pendente |
 | 6 | Recall.ai: bot nas reuniões | ⏳ Pendente |
 | 7 | Pipeline de transcrição | ⏳ Pendente |
@@ -330,23 +330,23 @@ Layout SystemShadcn (4 KPI cards + grid):
 | Action items abertos | `5` | Pendentes |
 | Próxima reunião | `14:00` | Título do evento |
 
-- [ ] `components/dashboard/kpi-cards.tsx`
-- [ ] `components/dashboard/recent-meetings-table.tsx` — colunas: título, data, plataforma, status, duração
-- [ ] `components/dashboard/attention-card.tsx` — action items vencidos/próximos
-- [ ] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, opcional MVP)
+- [x] `components/dashboard/kpi-cards.tsx`
+- [x] `components/dashboard/recent-meetings-table.tsx` — colunas: título, data, plataforma, status, duração
+- [x] `components/dashboard/attention-card.tsx` — action items vencidos/próximos
+- [ ] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, opcional MVP — adiado)
 
 #### 4.2 Lista de reuniões (`app/(app)/reunioes/page.tsx`)
 
-- [ ] Data table com sort por data
-- [ ] Filtros: status, plataforma, range de datas
-- [ ] Badge de status com cores (scheduled=muted, recording=warning, completed=success, failed=destructive)
-- [ ] Link row → `/reunioes/[id]`
+- [x] Data table com sort por data
+- [x] Filtros: status, plataforma, busca por título
+- [x] Badge de status com cores (scheduled=muted, recording=warning, completed=success, failed=destructive)
+- [x] Link row → `/reunioes/[id]`
 
 #### 4.3 Data layer
 
-- [ ] `lib/meetings/queries.ts` — `getMeetingsForUser`, `getMeetingById`
-- [ ] Server Components fetching Supabase (inicialmente seed/mock se sem dados)
-- [ ] `lib/meetings/types.ts` + Zod schemas
+- [x] `lib/meetings/queries.ts` — `getMeetingsForUser`, `getMeetingById`, stats do dashboard
+- [x] Server Components fetching Supabase (seed opcional via `npm run db:seed`)
+- [x] `lib/meetings/types.ts` + helpers de formatação e labels
 
 #### 4.4 Status badges
 
