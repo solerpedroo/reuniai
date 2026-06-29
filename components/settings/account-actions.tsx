@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import { createClient } from "@/lib/supabase/client";
 
 export function AccountActions() {
@@ -22,9 +23,7 @@ export function AccountActions() {
       <Button variant="outline" onClick={handleLogout} disabled={loading}>
         {loading ? "Saindo…" : "Sair da conta"}
       </Button>
-      <Button variant="outline" disabled title="Disponível na Onda 11 (LGPD)">
-        Deletar conta
-      </Button>
+      <DeleteAccountDialog />
     </div>
   );
 }
