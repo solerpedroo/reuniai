@@ -9,6 +9,7 @@ import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS, PRODUCT } from "@/components/shell/nav-config";
+import { MeetingSearch } from "@/components/shell/meeting-search";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -92,17 +93,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <List size={20} />
             </Button>
-            <div className="min-w-0 flex-1">
-              <motion.p
-                key={current.label}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className="truncate text-sm font-semibold"
-              >
-                {current.label}
-              </motion.p>
-              <p className="truncate text-xs text-muted-foreground">{current.description}</p>
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <motion.p
+                  key={current.label}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="truncate text-sm font-semibold"
+                >
+                  {current.label}
+                </motion.p>
+                <p className="truncate text-xs text-muted-foreground">{current.description}</p>
+              </div>
+              <MeetingSearch />
             </div>
             <div className="hidden items-center gap-3 sm:flex">
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
