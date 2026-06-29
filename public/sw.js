@@ -28,17 +28,22 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  const payload = event.data?.json() as { title?: string; body?: string; href?: string } | undefined;
-  const title = payload?.title ?? "ReuniAI";
+  let payload;
+  try {
+    payload = event.data ? event.data.json() : undefined;
+  } catch {
+    payload = undefined;
+  }
+  const title = (payload && payload.title) || "ReuniAI";
   const options = {
-    body: payload?.body ?? "",
-    data: { href: payload?.href ?? "/" },
+    body: (payload && payload.body) || "",
+    data: { href: (payload && payload.href) || "/" },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const href = (event.notification.data as { href?: string } | undefined)?.href ?? "/";
+  const href = (event.notification.data && event.notification.data.href) || "/";
   event.waitUntil(self.clients.openWindow(href));
 });
