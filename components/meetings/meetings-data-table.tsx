@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, MagnifyingGlass, VideoCamera } from "@phosphor-icons/react";
+import { BotActions } from "@/components/meetings/bot-actions";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { Input } from "@/components/ui/input";
@@ -117,12 +118,13 @@ export function MeetingsDataTable({ meetings }: { meetings: Meeting[] }) {
               <TableHead className="hidden sm:table-cell">Plataforma</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Duração</TableHead>
+              <TableHead className="text-right">Bot</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-12 text-center">
+                <TableCell colSpan={6} className="py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <VideoCamera size={28} className="text-muted-foreground/60" aria-hidden />
                     <p className="text-sm text-muted-foreground">
@@ -155,6 +157,9 @@ export function MeetingsDataTable({ meetings }: { meetings: Meeting[] }) {
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-muted-foreground">
                     {formatDuration(getMeetingDurationMs(meeting))}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <BotActions meetingId={meeting.id} status={meeting.status} />
                   </TableCell>
                 </TableRow>
               ))
