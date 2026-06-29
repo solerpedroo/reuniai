@@ -9,8 +9,8 @@ import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
+import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
-import { MeetingSearch } from "@/components/shell/meeting-search";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,7 +19,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <CommandPaletteProvider>
+      <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <SidebarBrand />
         <nav className="flex-1 px-3 py-4" aria-label="Menu principal">
@@ -109,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="hidden max-w-md flex-1 justify-end lg:flex">
-              <MeetingSearch />
+              <CommandTrigger />
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -127,6 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </footer>
       </div>
     </div>
+    </CommandPaletteProvider>
   );
 }
 
