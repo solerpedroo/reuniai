@@ -20,7 +20,7 @@
 | 6 | Vexa: bot nas reuniões | ✅ Concluída |
 | 7 | Pipeline de transcrição | ✅ Concluída |
 | 8 | IA post-call: resumo e atribuições | ✅ Concluída |
-| 9 | Detalhe da reunião (UI completa) | ⏳ Pendente |
+| 9 | Detalhe da reunião (UI completa) | ✅ Concluída |
 | 10 | Chat com IA (RAG) | ⏳ Pendente |
 | 11 | Segurança, LGPD e polish | ⏳ Pendente |
 | 12–19 | Ondas futuras (post-MVP) | 📋 Planejadas |
@@ -607,56 +607,54 @@ Mapeamento `meeting.status_change`:
 
 ---
 
-## Onda 9 — Detalhe da reunião (UI completa)
+## Onda 9 — Detalhe da reunião (UI completa) ✅
 
 **Objetivo:** Página `/reunioes/[id]` com todas as abas funcionais.
 
 ### Tarefas
 
-#### 9.1 Layout (`app/(app)/reunioes/[id]/page.tsx`)
+#### 9.1 Layout (`app/(app)/reunioes/[id]/page.tsx`) ✅
 
-- [ ] `PageHeader` — título, data, duração, platform badge, lista participantes
-- [ ] Tabs shadcn: Resumo | Transcrição | Atribuições | Chat
+- [x] `PageHeader` — título, data, duração, badges de status/plataforma, link da call
+- [x] Tabs (`components/meetings/meeting-tabs.tsx`): Resumo | Atribuições | Transcrição | Chat
+- [x] Badge com contagem de itens em aberto na aba Atribuições
 
-#### 9.2 Aba Resumo
+#### 9.2 Aba Resumo ✅
 
-- [ ] `components/meetings/summary-tab.tsx`
-- [ ] Executive summary em card
-- [ ] Lista de tópicos (accordion ou cards)
-- [ ] Lista de decisões (bullet)
+- [x] `components/meetings/summary-view.tsx` (Onda 8) — resumo executivo em card, tópicos e decisões
 
-#### 9.3 Aba Transcrição
+#### 9.3 Aba Transcrição ✅ (parcial)
 
-- [ ] Player fixo no topo ou sticky bottom
-- [ ] Transcript scroll com highlight segment ativo
-- [ ] Auto-scroll opcional durante playback
+- [x] `components/meetings/transcript-view.tsx` — segments com timestamp e speaker
+- [ ] **Diferido:** player de áudio com highlight do segment ativo (exige rota proxy para a mídia autenticada do Vexa — `GET /recordings/...`). Pendente de validar os endpoints de gravação do Vexa.
 
-#### 9.4 Aba Atribuições
+#### 9.4 Aba Atribuições (`components/meetings/action-items-tab.tsx`) ✅
 
-- [ ] `components/meetings/action-items-tab.tsx`
-- [ ] Lista com checkbox (toggle `done`)
-- [ ] Editar assignee e due_date inline
-- [ ] Adicionar item manual (`source = manual`)
-- [ ] Deletar item
+- [x] Lista com checkbox (toggle `done`, otimista)
+- [x] Editar título, assignee e due_date inline
+- [x] Adicionar item manual (`source = manual`)
+- [x] Deletar item
 
-#### 9.5 API mutations
+#### 9.5 API mutations ✅
 
-- [ ] `PATCH /api/meetings/[id]/action-items/[itemId]`
-- [ ] `POST /api/meetings/[id]/action-items`
-- [ ] `DELETE /api/meetings/[id]/action-items/[itemId]`
-- [ ] Validar ownership via RLS + double-check user_id
+- [x] `POST /api/meetings/[id]/action-items` (criar, Zod)
+- [x] `PATCH /api/meetings/[id]/action-items/[itemId]` (editar/toggle, Zod)
+- [x] `DELETE /api/meetings/[id]/action-items/[itemId]`
+- [x] Ownership: verifica `meeting.user_id`/`item.user_id` antes de gravar (admin client)
 
-#### 9.6 Empty e loading states
+#### 9.6 Empty e loading states ✅
 
-- [ ] Skeleton enquanto `processing`
-- [ ] Mensagem clara para `failed` com `error_message`
-- [ ] `partial` — "Bot removido; transcrição parcial disponível"
+- [x] `components/meetings/meeting-status-banner.tsx` — info enquanto `processing`/`recording`/`bot_joining`
+- [x] Mensagem clara para `failed` com `error_message`
+- [x] `partial` — "transcrição parcial disponível"
+- [x] Empty states nas abas (resumo, transcrição e atribuições)
 
 ### Critérios de aceite
 
-- Todas as abas funcionam com dados reais
-- Edição de action item persiste e reflete no dashboard "attention card"
-- Mobile: tabs scroll horizontal, player responsivo
+- [x] Abas funcionam com dados reais
+- [x] Edição/criação/remoção de action item persiste (refletirá no "attention card" do dashboard)
+- [x] Tabs com `flex-wrap` (responsivo)
+- [ ] Player responsivo — diferido junto com 9.3
 
 ---
 
