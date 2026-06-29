@@ -8,6 +8,7 @@ import { SummaryView } from "@/components/meetings/summary-view";
 import type { Citation } from "@/lib/meetings/chat";
 import { computeTalkTime } from "@/lib/meetings/talk-time";
 import type { ActionItem, Meeting, MeetingSummary, TranscriptSegment } from "@/lib/supabase/types";
+import type { MeetingFollowUp } from "@/lib/workflow/types";
 import type { ChatUiMessage } from "@/components/meetings/meeting-tabs";
 
 export function MeetingReview({
@@ -19,6 +20,7 @@ export function MeetingReview({
   chatMessages,
   llmEnabled,
   initialSeekMs,
+  followUp,
 }: {
   meeting: Meeting;
   hasRecording: boolean;
@@ -28,6 +30,7 @@ export function MeetingReview({
   chatMessages: ChatUiMessage[];
   llmEnabled: boolean;
   initialSeekMs?: number;
+  followUp?: MeetingFollowUp | null;
 }) {
   const [currentTimeMs, setCurrentTimeMs] = useState(initialSeekMs ?? 0);
   const [highlightMs, setHighlightMs] = useState<number | null>(initialSeekMs ?? null);
@@ -82,6 +85,7 @@ export function MeetingReview({
         onHighlightDone={() => setHighlightMs(null)}
         onSeek={seek}
         onCitationClick={handleCitation}
+        followUp={followUp}
       />
     </div>
   );
