@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
-import { ingestByNativeId } from "@/lib/pipeline/ingest-transcript";
+import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
 import { getRunningBots } from "@/lib/vexa/client";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 
@@ -47,14 +47,14 @@ export async function GET(request: NextRequest) {
       });
       if (result.updated) updated += 1;
 
-      // Reunião encerrada → ingerir a transcrição.
+      // Reunião encerrada → ingerir transcrição e analisar.
       if (mapVexaStatus(vexaStatus) === "completed") {
         const parsed = meeting.meeting_url ? parseMeetingUrl(meeting.meeting_url) : null;
         if (parsed) {
           try {
-            await ingestByNativeId(admin, parsed.platform, nativeId);
+            await processMeetingByNativeId(admin, parsed.platform, nativeId);
           } catch (err) {
-            console.error("Falha ao ingerir transcrição (poll):", err);
+            console.error("Falha ao processar reunião (poll):", err);
           }
         }
       }
