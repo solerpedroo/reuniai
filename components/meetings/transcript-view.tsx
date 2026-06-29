@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChatText, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,15 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
+export function TranscriptView({
+  segments,
+  highlightMs,
+  onHighlightDone,
+}: {
+  segments: TranscriptSegment[];
+  highlightMs?: number | null;
+  onHighlightDone?: () => void;
+}) {
   const [query, setQuery] = useState("");
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
 
@@ -53,6 +61,16 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
   );
 
   const speakerIndex = useMemo(() => new Map<string, number>(), []);
+
+  useEffect(() => {
+    if (highlightMs == null) return;
+
+    const el = document.getElementById(`segment-${highlightMs}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const timer = window.setTimeout(() => onHighlightDone?.(), 3200);
+    return () => window.clearTimeout(timer);
+  }, [highlightMs, onHighlightDone]);
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -155,10 +173,13 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
             return (
               <div
                 key={segment.id}
+                id={`segment-${segment.start_ms}`}
                 className={cn(
                   "flex gap-3 rounded-lg px-2 py-1 transition-colors",
                   isSpeakerActive && activeSpeaker && "bg-brand/5",
-                  query.trim() && "hover:bg-muted/30"
+                  query.trim() && "hover:bg-muted/30",
+                  highlightMs === segment.start_ms &&
+                    "bg-brand/10 ring-2 ring-brand/30 ring-offset-2 ring-offset-background"
                 )}
               >
                 <span className="sticky top-28 w-12 shrink-0 self-start pt-0.5 text-right font-mono text-xs tabular-nums text-muted-foreground">
