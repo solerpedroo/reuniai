@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Copy, LinkSimple, Trash } from "@phosphor-icons/react";
+import { Copy, LinkSimple, ShieldCheck, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { ShareScope } from "@/lib/workflow/types";
 
 type ShareTokenRow = {
@@ -32,6 +33,7 @@ type ShareTokenRow = {
 export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
   const [open, setOpen] = useState(false);
   const [scope, setScope] = useState<ShareScope>("summary_only");
+  const [redactPii, setRedactPii] = useState(true);
   const [tokens, setTokens] = useState<ShareTokenRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +49,7 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
       const res = await fetch(`/api/meetings/${meetingId}/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scope, days: 7 }),
+        body: JSON.stringify({ scope, days: 7, redact_pii: redactPii }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha ao criar link");
@@ -59,7 +61,7 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [meetingId, scope, loadTokens]);
+  }, [meetingId, scope, redactPii, loadTokens]);
 
   const revoke = useCallback(
     async (tokenId: string) => {
@@ -118,6 +120,19 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
             <Button onClick={createLink} disabled={loading}>
               Gerar link
             </Button>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-2">
+            <div className="flex items-start gap-2">
+              <ShieldCheck size={18} className="mt-0.5 text-brand shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Redigir dados sensíveis</p>
+                <p className="text-xs text-muted-foreground">
+                  Recomendado para links públicos (default ativo)
+                </p>
+              </div>
+            </div>
+            <Switch checked={redactPii} onCheckedChange={setRedactPii} />
           </div>
 
           {tokens.length > 0 && (
