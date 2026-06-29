@@ -1,6 +1,7 @@
 import type { Database } from "@/lib/supabase/database.types";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type CalendarConnection = Database["public"]["Tables"]["calendar_connections"]["Row"];
 export type Meeting = Database["public"]["Tables"]["meetings"]["Row"];
 export type ActionItem = Database["public"]["Tables"]["action_items"]["Row"];
 export type MeetingSummary = Database["public"]["Tables"]["meeting_summaries"]["Row"];
