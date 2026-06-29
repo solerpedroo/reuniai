@@ -7,6 +7,24 @@
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
 **Última atualização:** junho 2026
 
+### Andamento das fases
+
+| Onda | Nome | Status |
+|------|------|--------|
+| 0 | Bootstrap do projeto | ✅ Concluída |
+| 1 | Design system e shell UI | ✅ Concluída |
+| 2 | Supabase: schema, RLS e Storage | ⏳ Pendente |
+| 3 | Autenticação e onboarding | ⏳ Pendente |
+| 4 | Dashboard e lista de reuniões | ⏳ Pendente |
+| 5 | Google Calendar e sync | ⏳ Pendente |
+| 6 | Recall.ai: bot nas reuniões | ⏳ Pendente |
+| 7 | Pipeline de transcrição | ⏳ Pendente |
+| 8 | IA post-call: resumo e atribuições | ⏳ Pendente |
+| 9 | Detalhe da reunião (UI completa) | ⏳ Pendente |
+| 10 | Chat com IA (RAG) | ⏳ Pendente |
+| 11 | Segurança, LGPD e polish | ⏳ Pendente |
+| 12–19 | Ondas futuras (post-MVP) | 📋 Planejadas |
+
 ---
 
 ## Índice
@@ -148,30 +166,30 @@ reuniai/
 
 #### 1.1 Tokens CSS (`app/globals.css`)
 
-- [ ] Portar tokens de `lab.css` `.shadcn-scope` → `:root` global
-- [ ] Incluir `--chart-1` … `--chart-5`
-- [ ] Dark mode: `[data-theme="dark"]` ou `.dark` (tokens do design lab)
-- [ ] `--brand` teal para ícones IA: `oklch(0.55 0.15 180)`
-- [ ] Utilities: `.label-caps`, `.glass`, `.nav-active` (de case_agi `globals.css`)
-- [ ] Geist Sans + Geist Mono via `next/font/google`
+- [x] Portar tokens de `lab.css` `.shadcn-scope` → `:root` global
+- [x] Incluir `--chart-1` … `--chart-5`
+- [x] Dark mode: `[data-theme="dark"]` ou `.dark` (tokens do design lab)
+- [x] `--brand` teal para ícones IA: `oklch(0.55 0.15 180)`
+- [x] Utilities: `.label-caps`, `.glass`, `.nav-active` (de case_agi `globals.css`)
+- [x] Geist Sans + Geist Mono via `next/font/google`
 
 #### 1.2 Shell (`components/shell/`)
 
-- [ ] `nav-config.ts` — rotas ReuniAI + `PRODUCT` metadata
-- [ ] `app-shell.tsx` — sidebar 260px, header 52px, mobile drawer
-- [ ] Logo ReuniAI (`components/brand/reuniai-logo.tsx`)
-- [ ] Layout `(app)/layout.tsx` com `AppShell`
+- [x] `nav-config.ts` — rotas ReuniAI + `PRODUCT` metadata
+- [x] `app-shell.tsx` — sidebar 260px, header 52px, mobile drawer
+- [x] Logo ReuniAI (`components/brand/reuniai-logo.tsx`)
+- [x] Layout `(app)/layout.tsx` com `AppShell`
 
 #### 1.3 Motion e layout
 
-- [ ] `components/motion/presets.ts` — `fadeUp`, easings
-- [ ] `components/motion/page-transition.tsx`
-- [ ] `components/layout/page-header.tsx`
+- [x] `components/motion/presets.ts` — `fadeUp`, easings
+- [x] `components/motion/page-transition.tsx`
+- [x] `components/layout/page-header.tsx`
 
 #### 1.4 Providers
 
-- [ ] `components/providers/app-providers.tsx` (mínimo: theme se necessário)
-- [ ] `Toaster` em root layout
+- [x] `components/providers/app-providers.tsx` (mínimo: theme se necessário)
+- [x] `Toaster` em root layout
 
 ### Nav items (MVP)
 
