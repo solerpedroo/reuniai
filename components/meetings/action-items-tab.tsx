@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Circle, PencilSimple, Plus, Trash, User, X } from "@phosphor-icons/react";
+import { CheckCircle, Circle, ClipboardText, PencilSimple, Plus, Trash, User, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import type { ActionItem } from "@/lib/supabase/types";
 
@@ -117,9 +118,18 @@ export function ActionItemsTab({
       {adding && <AddItemForm busy={busy} onCancel={() => setAdding(false)} onSubmit={create} />}
 
       {items.length === 0 && !adding ? (
-        <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-          Nenhum item de ação. Adicione um ou processe a reunião com IA.
-        </p>
+        <EmptyState
+          icon={ClipboardText}
+          title="Nenhum item de ação"
+          description="Adicione tarefas manualmente ou processe a reunião com IA para extrair compromissos."
+          tone="muted"
+          className="py-10"
+        >
+          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <Plus size={14} />
+            Adicionar item
+          </Button>
+        </EmptyState>
       ) : (
         <ul className="space-y-2">
           {items.map((item) =>
