@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ChatCircleDots,
   EnvelopeSimple,
@@ -37,6 +38,13 @@ const TABS = [
 
 type TabValue = (typeof TABS)[number]["value"];
 
+const VALID_TABS = new Set<string>(TABS.map((t) => t.value));
+
+function parseTabParam(value: string | null): TabValue {
+  if (value && VALID_TABS.has(value)) return value as TabValue;
+  return "resumo";
+}
+
 export function MeetingTabs({
   meetingId,
   summary,
@@ -64,8 +72,16 @@ export function MeetingTabs({
   onCitationClick?: (citation: Citation) => void;
   followUp?: MeetingFollowUp | null;
 }) {
-  const [activeTab, setActiveTab] = useState<TabValue>("resumo");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabValue>(() =>
+    parseTabParam(searchParams.get("tab"))
+  );
   const openCount = actionItems.filter((i) => i.status === "open").length;
+  const suggestedCount = actionItems.filter((i) => i.status === "suggested").length;
+
+  useEffect(() => {
+    setActiveTab(parseTabParam(searchParams.get("tab")));
+  }, [searchParams]);
 
   const handleCitation = useCallback(
     (citation: Citation) => {
@@ -112,9 +128,9 @@ export function MeetingTabs({
               <span className="relative z-10 flex items-center gap-1.5">
                 <Icon size={14} className={isActive ? "text-brand" : undefined} />
                 {tab.label}
-                {tab.value === "atribuicoes" && openCount > 0 && (
+                {tab.value === "atribuicoes" && (openCount > 0 || suggestedCount > 0) && (
                   <span className="rounded-full bg-brand/15 px-1.5 text-xs text-brand">
-                    {openCount}
+                    {suggestedCount > 0 ? suggestedCount : openCount}
                   </span>
                 )}
               </span>
