@@ -149,7 +149,7 @@ export function MeetingsDataTable({
                     <p className="text-sm text-muted-foreground">
                       {hasFilters
                         ? "Nenhuma reunião corresponde aos filtros."
-                        : "Nenhuma reunião ainda. Conecte seu calendário nas configurações."}
+                        : "Nenhuma reunião ainda. Use Nova reunião para colar um link ou conecte seu calendário."}
                     </p>
                   </div>
                 </TableCell>
