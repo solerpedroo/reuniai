@@ -1,7 +1,7 @@
 # ReuniAI — Plano de Implementação por Ondas
 
 > SaaS individual de inteligência de reuniões (estilo Fireflies).  
-> Stack: Next.js 15 · Supabase · Recall.ai · Deepgram · LLM  
+> Stack: Next.js 15 · Supabase · Vexa (bot + transcrição) · LLM  
 > UI: patterns de `case_agi` + design system **shadcn/ui Official** (design lab)
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
@@ -17,7 +17,7 @@
 | 3 | Autenticação e onboarding | ✅ Concluída |
 | 4 | Dashboard e lista de reuniões | ✅ Concluída |
 | 5 | Google Calendar e sync | ✅ Concluída |
-| 6 | Recall.ai: bot nas reuniões | ⏳ Pendente |
+| 6 | Vexa: bot nas reuniões | ✅ Concluída |
 | 7 | Pipeline de transcrição | ⏳ Pendente |
 | 8 | IA post-call: resumo e atribuições | ⏳ Pendente |
 | 9 | Detalhe da reunião (UI completa) | ⏳ Pendente |
@@ -425,58 +425,90 @@ function detectPlatform(url: string): MeetingPlatform {
 
 ---
 
-## Onda 6 — Recall.ai: bot nas reuniões
+## Onda 6 — Vexa: bot nas reuniões ✅
 
-**Objetivo:** Bot ReuniAI entra automaticamente nas reuniões agendadas.
+**Objetivo:** Bot ReuniAI entra (manual ou automaticamente) nas reuniões e grava/transcreve.
+
+> **Decisão:** trocamos Recall.ai pelo **[Vexa](https://github.com/Vexa-ai/vexa)** — alternativa open-source (Apache 2.0). API quase idêntica (POST URL → GET transcript) e que já cobre gravação **e** transcrição (Whisper). Modo **cloud** (`https://api.cloud.vexa.ai`, $5 grátis) para validar agora; mesmo código migra para **self-hosted** (`http://localhost:8056`, custo zero) trocando só `VEXA_API_BASE`.
 
 ### Tarefas
 
-#### 6.1 Recall setup
+#### 6.1 Setup ✅
 
-- [ ] Conta Recall.ai + API key
-- [ ] Configurar webhook URL: `{APP_URL}/api/webhooks/recall`
-- [ ] Verificar signing secret para validação HMAC
+- [x] Env: `VEXA_API_BASE`, `VEXA_API_KEY`, `VEXA_WEBHOOK_SECRET`, `NEXT_PUBLIC_BOT_NAME`
+- [x] Registrar webhook (público): `npm run vexa:webhook -- https://seu-dominio.com` → `scripts/vexa-set-webhook.mjs`
 
-#### 6.2 Client Recall (`lib/recall/client.ts`)
+#### 6.2 Client Vexa (`lib/vexa/client.ts`) ✅
 
-- [ ] `createBot({ meetingUrl, joinAt, botName })` → `recall_bot_id`
-- [ ] `getBot(botId)` — status
-- [ ] `deleteBot(botId)` — cancelar
+- [x] `createBot({ platform, nativeMeetingId, ... })` — recording + transcribe realtime
+- [x] `stopBot(platform, nativeMeetingId)` (idempotente em 404)
+- [x] `getRunningBots()` / `getTranscript()` / `setUserWebhook()`
+- [x] `lib/meetings/meeting-url.ts` — parse plataforma + `native_meeting_id` (Meet/Zoom)
 
-#### 6.3 Scheduler
+#### 6.3 Scheduler ✅
 
-- [ ] Após calendar sync: para meetings `scheduled` com `auto_join_enabled` e `started_at` dentro de janela (ex: join 2 min antes)
-- [ ] `lib/recall/scheduler.ts` — `scheduleBotsForUpcomingMeetings()`
-- [ ] Cron `/api/cron/schedule-bots` — cada 5 min
-- [ ] Update meeting: `status = bot_joining`, `recall_bot_id`
+- [x] `lib/vexa/scheduler.ts` — `startBotForMeeting()` + `scheduleBotsForUpcomingMeetings()` (janela: 5 min antes, 2 h de tolerância; só usuários com `auto_join_enabled`)
+- [x] Cron `/api/cron/schedule-bots` — cada 5 min (protegido por `CRON_SECRET`)
+- [x] Update meeting: `status = bot_joining`, `recall_bot_id = native_meeting_id`
 
-#### 6.4 Webhook handler (`app/api/webhooks/recall/route.ts`)
+#### 6.4 Webhook handler (`app/api/webhooks/vexa/route.ts`) ✅
 
-Eventos a processar:
+Mapeamento `meeting.status_change`:
 
-| Evento | Ação |
-|--------|------|
-| `bot.joining_call` | `status = bot_joining` |
-| `bot.in_call_recording` | `status = recording` |
-| `bot.call_ended` | `ended_at`, `duration_ms` |
-| `recording.done` | enqueue transcrição (Onda 7) |
-| `bot.removed` | `status = partial` ou `cancelled` |
-| `bot.fatal` | `status = failed`, `error_message` |
+| Status Vexa | Status interno |
+|-------------|----------------|
+| `requested` / `joining` / `awaiting_admission` | `bot_joining` |
+| `active` | `recording` |
+| `completed` | `completed` (+ `ended_at`, `duration_ms`) |
+| `failed` | `failed` (+ `error_message`) |
 
-- [ ] Idempotência via `webhook_events.event_id`
-- [ ] Validar signature
-- [ ] Service role para updates
+- [x] Idempotência via `webhook_events` (provider `vexa` + `event_id`)
+- [x] Auth via `Authorization: Bearer <VEXA_WEBHOOK_SECRET>`
+- [x] Service role para updates (`lib/vexa/sync.ts`)
+- [x] `recording.completed` → ingestão de transcript fica para Onda 7
 
-#### 6.5 Bot branding
+#### 6.5 Fallback de status + UI ✅
 
-- [ ] Nome: `ReuniAI Bot` (configurável em settings futuro)
-- [ ] Página pública `/recording-notice` — explica gravação para participantes
+- [x] Cron `/api/cron/poll-bots` — fallback sem webhook público (localhost): consulta `getRunningBots()` e fecha reuniões encerradas
+- [x] Rotas manuais `/api/bots/start` e `/api/bots/stop` (autenticadas)
+- [x] UI: `components/meetings/bot-actions.tsx` na tabela (Enviar bot / Parar bot)
+
+#### 6.6 Bot branding ✅
+
+- [x] Nome configurável via `NEXT_PUBLIC_BOT_NAME` (default `ReuniAI Bot`)
+- [x] Página pública `/recording-notice` (aviso LGPD), liberada no middleware
 
 ### Critérios de aceite
 
-- Reunião de teste Zoom/Meet: bot aparece na call
-- Webhook `recording.done` recebido e logado
-- Meeting status atualiza na UI em tempo real (polling 30s ou Supabase Realtime opcional)
+- [x] Bot enviado manualmente entra na call (botão na tabela de reuniões)
+- [x] Status atualiza via webhook (prod) ou poll (`/api/cron/poll-bots`, local)
+- [x] Webhooks/crons públicos sem redirect de sessão; demais rotas protegidas
+
+> **Pendente do usuário:** preencher `VEXA_API_KEY` (vexa.ai/account, $5 grátis) para testar.
+
+### ⚠️ Crédito grátis e plano de migração para custo zero
+
+**Situação atual (cloud):**
+
+- Estamos usando o **Vexa Cloud** (`VEXA_API_BASE=https://api.cloud.vexa.ai`).
+- O crédito grátis é de **$5 por conta** (~16h de bot a $0,30/h). **Não é recorrente** — depois disso vira pago ($0,30/h de bot + $0,20/h de transcrição realtime).
+- Os dados (áudio/transcrição) passam pela infraestrutura do Vexa enquanto estivermos no cloud.
+
+**Pontos a resolver / dúvidas em aberto:**
+
+- [ ] Confirmar quanto do crédito de $5 já foi consumido (dashboard em vexa.ai/account).
+- [ ] Definir gatilho de migração: migrar **antes** do crédito acabar para não interromper o serviço.
+- [ ] Validar requisitos do self-hosted (Vexa precisa de Docker em Linux; transcrição Whisper pede CPU/RAM razoável ou GPU para realtime).
+
+**Plano de migração (substituir cloud por custo zero):**
+
+1. **Opção A — Docker local:** subir o Vexa com `make lite` (container único) na própria máquina/servidor. Bom para dev e volume baixo.
+2. **Opção B — VM grátis:** hospedar o Vexa numa VM de free tier (ex.: Oracle Cloud Always Free, e2-micro do GCP, ou similar) com Docker. Precisa ser **Linux sempre disponível** no horário das reuniões.
+3. **Troca no código:** mudar apenas `VEXA_API_BASE` para `http://localhost:8056` (ou o IP/host da VM). **Nenhuma outra alteração de código é necessária** — client, scheduler, webhook e poll já são agnósticos.
+4. **Webhook:** rodar `npm run vexa:webhook -- <URL pública>` apontando para o app; no self-hosted local sem URL pública, continuar usando o fallback `/api/cron/poll-bots`.
+5. **Transcrição:** no self-hosted, é possível usar Whisper local (sem custo de API) — fecha o ciclo de custo zero também na Onda 7.
+
+> **Decisão registrada:** começar no cloud (rápido, $5 grátis para validar) e **substituir posteriormente por VM grátis ou Docker local** assim que o fluxo estiver validado, mantendo o mesmo código.
 
 ---
 
