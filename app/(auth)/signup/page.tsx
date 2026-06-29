@@ -5,9 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function SignupPage() {
   return (
-    <Card>
+    <div>
+      <div className="mb-4 lg:hidden">
+        <ReuniaiLogo compact />
+      </div>
+      <Card>
       <CardHeader className="space-y-4">
-        <ReuniaiLogo />
         <div>
           <CardTitle className="text-xl">Criar conta</CardTitle>
           <CardDescription>Comece a gravar e analisar suas reuniões</CardDescription>
@@ -23,5 +26,6 @@ export default function SignupPage() {
         </p>
       </CardContent>
     </Card>
+    </div>
   );
 }
