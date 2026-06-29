@@ -1,12 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { BotPlatform } from "@/lib/meetings/meeting-url";
+import { ingestByNativeId } from "@/lib/pipeline/ingest-transcript";
 import { applyMeetingStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
 
+const BOT_PLATFORMS: BotPlatform[] = ["google_meet", "teams", "zoom"];
+
 type VexaWebhookPayload = {
   event_type?: string;
   meeting?: {
+    platform?: string;
     native_meeting_id?: string;
     status?: string;
     start_time?: string | null;
@@ -61,20 +66,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  if (payload.event_type === "meeting.status_change") {
-    const vexaStatus = payload.status_change?.to ?? payload.meeting?.status;
-    if (vexaStatus) {
-      await applyMeetingStatus(admin, {
-        nativeMeetingId,
-        vexaStatus,
-        startTime: payload.meeting?.start_time,
-        endTime: payload.meeting?.end_time,
-        reason: payload.status_change?.reason,
-      });
-    }
+  const vexaStatus = payload.status_change?.to ?? payload.meeting?.status;
+
+  if (payload.event_type === "meeting.status_change" && vexaStatus) {
+    await applyMeetingStatus(admin, {
+      nativeMeetingId,
+      vexaStatus,
+      startTime: payload.meeting?.start_time,
+      endTime: payload.meeting?.end_time,
+      reason: payload.status_change?.reason,
+    });
   }
 
-  // recording.completed → ingestão de transcript/gravação será tratada na Onda 7.
+  // Reunião finalizada ou gravação pronta → ingerir transcrição (Onda 7).
+  const shouldIngest =
+    payload.event_type === "recording.completed" || vexaStatus === "completed";
+
+  if (shouldIngest) {
+    const platform = resolvePlatform(payload.meeting?.platform);
+    if (platform) {
+      try {
+        await ingestByNativeId(admin, platform, nativeMeetingId);
+      } catch (err) {
+        console.error("Falha ao ingerir transcrição (webhook):", err);
+      }
+    }
+  }
 
   await admin
     .from("webhook_events")
@@ -83,4 +100,10 @@ export async function POST(request: NextRequest) {
     .eq("event_id", eventId);
 
   return NextResponse.json({ ok: true });
+}
+
+function resolvePlatform(value: string | undefined): BotPlatform | null {
+  return value && BOT_PLATFORMS.includes(value as BotPlatform)
+    ? (value as BotPlatform)
+    : null;
 }
