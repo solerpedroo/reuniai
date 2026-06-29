@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
+import { ingestByNativeId } from "@/lib/pipeline/ingest-transcript";
 import { getRunningBots } from "@/lib/vexa/client";
-import { applyMeetingStatus } from "@/lib/vexa/sync";
+import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { data: meetings } = await admin
       .from("meetings")
-      .select("id, recall_bot_id, status")
+      .select("id, recall_bot_id, meeting_url, status")
       .in("status", ["bot_joining", "recording"])
       .not("recall_bot_id", "is", null);
 
@@ -44,6 +46,18 @@ export async function GET(request: NextRequest) {
         startTime: bot?.start_time,
       });
       if (result.updated) updated += 1;
+
+      // Reunião encerrada → ingerir a transcrição.
+      if (mapVexaStatus(vexaStatus) === "completed") {
+        const parsed = meeting.meeting_url ? parseMeetingUrl(meeting.meeting_url) : null;
+        if (parsed) {
+          try {
+            await ingestByNativeId(admin, parsed.platform, nativeId);
+          } catch (err) {
+            console.error("Falha ao ingerir transcrição (poll):", err);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, tracked: meetings.length, updated });
