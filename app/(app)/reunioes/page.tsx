@@ -26,9 +26,9 @@ function encodeCursor(cursor: MeetingsCursor): string {
 export default async function ReunioesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; cursor?: string }>;
+  searchParams: Promise<{ q?: string; cursor?: string; join?: string }>;
 }) {
-  const { q, cursor: cursorParam } = await searchParams;
+  const { q, cursor: cursorParam, join } = await searchParams;
   const supabase = await createClient();
   const cursor = parseCursor(cursorParam);
 
@@ -49,7 +49,7 @@ export default async function ReunioesPage({
         title="Reuniões"
         description="Todas as reuniões gravadas pelo ReuniAI Bot — da agenda ou via link manual."
         meta="Biblioteca"
-        actions={<JoinMeetingDialog />}
+        actions={<JoinMeetingDialog defaultOpen={join === "1"} />}
       />
 
       <MeetingsDataTable
