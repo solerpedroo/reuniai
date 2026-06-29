@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Icon } from "@phosphor-icons/react";
-import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { MagnifyingGlass, Plus, VideoCamera } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { MOTION, easePremium } from "@/components/motion/presets";
 import { NAV_ITEMS } from "@/components/shell/nav-config";
@@ -24,8 +24,15 @@ type CommandItem = {
   description?: string;
   icon: Icon;
   href?: string;
-  action?: "search" | "join";
+  action?: "search" | "join" | "busca";
   group: string;
+};
+
+type MeetingSearchHit = {
+  id: string;
+  title: string;
+  started_at: string;
+  status: string;
 };
 
 const BASE_COMMANDS: CommandItem[] = [
@@ -37,6 +44,14 @@ const BASE_COMMANDS: CommandItem[] = [
     href: item.href,
     group: "Navegação",
   })),
+  {
+    id: "busca",
+    label: "Busca global",
+    description: "Pesquisar título e transcrições",
+    icon: MagnifyingGlass,
+    href: "/busca",
+    group: "Navegação",
+  },
   {
     id: "new-meeting",
     label: "Nova reunião",
@@ -82,6 +97,34 @@ function CommandPaletteDialog() {
   const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [meetingHits, setMeetingHits] = useState<MeetingSearchHit[]>([]);
+
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < 2) {
+      setMeetingHits([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/meetings/search?q=${encodeURIComponent(term)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { meetings: MeetingSearchHit[] };
+        setMeetingHits(data.meetings ?? []);
+      } catch {
+        /* ignore abort */
+      }
+    }, 200);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [query]);
 
   const items = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -93,19 +136,33 @@ function CommandPaletteDialog() {
       );
     });
 
+    const meetingItems: CommandItem[] = meetingHits.map((meeting) => ({
+      id: `meeting-${meeting.id}`,
+      label: meeting.title,
+      description: new Date(meeting.started_at).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      icon: VideoCamera,
+      href: `/reunioes/${meeting.id}`,
+      group: "Reuniões",
+    }));
+
     if (term) {
       filtered.push({
         id: `search-${term}`,
-        label: `Buscar "${query.trim()}" nas reuniões`,
-        description: "Abrir biblioteca com filtro",
+        label: `Ver todos os resultados para "${query.trim()}"`,
+        description: "Abrir busca global",
         icon: MagnifyingGlass,
-        action: "search",
+        action: "busca",
         group: "Busca",
       });
     }
 
-    return filtered;
-  }, [query]);
+    return [...meetingItems, ...filtered];
+  }, [query, meetingHits]);
 
   const runItem = useCallback(
     (item: CommandItem) => {
@@ -118,8 +175,8 @@ function CommandPaletteDialog() {
         return;
       }
 
-      if (item.action === "search") {
-        router.push(`/reunioes?q=${encodeURIComponent(query.trim())}`);
+      if (item.action === "busca" || item.action === "search") {
+        router.push(`/busca?q=${encodeURIComponent(query.trim())}`);
         return;
       }
 
