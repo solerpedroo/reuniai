@@ -76,3 +76,24 @@ export type MeetingSeries = {
   lastStartedAt: string;
   firstStartedAt: string;
 };
+
+export type SpeakerMapping = {
+  id: string;
+  user_id: string;
+  label_pattern: string;
+  participant_email: string | null;
+  display_name: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MeetingHighlight = {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  start_ms: number;
+  end_ms: number | null;
+  label: string;
+  created_at: string;
+  updated_at: string;
+};
