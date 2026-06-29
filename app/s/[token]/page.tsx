@@ -36,6 +36,11 @@ export default async function PublicSharePage({
       </header>
 
       <main className="mx-auto max-w-3xl space-y-8 px-6 py-8">
+        {share.token.redact_pii !== false && (
+          <p className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
+            Dados sensíveis foram redigidos nesta visualização pública.
+          </p>
+        )}
         {summary?.executive_summary && (
           <section>
             <h2 className="text-lg font-medium">Resumo</h2>
