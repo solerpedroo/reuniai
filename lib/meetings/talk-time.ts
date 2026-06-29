@@ -5,20 +5,26 @@ export type SpeakerTalkTime = {
   durationMs: number;
   percentage: number;
   wordCount: number;
+  turnCount: number;
 };
 
 export function computeTalkTime(segments: TranscriptSegment[]): SpeakerTalkTime[] {
   if (segments.length === 0) return [];
 
-  const totals = new Map<string, { durationMs: number; wordCount: number }>();
+  const totals = new Map<string, { durationMs: number; wordCount: number; turnCount: number }>();
 
   for (const segment of segments) {
     const durationMs = Math.max(segment.end_ms - segment.start_ms, 0);
     const words = segment.text.trim().split(/\s+/).filter(Boolean).length;
-    const current = totals.get(segment.speaker_label) ?? { durationMs: 0, wordCount: 0 };
+    const current = totals.get(segment.speaker_label) ?? {
+      durationMs: 0,
+      wordCount: 0,
+      turnCount: 0,
+    };
     totals.set(segment.speaker_label, {
       durationMs: current.durationMs + durationMs,
       wordCount: current.wordCount + words,
+      turnCount: current.turnCount + 1,
     });
   }
 
@@ -29,6 +35,7 @@ export function computeTalkTime(segments: TranscriptSegment[]): SpeakerTalkTime[
       speaker,
       durationMs: stats.durationMs,
       wordCount: stats.wordCount,
+      turnCount: stats.turnCount,
       percentage: Math.round((stats.durationMs / totalDuration) * 100),
     }))
     .sort((a, b) => b.durationMs - a.durationMs);
