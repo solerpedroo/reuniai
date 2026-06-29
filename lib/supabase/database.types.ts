@@ -405,6 +405,7 @@ export type Database = {
           scope: Database["public"]["Enums"]["share_scope"];
           expires_at: string;
           revoked_at: string | null;
+          redact_pii: boolean;
           created_at: string;
         };
         Insert: {
@@ -415,6 +416,7 @@ export type Database = {
           scope?: Database["public"]["Enums"]["share_scope"];
           expires_at: string;
           revoked_at?: string | null;
+          redact_pii?: boolean;
           created_at?: string;
         };
         Update: {
@@ -425,7 +427,74 @@ export type Database = {
           scope?: Database["public"]["Enums"]["share_scope"];
           expires_at?: string;
           revoked_at?: string | null;
+          redact_pii?: boolean;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      export_audit: {
+        Row: {
+          id: string;
+          user_id: string;
+          meeting_id: string | null;
+          share_token_id: string | null;
+          format: string;
+          redaction_count: number;
+          redaction_types: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          meeting_id?: string | null;
+          share_token_id?: string | null;
+          format: string;
+          redaction_count?: number;
+          redaction_types?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          meeting_id?: string | null;
+          share_token_id?: string | null;
+          format?: string;
+          redaction_count?: number;
+          redaction_types?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_comments: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          start_ms: number;
+          end_ms: number | null;
+          label: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          start_ms: number;
+          end_ms?: number | null;
+          label: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          start_ms?: number;
+          end_ms?: number | null;
+          label?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
