@@ -10,6 +10,7 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:seed": "node --env-file=.env.local scripts/seed-meetings.mjs",
+    "vexa:webhook": "node --env-file=.env.local scripts/vexa-set-webhook.mjs",
     "gen:types": "supabase gen types typescript --local > lib/supabase/database.types.ts"
   },
   "dependencies": {
