@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isAuthPath, isOnboardingPath, ONBOARDING_PATH } from "@/lib/auth/paths";
+import {
+  isAuthPath,
+  isOnboardingPath,
+  isPublicApiPath,
+  isPublicPath,
+  ONBOARDING_PATH,
+} from "@/lib/auth/paths";
 import { withSessionCookies } from "@/lib/auth/session-cookies";
 
 type CookieToSet = {
@@ -10,6 +16,11 @@ type CookieToSet = {
 };
 
 export async function updateSession(request: NextRequest) {
+  // Webhooks e crons autenticam-se por segredo próprio — não passam pelo guard de sessão.
+  if (isPublicApiPath(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -46,7 +57,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && !isAuthPath(pathname)) {
+  if (!user && !isAuthPath(pathname) && !isPublicPath(pathname)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);
