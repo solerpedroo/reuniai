@@ -4,11 +4,15 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnection } from "@/components/settings/calendar-connection";
 import { RetentionSettings } from "@/components/settings/retention-settings";
+import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
+import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
+import { parseTemplateId } from "@/lib/analysis/template-types";
+import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
 import type { NotificationPrefs } from "@/lib/workflow/types";
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
@@ -40,21 +44,27 @@ export default async function ConfiguracoesPage({
     completed: true,
     digest: true,
   };
+  let locale: UserLocale = "pt-BR";
+  let defaultTemplate: AnalysisTemplateId = "generic";
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("auto_join_enabled, retention_days, notification_prefs")
+      .select("auto_join_enabled, retention_days, notification_prefs, locale, default_analysis_template")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile) {
       const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days"> & {
         notification_prefs?: NotificationPrefs;
+        locale?: string;
+        default_analysis_template?: string;
       };
       autoJoin = typed.auto_join_enabled;
       retentionDays = typed.retention_days;
       if (typed.notification_prefs) notificationPrefs = typed.notification_prefs;
+      locale = parseUserLocale(typed.locale);
+      defaultTemplate = parseTemplateId(typed.default_analysis_template);
     }
   }
 
@@ -131,6 +141,11 @@ export default async function ConfiguracoesPage({
         </Card>
 
         <NotificationSettings initialPrefs={notificationPrefs} />
+
+        <LocaleAndTemplateSettings
+          initialLocale={locale}
+          initialDefaultTemplate={defaultTemplate}
+        />
       </div>
     </div>
   );

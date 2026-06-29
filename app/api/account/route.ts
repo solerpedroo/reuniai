@@ -5,7 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+import { ANALYSIS_TEMPLATE_IDS } from "@/lib/analysis/template-types";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/profile/notification-prefs";
+import { USER_LOCALES } from "@/lib/profile/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,8 @@ const PatchSchema = z.object({
       })
     )
     .optional(),
+  locale: z.enum(USER_LOCALES.map((l) => l.value) as [string, ...string[]]).optional(),
+  default_analysis_template: z.enum(ANALYSIS_TEMPLATE_IDS).optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -70,6 +74,14 @@ export async function PATCH(request: NextRequest) {
 
   if (parsed.data.saved_views) {
     updates.saved_views = parsed.data.saved_views as Database["public"]["Tables"]["profiles"]["Update"]["saved_views"];
+  }
+
+  if (parsed.data.locale) {
+    updates.locale = parsed.data.locale;
+  }
+
+  if (parsed.data.default_analysis_template) {
+    updates.default_analysis_template = parsed.data.default_analysis_template;
   }
 
   if (Object.keys(updates).length === 0) {
