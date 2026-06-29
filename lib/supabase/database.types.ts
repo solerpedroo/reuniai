@@ -343,12 +343,11 @@ export type Database = {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      [_ in never]: never;
+    };
     Functions: {
-      is_meeting_owner: {
-        Args: { meeting_uuid: string };
-        Returns: boolean;
-      };
+      [_ in never]: never;
     };
     Enums: {
       meeting_platform: "google_meet" | "zoom" | "teams" | "other";
@@ -366,7 +365,9 @@ export type Database = {
       calendar_provider: "google" | "outlook";
       chat_message_role: "user" | "assistant";
     };
-    CompositeTypes: Record<string, never>;
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
 };
 
