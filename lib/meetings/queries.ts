@@ -230,6 +230,60 @@ export async function getDashboardStats(supabase: Client): Promise<DashboardStat
   };
 }
 
+export type WeeklyMeetingCount = {
+  weekLabel: string;
+  count: number;
+};
+
+function startOfWeek(date: Date): Date {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function formatWeekLabel(date: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(date);
+}
+
+export async function getMeetingsWeeklyChart(
+  supabase: Client,
+  weeks = 8
+): Promise<WeeklyMeetingCount[]> {
+  const now = new Date();
+  const currentWeekStart = startOfWeek(now);
+  const rangeStart = new Date(currentWeekStart);
+  rangeStart.setDate(rangeStart.getDate() - (weeks - 1) * 7);
+
+  const { data, error } = await supabase
+    .from("meetings")
+    .select("started_at")
+    .gte("started_at", rangeStart.toISOString());
+
+  if (error) throw error;
+
+  const buckets = Array.from({ length: weeks }, (_, index) => {
+    const weekStart = new Date(currentWeekStart);
+    weekStart.setDate(weekStart.getDate() - (weeks - 1 - index) * 7);
+    return {
+      weekStart,
+      weekLabel: formatWeekLabel(weekStart),
+      count: 0,
+    };
+  });
+
+  for (const row of data ?? []) {
+    const startedAt = new Date((row as { started_at: string }).started_at);
+    const weekStart = startOfWeek(startedAt).getTime();
+    const bucket = buckets.find((item) => item.weekStart.getTime() === weekStart);
+    if (bucket) bucket.count += 1;
+  }
+
+  return buckets.map(({ weekLabel, count }) => ({ weekLabel, count }));
+}
+
 export async function getDashboardData(supabase: Client): Promise<DashboardData> {
   const [stats, recentMeetings, attentionItems] = await Promise.all([
     getDashboardStats(supabase),
