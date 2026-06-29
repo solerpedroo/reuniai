@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function SignupPage() {
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader className="space-y-4">
         <ReuniaiLogo />
         <div>
