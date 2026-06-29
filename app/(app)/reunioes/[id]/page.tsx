@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
-import { ActionItemsList } from "@/components/meetings/action-items-list";
+import { MeetingStatusBanner } from "@/components/meetings/meeting-status-banner";
+import { MeetingTabs } from "@/components/meetings/meeting-tabs";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { SummaryView } from "@/components/meetings/summary-view";
@@ -57,7 +58,7 @@ export default async function MeetingDetailPage({
         actions={<TranscriptSyncButton meetingId={meeting.id} />}
       />
 
-      <div className="mb-8 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <StatusBadge status={meeting.status} />
         <PlatformBadge platform={meeting.platform} />
         {meeting.meeting_url && (
@@ -72,22 +73,14 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
-      <div className="space-y-10">
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold tracking-tight">Resumo</h2>
-          <SummaryView summary={summary} />
-        </section>
+      <MeetingStatusBanner meeting={meeting} />
 
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold tracking-tight">Itens de ação</h2>
-          <ActionItemsList items={actionItems} />
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold tracking-tight">Transcrição</h2>
-          <TranscriptView segments={segments} />
-        </section>
-      </div>
+      <MeetingTabs
+        meetingId={meeting.id}
+        summary={<SummaryView summary={summary} />}
+        transcript={<TranscriptView segments={segments} />}
+        actionItems={actionItems}
+      />
     </div>
   );
 }
