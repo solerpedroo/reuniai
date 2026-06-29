@@ -23,6 +23,7 @@ import {
 } from "@/lib/meetings/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getMeetingComments } from "@/lib/meetings/comments";
 import { getFollowUpForMeeting } from "@/lib/meetings/follow-up";
 import { getTagsForMeeting } from "@/lib/tags/queries";
 import type { Meeting } from "@/lib/supabase/types";
@@ -46,13 +47,14 @@ export default async function MeetingDetailPage({
 
   if (!meeting) notFound();
 
-  const [segments, summary, actionItems, chatMessages, tags, followUp] = await Promise.all([
+  const [segments, summary, actionItems, chatMessages, tags, followUp, comments] = await Promise.all([
     getTranscriptSegments(supabase, meeting.id),
     getMeetingSummary(supabase, meeting.id),
     getActionItems(supabase, meeting.id),
     getChatMessages(supabase, meeting.id),
     getTagsForMeeting(supabase, meeting.id),
     getFollowUpForMeeting(createAdminClient(), meeting.id),
+    getMeetingComments(supabase, meeting.id),
   ]);
 
   const chatUiMessages = chatMessages.map((m) => ({
@@ -118,6 +120,7 @@ export default async function MeetingDetailPage({
         llmEnabled={isLlmConfigured()}
         initialSeekMs={Number.isFinite(initialSeekMs) ? initialSeekMs : undefined}
         followUp={followUp}
+        comments={comments}
       />
     </div>
   );
