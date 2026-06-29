@@ -21,7 +21,7 @@
 | 7 | Pipeline de transcrição | ✅ Concluída |
 | 8 | IA post-call: resumo e atribuições | ✅ Concluída |
 | 9 | Detalhe da reunião (UI completa) | ✅ Concluída |
-| 10 | Chat com IA (RAG) | ⏳ Pendente |
+| 10 | Chat com IA (RAG) | ✅ Concluída |
 | 11 | Segurança, LGPD e polish | ⏳ Pendente |
 | 12–19 | Ondas futuras (post-MVP) | 📋 Planejadas |
 
@@ -658,56 +658,50 @@ Mapeamento `meeting.status_change`:
 
 ---
 
-## Onda 10 — Chat com IA (RAG)
+## Onda 10 — Chat com IA (RAG) ✅
 
 **Objetivo:** Perguntar sobre a reunião com respostas citando timestamps.
 
+> **RAG sem migração:** quando há `EMBEDDINGS_API_KEY`, a busca vetorial roda **em memória** (cosseno em Node sobre os embeddings da reunião) — sem precisar de RPC/pgvector query. Sem chave de embeddings (caso Groq), o contexto é a **transcrição completa** (truncada por orçamento). Em ambos os casos o LLM cita trechos por número e mapeamos para `{ start_ms, text }`.
+
 ### Tarefas
 
-#### 10.1 Port UI de case_agi
+#### 10.1 UI do chat ✅
 
-- [ ] `components/ia/meeting-chat.tsx` — de `consultor-chat.tsx`
-- [ ] `components/ia/message-bubble.tsx` — adaptar (citações)
-- [ ] `components/ia/suggested-prompts.tsx` — prompts ReuniAI
-- [ ] `components/ia/ai-thinking.tsx` — loading state
+- [x] `components/ia/meeting-chat.tsx` — lista de mensagens, input, estado "Pensando…"
+- [x] Prompts sugeridos embutidos (`MEETING_PROMPTS`)
+- [x] Bolhas com citações clicáveis
 
-#### 10.2 Suggested prompts
+#### 10.2 Suggested prompts ✅
 
-```typescript
-const MEETING_PROMPTS = [
-  'Quais foram as decisões tomadas?',
-  'Liste todos os action items',
-  'Resuma em 3 bullet points',
-  'Quem falou sobre [tópico]?',
-  'O que ficou pendente?',
-];
-```
+- [x] "Quais foram as decisões tomadas?", "Liste todos os itens de ação", "Resuma em 3 bullet points", "O que ficou pendente?"
 
-#### 10.3 RAG (`lib/rag/meeting-context.ts`)
+#### 10.3 RAG (`lib/rag/meeting-context.ts`) ✅
 
-1. Embed user question
-2. `SELECT segment_id, text, start_ms FROM transcript_embeddings WHERE meeting_id = $1 ORDER BY embedding <=> $2 LIMIT 8`
-3. Incluir `meeting_summaries.executive_summary` sempre no contexto
-4. Prompt com chunks numerados + timestamps
+- [x] `buildMeetingContext()` — resumo executivo + trechos relevantes
+- [x] Busca vetorial em memória (top-8 por cosseno) quando há embeddings
+- [x] Fallback para transcrição completa truncada (sem embeddings)
+- [x] `embedQuery` / `cosineSimilarity` / `parseVector` em `lib/embeddings/generate.ts`
 
-#### 10.4 API (`POST /api/meetings/[id]/chat`)
+#### 10.4 API (`POST /api/meetings/[id]/chat`) ✅
 
-- [ ] Validar `auth.uid()` owns meeting
-- [ ] Rate limit: 20 req/min/user (in-memory ou Upstash opcional)
-- [ ] Persist `chat_messages` (user + assistant)
-- [ ] Response: `{ content, citations: [{ start_ms, text }] }`
+- [x] Valida ownership do meeting
+- [x] Rate limit 20 req/min/usuário (in-memory)
+- [x] Persist `chat_messages` (user + assistant) via admin
+- [x] Resposta: `{ content, citations: [{ start_ms, text }] }`
+- [x] 503 se nenhum provedor de IA configurado
 
-#### 10.5 Citações na UI
+#### 10.5 Citações na UI ✅
 
-- [ ] Chips clicáveis "02:34" abaixo da resposta
-- [ ] Click → seek player (se na aba transcrição) ou toast com texto
+- [x] Chips "02:34" abaixo da resposta
+- [x] Click → toast com o texto do trecho (seek do player virá com o player diferido)
 
 ### Critérios de aceite
 
-- "Quais action items?" retorna lista coerente com DB
-- Citações apontam timestamps reais
-- Chat não responde sobre outras reuniões (scoped)
-- Histórico de chat persiste ao recarregar página
+- [x] "Quais itens de ação?" retorna lista coerente com a transcrição
+- [x] Citações apontam timestamps reais dos trechos usados
+- [x] Chat é escopado por reunião (contexto só daquela reunião)
+- [x] Histórico de chat persiste ao recarregar (carregado no server)
 
 ---
 
