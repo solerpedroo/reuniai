@@ -16,6 +16,8 @@ export type Database = {
           auto_join_enabled: boolean;
           retention_days: number;
           onboarding_completed: boolean;
+          timezone: string;
+          notification_prefs: Json;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +27,8 @@ export type Database = {
           auto_join_enabled?: boolean;
           retention_days?: number;
           onboarding_completed?: boolean;
+          timezone?: string;
+          notification_prefs?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,6 +38,8 @@ export type Database = {
           auto_join_enabled?: boolean;
           retention_days?: number;
           onboarding_completed?: boolean;
+          timezone?: string;
+          notification_prefs?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -342,6 +348,198 @@ export type Database = {
         };
         Relationships: [];
       };
+      tags: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          color: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          color?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          color?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_tags: {
+        Row: {
+          meeting_id: string;
+          tag_id: string;
+          created_at: string;
+        };
+        Insert: {
+          meeting_id: string;
+          tag_id: string;
+          created_at?: string;
+        };
+        Update: {
+          meeting_id?: string;
+          tag_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      share_tokens: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          token: string;
+          scope: Database["public"]["Enums"]["share_scope"];
+          expires_at: string;
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          token?: string;
+          scope?: Database["public"]["Enums"]["share_scope"];
+          expires_at: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          token?: string;
+          scope?: Database["public"]["Enums"]["share_scope"];
+          expires_at?: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_follow_ups: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          subject: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          subject: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          subject?: string;
+          body?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_prep_cards: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          briefing: string;
+          related_meeting_id: string | null;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          briefing: string;
+          related_meeting_id?: string | null;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          briefing?: string;
+          related_meeting_id?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          body: string;
+          href: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          body: string;
+          href?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          body?: string;
+          href?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -364,6 +562,7 @@ export type Database = {
       action_item_source: "ai" | "manual";
       calendar_provider: "google" | "outlook";
       chat_message_role: "user" | "assistant";
+      share_scope: "summary_only" | "full_transcript";
     };
     CompositeTypes: {
       [_ in never]: never;

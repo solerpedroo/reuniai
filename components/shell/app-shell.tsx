@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <NotificationBell />
               <JoinMeetingDialog triggerClassName="h-9 px-3.5 text-xs" />
             </div>
           </div>

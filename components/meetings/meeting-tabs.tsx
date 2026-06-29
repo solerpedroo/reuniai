@@ -4,17 +4,20 @@ import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import {
   ChatCircleDots,
+  EnvelopeSimple,
   ListChecks,
   Sparkle,
   TextAlignLeft,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { ActionItemsTab } from "@/components/meetings/action-items-tab";
+import { FollowUpTab } from "@/components/meetings/follow-up-tab";
 import { MeetingChat } from "@/components/ia/meeting-chat";
 import { TranscriptView } from "@/components/meetings/transcript-view";
 import { easePremium } from "@/components/motion/presets";
 import type { Citation } from "@/lib/meetings/chat";
 import type { ActionItem, TranscriptSegment } from "@/lib/supabase/types";
+import type { MeetingFollowUp } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
 
 export type ChatUiMessage = {
@@ -27,6 +30,7 @@ export type ChatUiMessage = {
 const TABS = [
   { value: "resumo", label: "Resumo", icon: Sparkle },
   { value: "atribuicoes", label: "Atribuições", icon: ListChecks },
+  { value: "followup", label: "Follow-up", icon: EnvelopeSimple },
   { value: "transcricao", label: "Transcrição", icon: TextAlignLeft },
   { value: "chat", label: "Chat", icon: ChatCircleDots },
 ] as const;
@@ -45,6 +49,7 @@ export function MeetingTabs({
   onHighlightDone,
   onSeek,
   onCitationClick,
+  followUp,
 }: {
   meetingId: string;
   summary: ReactNode;
@@ -57,6 +62,7 @@ export function MeetingTabs({
   onHighlightDone?: () => void;
   onSeek?: (ms: number) => void;
   onCitationClick?: (citation: Citation) => void;
+  followUp?: MeetingFollowUp | null;
 }) {
   const [activeTab, setActiveTab] = useState<TabValue>("resumo");
   const openCount = actionItems.filter((i) => i.status === "open").length;
@@ -132,6 +138,13 @@ export function MeetingTabs({
             {activeTab === "resumo" && summary}
             {activeTab === "atribuicoes" && (
               <ActionItemsTab meetingId={meetingId} initialItems={actionItems} />
+            )}
+            {activeTab === "followup" && (
+              <FollowUpTab
+                meetingId={meetingId}
+                initialFollowUp={followUp ?? null}
+                llmEnabled={llmEnabled}
+              />
             )}
             {activeTab === "transcricao" && (
               <TranscriptView

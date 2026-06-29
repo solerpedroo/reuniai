@@ -5,6 +5,8 @@ import type { Database } from "@/lib/supabase/database.types";
 import { isLlmConfigured } from "@/lib/llm/client";
 import { analyzeMeeting } from "@/lib/llm/meeting-analysis";
 import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
+import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
+import { createNotification } from "@/lib/notifications/create";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -91,6 +93,19 @@ export async function analyzeMeetingById(
     }
 
     await admin.from("meetings").update({ status: "completed" }).eq("id", meetingId);
+
+    try {
+      await generateAndSaveFollowUp(admin, meetingId);
+      await createNotification(admin, {
+        userId: meeting.user_id,
+        title: "Reunião processada",
+        body: `O resumo e follow-up de "${meeting.title}" estão prontos.`,
+        href: `/reunioes/${meetingId}`,
+      });
+    } catch (err) {
+      console.error("Falha ao gerar follow-up/notificação (não bloqueante):", err);
+    }
+
     return { status: "completed", actionItems: analysis.action_items.length };
   } catch (err) {
     console.error("Falha ao analisar reunião:", err);

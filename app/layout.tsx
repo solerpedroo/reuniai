@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { ThemeScript } from "@/components/providers/theme-provider";
+import { PwaRegister } from "@/components/pwa/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -21,6 +22,15 @@ export const metadata: Metadata = {
     template: "%s · ReuniAI",
   },
   description: "Inteligência de reuniões com transcrição, resumo e action items.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "ReuniAI",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -33,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AppProviders>
           {children}
         </AppProviders>
+        <PwaRegister />
         <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
