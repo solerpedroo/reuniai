@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:isolation": "node --env-file=.env.local scripts/test-rls-isolation.mjs",
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:seed": "node --env-file=.env.local scripts/seed-meetings.mjs",
