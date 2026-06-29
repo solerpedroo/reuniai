@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChatText, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ const SPEAKER_TONES = [
   "bg-muted text-foreground/80 ring-border/30",
   "bg-brand/8 text-primary ring-brand/15",
 ];
+
+const VIRTUAL_THRESHOLD = 60;
 
 function toneForSpeaker(speaker: string, index: Map<string, number>): string {
   if (!index.has(speaker)) index.set(speaker, index.size);
@@ -43,9 +46,29 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
+function isSegmentActive(
+  segment: TranscriptSegment,
+  currentTimeMs: number
+): boolean {
+  return currentTimeMs >= segment.start_ms && currentTimeMs < segment.end_ms;
+}
+
+export function TranscriptView({
+  segments,
+  currentTimeMs = 0,
+  highlightMs,
+  onHighlightDone,
+  onSeek,
+}: {
+  segments: TranscriptSegment[];
+  currentTimeMs?: number;
+  highlightMs?: number | null;
+  onHighlightDone?: () => void;
+  onSeek?: (ms: number) => void;
+}) {
   const [query, setQuery] = useState("");
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const speakers = useMemo(
     () => [...new Set(segments.map((s) => s.speaker_label))],
@@ -53,6 +76,16 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
   );
 
   const speakerIndex = useMemo(() => new Map<string, number>(), []);
+
+  useEffect(() => {
+    if (highlightMs == null) return;
+
+    const el = document.getElementById(`segment-${highlightMs}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const timer = window.setTimeout(() => onHighlightDone?.(), 3200);
+    return () => window.clearTimeout(timer);
+  }, [highlightMs, onHighlightDone]);
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -66,6 +99,16 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
     });
   }, [segments, query, activeSpeaker]);
 
+  const useVirtual = filtered.length >= VIRTUAL_THRESHOLD;
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 88,
+    overscan: 8,
+    enabled: useVirtual,
+  });
+
   if (segments.length === 0) {
     return (
       <EmptyState
@@ -74,6 +117,54 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
         title="Transcrição pendente"
         description="Quando o bot finalizar a gravação e o processamento, cada fala aparecerá aqui com timestamp e participante."
       />
+    );
+  }
+
+  function renderSegment(segment: TranscriptSegment) {
+    const speakerTone = toneForSpeaker(segment.speaker_label, speakerIndex);
+    const isSpeakerActive = !activeSpeaker || activeSpeaker === segment.speaker_label;
+    const playing = isSegmentActive(segment, currentTimeMs);
+    const highlighted = highlightMs === segment.start_ms;
+
+    return (
+      <div
+        key={segment.id}
+        id={`segment-${segment.start_ms}`}
+        className={cn(
+          "flex gap-3 rounded-lg px-2 py-1 transition-colors",
+          isSpeakerActive && activeSpeaker && "bg-brand/5",
+          playing && "bg-brand/8 ring-1 ring-brand/20",
+          highlighted && "bg-brand/10 ring-2 ring-brand/30 ring-offset-2 ring-offset-background",
+          query.trim() && "hover:bg-muted/30"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => onSeek?.(segment.start_ms)}
+          className="sticky top-28 w-12 shrink-0 self-start pt-0.5 text-right font-mono text-xs tabular-nums text-muted-foreground transition-colors hover:text-brand"
+        >
+          {formatTimestamp(segment.start_ms)}
+        </button>
+        <div className="min-w-0 flex-1 border-l border-border/50 pl-3">
+          <button
+            type="button"
+            onClick={() =>
+              setActiveSpeaker((current) =>
+                current === segment.speaker_label ? null : segment.speaker_label
+              )
+            }
+            className={cn(
+              "inline-block rounded-md px-2 py-0.5 text-xs font-medium ring-1 transition-transform hover:scale-[1.02]",
+              speakerTone
+            )}
+          >
+            {segment.speaker_label}
+          </button>
+          <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+            {highlightText(segment.text, query)}
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -145,48 +236,30 @@ export function TranscriptView({ segments }: { segments: TranscriptSegment[] }) 
           title="Nenhum trecho encontrado"
           description="Tente outro termo ou limpe os filtros de participante."
         />
-      ) : (
-        <div className="space-y-5">
-          {filtered.map((segment) => {
-            const speakerTone = toneForSpeaker(segment.speaker_label, speakerIndex);
-            const isSpeakerActive =
-              !activeSpeaker || activeSpeaker === segment.speaker_label;
-
-            return (
+      ) : useVirtual ? (
+        <div ref={parentRef} className="max-h-[60vh] overflow-auto">
+          <div
+            style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}
+            className="space-y-5"
+          >
+            {virtualizer.getVirtualItems().map((item) => (
               <div
-                key={segment.id}
-                className={cn(
-                  "flex gap-3 rounded-lg px-2 py-1 transition-colors",
-                  isSpeakerActive && activeSpeaker && "bg-brand/5",
-                  query.trim() && "hover:bg-muted/30"
-                )}
+                key={filtered[item.index]!.id}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${item.start}px)`,
+                }}
               >
-                <span className="sticky top-28 w-12 shrink-0 self-start pt-0.5 text-right font-mono text-xs tabular-nums text-muted-foreground">
-                  {formatTimestamp(segment.start_ms)}
-                </span>
-                <div className="min-w-0 flex-1 border-l border-border/50 pl-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActiveSpeaker((current) =>
-                        current === segment.speaker_label ? null : segment.speaker_label
-                      )
-                    }
-                    className={cn(
-                      "inline-block rounded-md px-2 py-0.5 text-xs font-medium ring-1 transition-transform hover:scale-[1.02]",
-                      speakerTone
-                    )}
-                  >
-                    {segment.speaker_label}
-                  </button>
-                  <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                    {highlightText(segment.text, query)}
-                  </p>
-                </div>
+                {renderSegment(filtered[item.index]!)}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
+      ) : (
+        <div className="space-y-5">{filtered.map((segment) => renderSegment(segment))}</div>
       )}
 
       <p className="text-xs text-muted-foreground">
