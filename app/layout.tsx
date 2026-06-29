@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
@@ -44,6 +46,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </AppProviders>
         <PwaRegister />
+        <Analytics />
+        <SpeedInsights />
         <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
