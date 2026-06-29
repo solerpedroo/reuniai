@@ -1,0 +1,18 @@
+{
+  "name": "ReuniAI",
+  "short_name": "ReuniAI",
+  "description": "Inteligência de reuniões com transcrição, resumo e action items",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#6366f1",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
