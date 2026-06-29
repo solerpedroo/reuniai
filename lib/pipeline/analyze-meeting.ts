@@ -1,0 +1,106 @@
+import "server-only";
+
+import type { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/database.types";
+import { isLlmConfigured } from "@/lib/llm/client";
+import { analyzeMeeting } from "@/lib/llm/meeting-analysis";
+import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
+
+export type AnalyzeResult = {
+  status: "completed" | "skipped" | "failed";
+  actionItems: number;
+};
+
+/**
+ * Gera resumo executivo, tópicos, decisões e action items a partir da
+ * transcrição persistida, e salva em `meeting_summaries` + `action_items`.
+ * Idempotente: substitui o resumo e os action items de origem `ai`.
+ */
+export async function analyzeMeetingById(
+  admin: AdminClient,
+  meetingId: string
+): Promise<AnalyzeResult> {
+  if (!isLlmConfigured()) {
+    return { status: "skipped", actionItems: 0 };
+  }
+
+  const { data: meeting } = await admin
+    .from("meetings")
+    .select("id, user_id, title")
+    .eq("id", meetingId)
+    .maybeSingle();
+
+  if (!meeting) return { status: "skipped", actionItems: 0 };
+
+  const { data: segments } = await admin
+    .from("transcript_segments")
+    .select("speaker_label, text")
+    .eq("meeting_id", meetingId)
+    .order("sequence", { ascending: true });
+
+  if (!segments || segments.length === 0) {
+    return { status: "skipped", actionItems: 0 };
+  }
+
+  const transcript = segments.map((s) => `${s.speaker_label}: ${s.text}`).join("\n");
+
+  await admin.from("meetings").update({ status: "processing" }).eq("id", meetingId);
+
+  try {
+    const analysis = await analyzeMeeting(transcript, meeting.title);
+
+    await admin.from("meeting_summaries").upsert(
+      {
+        meeting_id: meetingId,
+        executive_summary: analysis.executive_summary,
+        topics: analysis.topics,
+        decisions: analysis.decisions,
+        raw_json: analysis as unknown as Database["public"]["Tables"]["meeting_summaries"]["Insert"]["raw_json"],
+      },
+      { onConflict: "meeting_id" }
+    );
+
+    // Recria os action items gerados por IA (preserva os manuais).
+    await admin
+      .from("action_items")
+      .delete()
+      .eq("meeting_id", meetingId)
+      .eq("source", "ai");
+
+    if (analysis.action_items.length > 0) {
+      const rows: ActionItemInsert[] = analysis.action_items.map((item) => ({
+        meeting_id: meetingId,
+        user_id: meeting.user_id,
+        title: item.title,
+        assignee: item.assignee,
+        due_date: item.due_date,
+        source: "ai",
+      }));
+      const { error } = await admin.from("action_items").insert(rows);
+      if (error) throw error;
+    }
+
+    // Embeddings (opcional, prep para RAG da Onda 10).
+    try {
+      await generateMeetingEmbeddings(admin, meetingId);
+    } catch (err) {
+      console.error("Falha ao gerar embeddings (não bloqueante):", err);
+    }
+
+    await admin.from("meetings").update({ status: "completed" }).eq("id", meetingId);
+    return { status: "completed", actionItems: analysis.action_items.length };
+  } catch (err) {
+    console.error("Falha ao analisar reunião:", err);
+    await admin
+      .from("meetings")
+      .update({
+        status: "failed",
+        error_message: err instanceof Error ? err.message.slice(0, 500) : "Falha na análise por IA",
+      })
+      .eq("id", meetingId);
+    return { status: "failed", actionItems: 0 };
+  }
+}
