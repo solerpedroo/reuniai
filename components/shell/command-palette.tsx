@@ -23,7 +23,7 @@ type CommandItem = {
   description?: string;
   icon: Icon;
   href?: string;
-  action?: "search" | "join";
+  action?: "search" | "join" | "busca";
   group: string;
 };
 
@@ -36,6 +36,14 @@ const BASE_COMMANDS: CommandItem[] = [
     href: item.href,
     group: "Navegação",
   })),
+  {
+    id: "busca",
+    label: "Busca global",
+    description: "Pesquisar título e transcrições",
+    icon: MagnifyingGlass,
+    href: "/busca",
+    group: "Navegação",
+  },
   {
     id: "new-meeting",
     label: "Nova reunião",
@@ -93,8 +101,8 @@ function CommandPaletteDialog() {
     if (term) {
       filtered.push({
         id: `search-${term}`,
-        label: `Buscar "${query.trim()}" nas reuniões`,
-        description: "Abrir biblioteca com filtro",
+        label: `Buscar "${query.trim()}" em todas as reuniões`,
+        description: "Abrir busca global",
         icon: MagnifyingGlass,
         action: "search",
         group: "Busca",
@@ -116,7 +124,7 @@ function CommandPaletteDialog() {
       }
 
       if (item.action === "search") {
-        router.push(`/reunioes?q=${encodeURIComponent(query.trim())}`);
+        router.push(`/busca?q=${encodeURIComponent(query.trim())}`);
         return;
       }
 
@@ -203,6 +211,7 @@ function CommandPaletteDialog() {
 
           <motion.div
             role="dialog"
+            aria-modal="true"
             aria-label="Paleta de comandos"
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
