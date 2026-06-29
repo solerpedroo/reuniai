@@ -116,6 +116,7 @@ type GoogleEvent = {
   recurringEventId?: string;
   start?: GoogleEventDate;
   end?: GoogleEventDate;
+  attendees?: { email?: string; displayName?: string; responseStatus?: string }[];
   conferenceData?: {
     entryPoints?: { entryPointType?: string; uri?: string }[];
   };
@@ -272,6 +273,8 @@ export async function syncCalendarConnection(
     if (error) throw error;
   }
 
+  await syncParticipantsForMeetings(admin, connection.userId, candidates);
+
   await admin
     .from("calendar_connections")
     .update({ last_synced_at: new Date().toISOString() })
@@ -283,4 +286,47 @@ export async function syncCalendarConnection(
     inserted: toInsert.length,
     updated,
   };
+}
+
+async function syncParticipantsForMeetings(
+  admin: AdminClient,
+  userId: string,
+  candidates: { event: GoogleEvent }[]
+): Promise<void> {
+  const eventIds = candidates.map((c) => c.event.id);
+  if (eventIds.length === 0) return;
+
+  const { data: meetings, error } = await admin
+    .from("meetings")
+    .select("id, calendar_event_id")
+    .eq("user_id", userId)
+    .in("calendar_event_id", eventIds);
+
+  if (error) throw error;
+
+  const meetingByEventId = new Map(
+    ((meetings ?? []) as { id: string; calendar_event_id: string | null }[])
+      .filter((m) => m.calendar_event_id)
+      .map((m) => [m.calendar_event_id!, m.id])
+  );
+
+  for (const { event } of candidates) {
+    const meetingId = meetingByEventId.get(event.id);
+    if (!meetingId || !event.attendees?.length) continue;
+
+    await admin.from("participants").delete().eq("meeting_id", meetingId);
+
+    const rows = event.attendees
+      .filter((a) => a.responseStatus !== "declined")
+      .map((attendee) => ({
+        meeting_id: meetingId,
+        name: attendee.displayName?.trim() || attendee.email?.split("@")[0] || "Participante",
+        email: attendee.email ?? null,
+      }));
+
+    if (rows.length > 0) {
+      const { error: insertError } = await admin.from("participants").insert(rows);
+      if (insertError) console.error("Falha ao sincronizar participantes:", insertError);
+    }
+  }
 }
