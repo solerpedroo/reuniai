@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ChatCircleDots,
   ListChecks,
@@ -11,9 +11,10 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { ActionItemsTab } from "@/components/meetings/action-items-tab";
 import { MeetingChat } from "@/components/ia/meeting-chat";
+import { TranscriptView } from "@/components/meetings/transcript-view";
 import { easePremium } from "@/components/motion/presets";
 import type { Citation } from "@/lib/meetings/chat";
-import type { ActionItem } from "@/lib/supabase/types";
+import type { ActionItem, TranscriptSegment } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 export type ChatUiMessage = {
@@ -35,20 +36,41 @@ type TabValue = (typeof TABS)[number]["value"];
 export function MeetingTabs({
   meetingId,
   summary,
-  transcript,
+  segments,
   actionItems,
   chatMessages,
   llmEnabled,
 }: {
   meetingId: string;
   summary: ReactNode;
-  transcript: ReactNode;
+  segments: TranscriptSegment[];
   actionItems: ActionItem[];
   chatMessages: ChatUiMessage[];
   llmEnabled: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TabValue>("resumo");
+  const [highlightMs, setHighlightMs] = useState<number | null>(null);
   const openCount = actionItems.filter((i) => i.status === "open").length;
+
+  const handleCitationClick = useCallback(
+    (citation: Citation) => {
+      const exact = segments.find((s) => s.start_ms === citation.start_ms);
+      const closest =
+        exact ??
+        segments.reduce<TranscriptSegment | null>((best, segment) => {
+          if (!best) return segment;
+          const bestDiff = Math.abs(best.start_ms - citation.start_ms);
+          const segDiff = Math.abs(segment.start_ms - citation.start_ms);
+          return segDiff < bestDiff ? segment : best;
+        }, null);
+
+      if (!closest) return;
+
+      setActiveTab("transcricao");
+      setHighlightMs(closest.start_ms);
+    },
+    [segments]
+  );
 
   return (
     <div>
@@ -108,12 +130,19 @@ export function MeetingTabs({
             {activeTab === "atribuicoes" && (
               <ActionItemsTab meetingId={meetingId} initialItems={actionItems} />
             )}
-            {activeTab === "transcricao" && transcript}
+            {activeTab === "transcricao" && (
+              <TranscriptView
+                segments={segments}
+                highlightMs={highlightMs}
+                onHighlightDone={() => setHighlightMs(null)}
+              />
+            )}
             {activeTab === "chat" && (
               <MeetingChat
                 meetingId={meetingId}
                 initialMessages={chatMessages}
                 llmEnabled={llmEnabled}
+                onCitationClick={handleCitationClick}
               />
             )}
           </motion.div>
