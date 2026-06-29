@@ -153,6 +153,11 @@
     font-weight: 600;
   }
 
+  .text-display {
+    letter-spacing: -0.038em;
+    font-weight: 600;
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--brand) 25%, transparent);
   }
