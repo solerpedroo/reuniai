@@ -9,6 +9,7 @@ import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
 import { createNotification } from "@/lib/notifications/create";
 import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
+import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -87,6 +88,17 @@ export async function analyzeMeetingById(
       if (error) throw error;
     }
 
+    try {
+      await detectAndSaveCommitments(
+        admin,
+        meetingId,
+        transcript,
+        analysis.action_items.map((item) => item.title)
+      );
+    } catch (err) {
+      console.error("Falha na detecção de compromissos (não bloqueante):", err);
+    }
+
     // Embeddings (opcional, prep para RAG da Onda 10).
     try {
       await generateMeetingEmbeddings(admin, meetingId);
@@ -102,7 +114,7 @@ export async function analyzeMeetingById(
         userId: meeting.user_id,
         title: "Reunião processada",
         body: `O resumo e follow-up de "${meeting.title}" estão prontos.`,
-        href: `/reunioes/${meetingId}`,
+        href: `/reunioes/${meetingId}?tab=followup`,
       });
       await sendMeetingCompletedEmail(admin, meetingId);
       await suggestAndApplyTags(admin, meetingId);
