@@ -10,7 +10,7 @@ export function ReuniaiLogo({ className, compact = false }: ReuniaiLogoProps) {
   if (compact) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-brand text-brand-foreground shadow-sm brand-glow">
           <VideoCamera size={18} weight="duotone" aria-hidden />
         </div>
         <span className="text-sm font-semibold tracking-tight">ReuniAI</span>
@@ -20,7 +20,7 @@ export function ReuniaiLogo({ className, compact = false }: ReuniaiLogoProps) {
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+      <div className="flex size-10 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-sm brand-glow">
         <VideoCamera size={22} weight="duotone" aria-hidden />
       </div>
       <div>
