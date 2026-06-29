@@ -41,7 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <ThemeScript />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <AppProviders>
           {children}
         </AppProviders>
