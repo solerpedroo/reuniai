@@ -16,7 +16,7 @@
 | 2 | Supabase: schema, RLS e Storage | ✅ Concluída |
 | 3 | Autenticação e onboarding | ✅ Concluída |
 | 4 | Dashboard e lista de reuniões | ✅ Concluída |
-| 5 | Google Calendar e sync | ⏳ Pendente |
+| 5 | Google Calendar e sync | ✅ Concluída |
 | 6 | Recall.ai: bot nas reuniões | ⏳ Pendente |
 | 7 | Pipeline de transcrição | ⏳ Pendente |
 | 8 | IA post-call: resumo e atribuições | ⏳ Pendente |
@@ -386,15 +386,15 @@ const STATUS_LABELS: Record<MeetingStatus, string> = {
 
 #### 5.2 OAuth flow
 
-- [ ] `GET /api/calendar/connect` — redirect Google OAuth
-- [ ] `GET /api/calendar/callback` — recebe tokens, salva em `calendar_connections`
-- [ ] Encrypt refresh_token antes de salvar (`lib/crypto/token-encrypt.ts` — AES-256-GCM com `ENCRYPTION_KEY` env)
+- [x] `GET /api/calendar/connect` — redirect Google OAuth
+- [x] `GET /api/calendar/callback` — recebe tokens, salva em `calendar_connections`
+- [x] Encrypt refresh_token antes de salvar (`lib/crypto/token-encrypt.ts` — AES-256-GCM com `ENCRYPTION_KEY` env)
 
 #### 5.3 Sync job
 
-- [ ] `POST /api/calendar/sync` — manual trigger (botão em configurações)
-- [ ] Cron Vercel `/api/cron/calendar-sync` — cada 15 min (proteger com `CRON_SECRET`)
-- [ ] `lib/calendar/google.ts`:
+- [x] `POST /api/calendar/sync` — manual trigger (botão em configurações)
+- [x] Cron Vercel `/api/cron/calendar-sync` — cada 15 min (proteger com `CRON_SECRET`)
+- [x] `lib/calendar/google.ts`:
   - Listar eventos próximos 7 dias + passados 30 dias
   - Extrair URL de meeting (regex Meet/Zoom/Teams)
   - Upsert `meetings` por `calendar_event_id`
@@ -413,9 +413,9 @@ function detectPlatform(url: string): MeetingPlatform {
 
 #### 5.5 UI configurações
 
-- [ ] Card "Google Calendar" — conectado/desconectado, email, último sync
-- [ ] Botão "Sincronizar agora"
-- [ ] Toggle auto-join (salva em `profiles`)
+- [x] Card "Google Calendar" — conectado/desconectado, email, último sync
+- [x] Botão "Sincronizar agora"
+- [x] Toggle auto-join (salva em `profiles`)
 
 ### Critérios de aceite
 
