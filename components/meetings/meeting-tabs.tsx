@@ -3,19 +3,32 @@
 import type { ReactNode } from "react";
 import { ChatCircleDots, ListChecks, Sparkle, TextAlignLeft } from "@phosphor-icons/react";
 import { ActionItemsTab } from "@/components/meetings/action-items-tab";
+import { MeetingChat } from "@/components/ia/meeting-chat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Citation } from "@/lib/meetings/chat";
 import type { ActionItem } from "@/lib/supabase/types";
+
+export type ChatUiMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations: Citation[];
+};
 
 export function MeetingTabs({
   meetingId,
   summary,
   transcript,
   actionItems,
+  chatMessages,
+  llmEnabled,
 }: {
   meetingId: string;
   summary: ReactNode;
   transcript: ReactNode;
   actionItems: ActionItem[];
+  chatMessages: ChatUiMessage[];
+  llmEnabled: boolean;
 }) {
   const openCount = actionItems.filter((i) => i.status === "open").length;
 
@@ -39,7 +52,7 @@ export function MeetingTabs({
           <TextAlignLeft size={14} className="mr-1.5" />
           Transcrição
         </TabsTrigger>
-        <TabsTrigger value="chat" disabled>
+        <TabsTrigger value="chat">
           <ChatCircleDots size={14} className="mr-1.5" />
           Chat
         </TabsTrigger>
@@ -58,9 +71,11 @@ export function MeetingTabs({
       </TabsContent>
 
       <TabsContent value="chat" className="pt-4">
-        <p className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-          O chat com IA chega na próxima onda.
-        </p>
+        <MeetingChat
+          meetingId={meetingId}
+          initialMessages={chatMessages}
+          llmEnabled={llmEnabled}
+        />
       </TabsContent>
     </Tabs>
   );
