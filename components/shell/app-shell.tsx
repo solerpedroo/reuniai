@@ -10,6 +10,8 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger, MobileCommandTrigger } from "@/components/shell/command-palette";
+import { ShortcutHelp, ShortcutHelpTrigger } from "@/components/shell/shortcut-help";
+import { useKeyboardShortcuts } from "@/components/shell/use-keyboard-shortcuts";
 import { UserMenu } from "@/components/shell/user-menu";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { cn } from "@/lib/utils";
@@ -21,12 +23,28 @@ export function AppShell({
   children: React.ReactNode;
   userEmail: string | null;
 }) {
+  return (
+    <CommandPaletteProvider>
+      <AppShellInner userEmail={userEmail}>{children}</AppShellInner>
+    </CommandPaletteProvider>
+  );
+}
+
+function AppShellInner({
+  children,
+  userEmail,
+}: {
+  children: React.ReactNode;
+  userEmail: string | null;
+}) {
   const pathname = usePathname();
   const current = getNavItem(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  useKeyboardShortcuts();
 
   return (
-    <CommandPaletteProvider>
+    <>
       <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <SidebarBrand />
@@ -42,6 +60,10 @@ export function AppShell({
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             ReuniAI · Gravação com consentimento dos participantes
           </p>
+          <ShortcutHelpTrigger
+            className="mt-2 block text-left"
+            onClick={() => setShortcutsOpen(true)}
+          />
         </div>
       </aside>
 
@@ -137,7 +159,9 @@ export function AppShell({
         </footer>
       </div>
     </div>
-    </CommandPaletteProvider>
+
+      <ShortcutHelp open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+    </>
   );
 }
 
