@@ -97,6 +97,18 @@ export function NotificationSettings({
         </div>
         <div className="flex items-center justify-between gap-4">
           <div>
+            <p className="text-sm font-medium">Digest semanal</p>
+            <p className="text-xs text-muted-foreground">
+              Resumo por email aos domingos (reuniões, decisões e prazos)
+            </p>
+          </div>
+          <Switch
+            checked={prefs.digest ?? true}
+            onCheckedChange={(digest) => void savePrefs({ ...prefs, digest })}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
             <p className="text-sm font-medium">Prep de reunião</p>
             <p className="text-xs text-muted-foreground">Briefing antes de calls com histórico</p>
           </div>
