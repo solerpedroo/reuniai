@@ -85,6 +85,18 @@ export function NotificationSettings({
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
+            <p className="text-sm font-medium">Email de resumo</p>
+            <p className="text-xs text-muted-foreground">
+              Receba resumo por email quando a reunião for processada (requer Resend)
+            </p>
+          </div>
+          <Switch
+            checked={prefs.email}
+            onCheckedChange={(email) => void savePrefs({ ...prefs, email })}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
             <p className="text-sm font-medium">Prep de reunião</p>
             <p className="text-xs text-muted-foreground">Briefing antes de calls com histórico</p>
           </div>
