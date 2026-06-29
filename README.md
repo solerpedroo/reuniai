@@ -56,8 +56,35 @@ SaaS de inteligência de reuniões — transcrição, resumo e action items com 
 | `npm run build`| Build de produção      |
 | `npm run start`| Servidor de produção   |
 | `npm run lint` | ESLint                 |
+| `npm run db:push` | Aplica migrations no projeto Supabase linkado |
+| `npm run db:reset` | Reset local Supabase + migrations |
+| `npm run gen:types` | Regenera `database.types.ts` do schema local |
 
-## Estrutura
+## Supabase (Onda 2)
+
+1. Instale a [Supabase CLI](https://supabase.com/docs/guides/cli) e faça login.
+2. Crie um projeto em [supabase.com](https://supabase.com) ou use local:
+
+   ```bash
+   supabase link --project-ref <your-project-ref>
+   npm run db:push
+   ```
+
+3. Ou rode localmente:
+
+   ```bash
+   supabase start
+   npm run db:reset
+   ```
+
+4. Regenerar tipos após mudar o schema:
+
+   ```bash
+   npm run gen:types
+   ```
+
+Migrations em `supabase/migrations/`. Testes manuais de RLS: `supabase/tests/rls_isolation_notes.sql`.
+
 
 ```
 app/              # App Router (flat, sem src/)
