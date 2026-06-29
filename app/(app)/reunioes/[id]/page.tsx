@@ -4,6 +4,7 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { BotActions } from "@/components/meetings/bot-actions";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
+import { AnalysisTemplateSelect } from "@/components/meetings/analysis-template-select";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
 import { MeetingReview } from "@/components/meetings/meeting-review";
 import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
@@ -24,7 +25,10 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getMeetingComments } from "@/lib/meetings/comments";
+import { getMeetingHighlights } from "@/lib/meetings/highlights";
 import { getFollowUpForMeeting } from "@/lib/meetings/follow-up";
+import { getSpeakerMappings } from "@/lib/speakers/mappings";
+import { parseTemplateId } from "@/lib/analysis/template-types";
 import { getTagsForMeeting } from "@/lib/tags/queries";
 import type { Meeting } from "@/lib/supabase/types";
 
@@ -47,15 +51,28 @@ export default async function MeetingDetailPage({
 
   if (!meeting) notFound();
 
-  const [segments, summary, actionItems, chatMessages, tags, followUp, comments] = await Promise.all([
-    getTranscriptSegments(supabase, meeting.id),
-    getMeetingSummary(supabase, meeting.id),
-    getActionItems(supabase, meeting.id),
-    getChatMessages(supabase, meeting.id),
-    getTagsForMeeting(supabase, meeting.id),
-    getFollowUpForMeeting(createAdminClient(), meeting.id),
-    getMeetingComments(supabase, meeting.id),
-  ]);
+  const admin = createAdminClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings] =
+    await Promise.all([
+      getTranscriptSegments(supabase, meeting.id),
+      getMeetingSummary(supabase, meeting.id),
+      getActionItems(supabase, meeting.id),
+      getChatMessages(supabase, meeting.id),
+      getTagsForMeeting(supabase, meeting.id),
+      getFollowUpForMeeting(admin, meeting.id),
+      getMeetingComments(supabase, meeting.id),
+      getMeetingHighlights(supabase, meeting.id),
+      user ? getSpeakerMappings(admin, user.id) : Promise.resolve([]),
+    ]);
+
+  const meetingWithTemplate = meeting as Meeting & { analysis_template?: string | null };
+  const analysisTemplate = meetingWithTemplate.analysis_template
+    ? parseTemplateId(meetingWithTemplate.analysis_template)
+    : null;
 
   const chatUiMessages = chatMessages.map((m) => ({
     id: m.id,
@@ -94,6 +111,9 @@ export default async function MeetingDetailPage({
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <StatusBadge status={meeting.status} />
         <PlatformBadge platform={meeting.platform} />
+        {isLlmConfigured() && (
+          <AnalysisTemplateSelect meetingId={meeting.id} initialTemplate={analysisTemplate} />
+        )}
         {meeting.meeting_url && (
           <a
             href={meeting.meeting_url}
@@ -121,6 +141,8 @@ export default async function MeetingDetailPage({
         initialSeekMs={Number.isFinite(initialSeekMs) ? initialSeekMs : undefined}
         followUp={followUp}
         comments={comments}
+        highlights={highlights}
+        speakerMappings={speakerMappings}
       />
     </div>
   );
