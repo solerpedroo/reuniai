@@ -2,10 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
+import { ActionItemsList } from "@/components/meetings/action-items-list";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
+import { SummaryView } from "@/components/meetings/summary-view";
 import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
 import { TranscriptView } from "@/components/meetings/transcript-view";
+import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
 import { getTranscriptSegments } from "@/lib/meetings/transcript";
 import {
   formatDuration,
@@ -31,7 +34,11 @@ export default async function MeetingDetailPage({
 
   if (!meeting) notFound();
 
-  const segments = await getTranscriptSegments(supabase, meeting.id);
+  const [segments, summary, actionItems] = await Promise.all([
+    getTranscriptSegments(supabase, meeting.id),
+    getMeetingSummary(supabase, meeting.id),
+    getActionItems(supabase, meeting.id),
+  ]);
 
   return (
     <div>
@@ -65,10 +72,22 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold tracking-tight">Transcrição</h2>
-        <TranscriptView segments={segments} />
-      </section>
+      <div className="space-y-10">
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold tracking-tight">Resumo</h2>
+          <SummaryView summary={summary} />
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold tracking-tight">Itens de ação</h2>
+          <ActionItemsList items={actionItems} />
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold tracking-tight">Transcrição</h2>
+          <TranscriptView segments={segments} />
+        </section>
+      </div>
     </div>
   );
 }
