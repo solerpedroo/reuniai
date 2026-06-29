@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { MeetingsDataTable } from "@/components/meetings/meetings-data-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,8 +47,9 @@ export default async function ReunioesPage({
     <div>
       <PageHeader
         title="Reuniões"
-        description="Todas as reuniões gravadas pelo ReuniAI Bot, com status e filtros."
+        description="Todas as reuniões gravadas pelo ReuniAI Bot — da agenda ou via link manual."
         meta="Biblioteca"
+        actions={<JoinMeetingDialog />}
       />
 
       <MeetingsDataTable
