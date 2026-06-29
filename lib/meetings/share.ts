@@ -8,6 +8,8 @@ import {
   formatMeetingDate,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
+import { redactManyTexts } from "@/lib/privacy/redact";
+import { logExportAudit } from "@/lib/privacy/export-audit";
 import type {
   ActionItem,
   Meeting,
@@ -60,6 +62,7 @@ export async function resolveShareToken(
       .from("action_items")
       .select("*")
       .eq("meeting_id", meeting.id)
+      .neq("status", "suggested")
       .order("created_at", { ascending: true }),
     row.scope === "full_transcript"
       ? admin
@@ -73,13 +76,65 @@ export async function resolveShareToken(
   if (actionItemsRes.error) throw actionItemsRes.error;
   if (segmentsRes.error) throw segmentsRes.error;
 
-  return {
-    token: row,
-    meeting,
-    summary: summaryRes.data ?? null,
-    actionItems: (actionItemsRes.data ?? []) as ActionItem[],
-    segments: (segmentsRes.data ?? []) as TranscriptSegment[],
-  };
+  let summary = summaryRes.data ?? null;
+  let actionItems = (actionItemsRes.data ?? []) as ActionItem[];
+  let segments = (segmentsRes.data ?? []) as TranscriptSegment[];
+
+  if (row.redact_pii !== false) {
+    const texts: string[] = [];
+    if (summary?.executive_summary) texts.push(summary.executive_summary);
+
+    const topics = parseTopics(summary?.topics ?? []);
+    for (const topic of topics) texts.push(topic.title, topic.summary);
+
+    const decisions = parseDecisions(summary?.decisions ?? []);
+    texts.push(...decisions);
+
+    for (const item of actionItems) {
+      texts.push(item.title);
+      if (item.assignee) texts.push(item.assignee);
+    }
+    for (const segment of segments) {
+      texts.push(segment.text, segment.speaker_label);
+    }
+
+    const { texts: redacted, audit } = await redactManyTexts(texts, { useLlm: true });
+    let index = 0;
+    const next = () => redacted[index++] ?? "";
+
+    if (summary) {
+      const redactedTopics = topics.map(() => ({ title: next(), summary: next() }));
+      const redactedDecisions = decisions.map(() => next());
+      summary = {
+        ...summary,
+        executive_summary: summary.executive_summary ? next() : summary.executive_summary,
+        topics: redactedTopics,
+        decisions: redactedDecisions,
+      };
+    }
+
+    actionItems = actionItems.map((item) => ({
+      ...item,
+      title: next(),
+      assignee: item.assignee ? next() : item.assignee,
+    }));
+
+    segments = segments.map((segment) => ({
+      ...segment,
+      text: next(),
+      speaker_label: next(),
+    }));
+
+    await logExportAudit(admin, {
+      userId: row.user_id,
+      meetingId: meeting.id,
+      format: "share_view",
+      audit,
+      shareTokenId: row.id,
+    });
+  }
+
+  return { token: row, meeting, summary, actionItems, segments };
 }
 
 export function buildShareSummaryText(
