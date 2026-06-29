@@ -1,0 +1,77 @@
+import "server-only";
+
+import type { Database } from "@/lib/supabase/database.types";
+import type { createAdminClient } from "@/lib/supabase/admin";
+import type { MeetingStatus } from "@/lib/supabase/types";
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+type MeetingUpdate = Database["public"]["Tables"]["meetings"]["Update"];
+
+/** Traduz o status do Vexa para o enum interno de status de reunião. */
+export function mapVexaStatus(vexaStatus: string): MeetingStatus | null {
+  switch (vexaStatus) {
+    case "requested":
+    case "joining":
+    case "awaiting_admission":
+      return "bot_joining";
+    case "active":
+      return "recording";
+    case "stopping":
+      return "recording";
+    case "completed":
+      return "completed";
+    case "failed":
+      return "failed";
+    default:
+      return null;
+  }
+}
+
+export type ApplyStatusInput = {
+  nativeMeetingId: string;
+  vexaStatus: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  reason?: string | null;
+};
+
+/**
+ * Atualiza a reunião correspondente (encontrada via `recall_bot_id`) com o novo
+ * status do bot. Calcula `ended_at`/`duration_ms` quando a reunião termina.
+ */
+export async function applyMeetingStatus(
+  admin: AdminClient,
+  input: ApplyStatusInput
+): Promise<{ updated: boolean }> {
+  const nextStatus = mapVexaStatus(input.vexaStatus);
+  if (!nextStatus) return { updated: false };
+
+  const { data: meeting } = await admin
+    .from("meetings")
+    .select("id, started_at, status")
+    .eq("recall_bot_id", input.nativeMeetingId)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!meeting) return { updated: false };
+
+  const patch: MeetingUpdate = { status: nextStatus };
+
+  if (nextStatus === "completed") {
+    const endIso = input.endTime ?? new Date().toISOString();
+    patch.ended_at = endIso;
+    const startMs = new Date(input.startTime ?? meeting.started_at).getTime();
+    const endMs = new Date(endIso).getTime();
+    if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+      patch.duration_ms = endMs - startMs;
+    }
+  }
+
+  if (nextStatus === "failed" && input.reason) {
+    patch.error_message = input.reason;
+  }
+
+  await admin.from("meetings").update(patch).eq("id", meeting.id);
+  return { updated: true };
+}
