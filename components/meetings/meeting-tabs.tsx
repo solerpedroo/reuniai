@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ChatCircleDots,
   ListChecks,
@@ -11,9 +11,10 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { ActionItemsTab } from "@/components/meetings/action-items-tab";
 import { MeetingChat } from "@/components/ia/meeting-chat";
+import { TranscriptView } from "@/components/meetings/transcript-view";
 import { easePremium } from "@/components/motion/presets";
 import type { Citation } from "@/lib/meetings/chat";
-import type { ActionItem } from "@/lib/supabase/types";
+import type { ActionItem, TranscriptSegment } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 export type ChatUiMessage = {
@@ -35,20 +36,40 @@ type TabValue = (typeof TABS)[number]["value"];
 export function MeetingTabs({
   meetingId,
   summary,
-  transcript,
+  segments,
   actionItems,
   chatMessages,
   llmEnabled,
+  currentTimeMs = 0,
+  highlightMs = null,
+  onHighlightDone,
+  onSeek,
+  onCitationClick,
 }: {
   meetingId: string;
   summary: ReactNode;
-  transcript: ReactNode;
+  segments: TranscriptSegment[];
   actionItems: ActionItem[];
   chatMessages: ChatUiMessage[];
   llmEnabled: boolean;
+  currentTimeMs?: number;
+  highlightMs?: number | null;
+  onHighlightDone?: () => void;
+  onSeek?: (ms: number) => void;
+  onCitationClick?: (citation: Citation) => void;
 }) {
   const [activeTab, setActiveTab] = useState<TabValue>("resumo");
   const openCount = actionItems.filter((i) => i.status === "open").length;
+
+  const handleCitation = useCallback(
+    (citation: Citation) => {
+      onCitationClick?.(citation);
+      setActiveTab("transcricao");
+    },
+    [onCitationClick]
+  );
+
+  const panelId = (tab: TabValue) => `meeting-tab-panel-${tab}`;
 
   return (
     <div>
@@ -66,7 +87,9 @@ export function MeetingTabs({
               key={tab.value}
               type="button"
               role="tab"
+              id={`meeting-tab-${tab.value}`}
               aria-selected={isActive}
+              aria-controls={panelId(tab.value)}
               onClick={() => setActiveTab(tab.value)}
               className={cn(
                 "relative inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -99,6 +122,8 @@ export function MeetingTabs({
           <motion.div
             key={activeTab}
             role="tabpanel"
+            id={panelId(activeTab)}
+            aria-labelledby={`meeting-tab-${activeTab}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
@@ -108,12 +133,21 @@ export function MeetingTabs({
             {activeTab === "atribuicoes" && (
               <ActionItemsTab meetingId={meetingId} initialItems={actionItems} />
             )}
-            {activeTab === "transcricao" && transcript}
+            {activeTab === "transcricao" && (
+              <TranscriptView
+                segments={segments}
+                currentTimeMs={currentTimeMs}
+                highlightMs={highlightMs}
+                onHighlightDone={onHighlightDone}
+                onSeek={onSeek}
+              />
+            )}
             {activeTab === "chat" && (
               <MeetingChat
                 meetingId={meetingId}
                 initialMessages={chatMessages}
                 llmEnabled={llmEnabled}
+                onCitationClick={handleCitation}
               />
             )}
           </motion.div>

@@ -1,14 +1,18 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { AttentionCard } from "@/components/dashboard/attention-card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
+import { MeetingsChart } from "@/components/dashboard/meetings-chart";
 import { RecentMeetingsTable } from "@/components/dashboard/recent-meetings-table";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
-import { getDashboardData } from "@/lib/meetings/queries";
+import { getDashboardData, getMeetingsWeeklyChart } from "@/lib/meetings/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const { stats, recentMeetings, attentionItems } = await getDashboardData(supabase);
+  const [{ stats, recentMeetings, attentionItems }, chartData] = await Promise.all([
+    getDashboardData(supabase),
+    getMeetingsWeeklyChart(supabase),
+  ]);
 
   const meetingTitleById = new Map(recentMeetings.map((m) => [m.id, m.title]));
 
@@ -22,6 +26,10 @@ export default async function HomePage() {
       />
 
       <KpiCards stats={stats} />
+
+      <div className="mt-6">
+        <MeetingsChart data={chartData} />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">

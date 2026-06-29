@@ -20,6 +20,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <CommandPaletteProvider>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Pular para o conteúdo
+      </a>
       <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <SidebarBrand />
@@ -120,7 +126,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <PageTransition>
-          <div className="flex-1 px-4 py-6 lg:px-8">{children}</div>
+          <div id="main-content" className="flex-1 px-4 py-6 lg:px-8">
+            {children}
+          </div>
         </PageTransition>
 
         <footer className="mt-auto border-t border-border/70 px-4 py-4 lg:px-8">

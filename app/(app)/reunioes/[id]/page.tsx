@@ -5,15 +5,13 @@ import { PageHeader } from "@/components/layout/page-header";
 import { BotActions } from "@/components/meetings/bot-actions";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
-import { MeetingStatusBanner } from "@/components/meetings/meeting-status-banner";
-import { MeetingTabs } from "@/components/meetings/meeting-tabs";
+import { MeetingReview } from "@/components/meetings/meeting-review";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
-import { SummaryView } from "@/components/meetings/summary-view";
 import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
-import { TranscriptView } from "@/components/meetings/transcript-view";
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
+import { meetingHasRecording } from "@/lib/meetings/recording";
 import { getTranscriptSegments } from "@/lib/meetings/transcript";
 import { isLlmConfigured } from "@/lib/llm/client";
 import {
@@ -26,10 +24,13 @@ import type { Meeting } from "@/lib/supabase/types";
 
 export default async function MeetingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ t?: string }>;
 }) {
   const { id } = await params;
+  const { t } = await searchParams;
   const supabase = await createClient();
 
   const { data: meeting } = await supabase
@@ -53,6 +54,8 @@ export default async function MeetingDetailPage({
     content: m.content,
     citations: parseCitations(m.citations),
   }));
+
+  const initialSeekMs = t ? Number.parseInt(t, 10) : undefined;
 
   return (
     <div>
@@ -93,15 +96,15 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
-      <MeetingStatusBanner meeting={meeting} />
-
-      <MeetingTabs
-        meetingId={meeting.id}
-        summary={<SummaryView summary={summary} />}
-        transcript={<TranscriptView segments={segments} />}
+      <MeetingReview
+        meeting={meeting}
+        hasRecording={meetingHasRecording(meeting)}
+        segments={segments}
+        summary={summary}
         actionItems={actionItems}
         chatMessages={chatUiMessages}
         llmEnabled={isLlmConfigured()}
+        initialSeekMs={Number.isFinite(initialSeekMs) ? initialSeekMs : undefined}
       />
     </div>
   );

@@ -27,10 +27,12 @@ export function MeetingChat({
   meetingId,
   initialMessages,
   llmEnabled,
+  onCitationClick,
 }: {
   meetingId: string;
   initialMessages: UiMessage[];
   llmEnabled: boolean;
+  onCitationClick?: (citation: Citation) => void;
 }) {
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -140,8 +142,8 @@ export function MeetingChat({
                     <button
                       key={i}
                       type="button"
-                      onClick={() => toast(formatTimestamp(c.start_ms), { description: c.text })}
-                      className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => onCitationClick?.(c)}
+                      className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground transition-colors hover:bg-brand/10 hover:text-brand"
                     >
                       <Quotes size={10} />
                       {formatTimestamp(c.start_ms)}

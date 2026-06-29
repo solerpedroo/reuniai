@@ -36,6 +36,15 @@ export const PRODUCT = {
 } as const;
 
 export function getNavItem(pathname: string): NavItem {
+  if (pathname === "/busca" || pathname.startsWith("/busca?")) {
+    return {
+      href: "/busca",
+      label: "Busca global",
+      description: "Pesquisar título e transcrições",
+      icon: NAV_ITEMS[1]!.icon,
+    };
+  }
+
   const exact = NAV_ITEMS.find((item) => item.href === pathname);
   if (exact) return exact;
 
