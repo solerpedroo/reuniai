@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppProviders } from "@/components/providers/app-providers";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -14,15 +15,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ReuniAI",
+  title: {
+    default: "ReuniAI",
+    template: "%s · ReuniAI",
+  },
   description: "Inteligência de reuniões com transcrição, resumo e action items.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}>
-        {children}
+        <AppProviders>
+          {children}
+        </AppProviders>
         <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
