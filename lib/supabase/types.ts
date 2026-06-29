@@ -8,6 +8,8 @@ export type MeetingSummary = Database["public"]["Tables"]["meeting_summaries"]["
 export type TranscriptSegment = Database["public"]["Tables"]["transcript_segments"]["Row"];
 export type ChatMessage = Database["public"]["Tables"]["chat_messages"]["Row"];
 
+export type { Tag, ShareToken, MeetingFollowUp, MeetingPrepCard, AppNotification, NotificationPrefs, MeetingSeries } from "@/lib/workflow/types";
+
 export type MeetingPlatform = Database["public"]["Enums"]["meeting_platform"];
 export type MeetingStatus = Database["public"]["Enums"]["meeting_status"];
 export type ActionItemStatus = Database["public"]["Enums"]["action_item_status"];
