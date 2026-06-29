@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
+import { AuthCard } from "@/components/auth/auth-card";
 import { SignupForm } from "@/components/auth/signup-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SignupPage() {
   return (
@@ -9,23 +9,28 @@ export default function SignupPage() {
       <div className="mb-4 lg:hidden">
         <ReuniaiLogo compact />
       </div>
-      <Card>
-      <CardHeader className="space-y-4">
-        <div>
-          <CardTitle className="text-xl">Criar conta</CardTitle>
-          <CardDescription>Comece a gravar e analisar suas reuniões</CardDescription>
+      <AuthCard>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Criar conta</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Comece a gravar e analisar suas reuniões
+            </p>
+          </div>
+
+          <SignupForm />
+
+          <p className="text-center text-sm text-muted-foreground">
+            Já tem conta?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Entrar
+            </Link>
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <SignupForm />
-        <p className="text-center text-sm text-muted-foreground">
-          Já tem conta?{" "}
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Entrar
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      </AuthCard>
     </div>
   );
 }

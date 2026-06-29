@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { MOTION, easePremium } from "@/components/motion/presets";
 import { NAV_ITEMS } from "@/components/shell/nav-config";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type CommandItem = {
@@ -61,6 +62,8 @@ function useCommandPalette() {
   }
   return ctx;
 }
+
+export { useCommandPalette };
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -304,6 +307,22 @@ function CommandPaletteDialog() {
   );
 }
 
+export function MobileCommandTrigger({ className }: { className?: string }) {
+  const { toggle } = useCommandPalette();
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className={cn("size-9 lg:hidden", className)}
+      onClick={toggle}
+      aria-label="Buscar ou executar"
+    >
+      <MagnifyingGlass size={18} />
+    </Button>
+  );
+}
 export function CommandTrigger({ className }: { className?: string }) {
   const { toggle } = useCommandPalette();
   const [isMac, setIsMac] = useState(false);

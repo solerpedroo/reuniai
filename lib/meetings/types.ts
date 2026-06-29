@@ -41,6 +41,13 @@ export const PLATFORM_LABELS: Record<MeetingPlatform, string> = {
   other: "Outra",
 };
 
+export const PLATFORM_TONES: Record<MeetingPlatform, string> = {
+  google_meet: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400",
+  zoom: "bg-sky-500/12 text-sky-700 dark:text-sky-400",
+  teams: "bg-indigo-500/12 text-indigo-700 dark:text-indigo-400",
+  other: "bg-muted text-muted-foreground",
+};
+
 export const MEETING_STATUSES = Object.keys(STATUS_LABELS) as MeetingStatus[];
 export const MEETING_PLATFORMS = Object.keys(PLATFORM_LABELS) as MeetingPlatform[];
 

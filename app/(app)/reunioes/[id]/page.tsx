@@ -2,15 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
-import { BotActions } from "@/components/meetings/bot-actions";
-import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
-import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
-import { MeetingStatusBanner } from "@/components/meetings/meeting-status-banner";
+import { MeetingActionsMenu } from "@/components/meetings/meeting-actions-menu";
+import { MeetingLiveBanner } from "@/components/meetings/meeting-live-banner";
 import { MeetingTabs } from "@/components/meetings/meeting-tabs";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { SummaryView } from "@/components/meetings/summary-view";
-import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
 import { TranscriptView } from "@/components/meetings/transcript-view";
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
@@ -69,12 +66,11 @@ export default async function MeetingDetailPage({
         meta={formatMeetingDate(meeting.started_at)}
         description={`Duração: ${formatDuration(getMeetingDurationMs(meeting))}`}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <BotActions meetingId={meeting.id} status={meeting.status} />
-            <ExportMeetingButton meetingId={meeting.id} />
-            <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
-            <TranscriptSyncButton meetingId={meeting.id} />
-          </div>
+          <MeetingActionsMenu
+            meetingId={meeting.id}
+            meetingTitle={meeting.title}
+            status={meeting.status}
+          />
         }
       />
 
@@ -93,7 +89,7 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
-      <MeetingStatusBanner meeting={meeting} />
+      <MeetingLiveBanner meeting={meeting} />
 
       <MeetingTabs
         meetingId={meeting.id}

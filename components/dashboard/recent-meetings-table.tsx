@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, CaretRight, VideoCamera } from "@phosphor-icons/react/dist/ssr";
+import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -16,25 +17,43 @@ import { formatDuration, formatMeetingDate, getMeetingDurationMs } from "@/lib/m
 
 export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle>Reuniões recentes</CardTitle>
-          <Link
-            href="/reunioes"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand transition-colors hover:text-brand/80"
-          >
-            Ver todas
-            <CaretRight size={14} />
-          </Link>
-        </div>
-        <CardDescription>Suas últimas reuniões processadas pelo ReuniAI.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {meetings.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Nenhuma reunião ainda. Conecte seu calendário para começar.
+    <div className="surface-card overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-border/70 px-5 py-4">
+        <div>
+          <h2 className="text-sm font-semibold">Reuniões recentes</h2>
+          <p className="text-xs text-muted-foreground">
+            Suas últimas reuniões processadas pelo ReuniAI.
           </p>
+        </div>
+        <Link
+          href="/reunioes"
+          className="inline-flex items-center gap-1 text-sm font-medium text-brand transition-colors hover:text-brand/80"
+        >
+          Ver todas
+          <CaretRight size={14} />
+        </Link>
+      </div>
+
+      <div className="p-2">
+        {meetings.length === 0 ? (
+          <EmptyState
+            icon={VideoCamera}
+            title="Nenhuma reunião ainda"
+            description="Conecte seu calendário ou entre com um link para começar."
+            tone="brand"
+            className="border-0 bg-transparent py-10"
+          >
+            <div className="flex flex-wrap justify-center gap-2">
+              <JoinMeetingDialog triggerClassName="h-9" />
+              <Link
+                href="/configuracoes"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted/50"
+              >
+                <CalendarBlank size={14} />
+                Conectar calendário
+              </Link>
+            </div>
+          </EmptyState>
         ) : (
           <Table>
             <TableHeader>
@@ -48,7 +67,10 @@ export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
             </TableHeader>
             <TableBody>
               {meetings.map((meeting) => (
-                <TableRow key={meeting.id} className="group cursor-pointer transition-colors hover:bg-brand/5">
+                <TableRow
+                  key={meeting.id}
+                  className="group cursor-pointer transition-colors hover:bg-brand/5"
+                >
                   <TableCell className="font-medium">
                     <Link
                       href={`/reunioes/${meeting.id}`}
@@ -74,7 +96,7 @@ export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
             </TableBody>
           </Table>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

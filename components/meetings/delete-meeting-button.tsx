@@ -17,7 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function DeleteMeetingButton({ meetingId, meetingTitle }: { meetingId: string; meetingTitle: string }) {
+export function DeleteMeetingButton({
+  meetingId,
+  meetingTitle,
+  menuItem = false,
+  onOpenChange,
+}: {
+  meetingId: string;
+  meetingTitle: string;
+  menuItem?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -54,16 +64,28 @@ export function DeleteMeetingButton({ meetingId, meetingTitle }: { meetingId: st
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
+        onOpenChange?.(next);
         if (!next) setConfirmation("");
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-          <Trash size={14} className="mr-1.5" />
-          Excluir
-        </Button>
+        {menuItem ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <Trash size={16} />
+            Excluir reunião
+          </button>
+        ) : (
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+            <Trash size={14} className="mr-1.5" />
+            Excluir
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="surface-modal border-0 shadow-none sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Excluir reunião</DialogTitle>
           <DialogDescription>

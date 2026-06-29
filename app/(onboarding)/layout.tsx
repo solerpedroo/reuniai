@@ -1,7 +1,12 @@
+import { AuthBrandPanel } from "@/components/auth/auth-brand-panel";
+
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-lg">{children}</div>
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <AuthBrandPanel />
+      <div className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-lg">{children}</div>
+      </div>
     </div>
   );
 }

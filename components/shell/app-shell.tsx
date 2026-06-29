@@ -9,11 +9,18 @@ import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
-import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
+import { CommandPaletteProvider, CommandTrigger, MobileCommandTrigger } from "@/components/shell/command-palette";
+import { UserMenu } from "@/components/shell/user-menu";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { cn } from "@/lib/utils";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  userEmail,
+}: {
+  children: React.ReactNode;
+  userEmail: string | null;
+}) {
   const pathname = usePathname();
   const current = getNavItem(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -114,7 +121,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <MobileCommandTrigger />
               <JoinMeetingDialog triggerClassName="h-9 px-3.5 text-xs" />
+              {userEmail && <UserMenu email={userEmail} />}
             </div>
           </div>
         </header>

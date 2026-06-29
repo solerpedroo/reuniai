@@ -66,7 +66,7 @@ export function DeleteAccountDialog() {
           Deletar conta
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="surface-modal border-0 shadow-none sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Excluir conta permanentemente</DialogTitle>
           <DialogDescription>

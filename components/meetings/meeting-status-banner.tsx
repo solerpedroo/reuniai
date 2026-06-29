@@ -1,5 +1,19 @@
 import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Meeting } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
+
+const PROCESSING_STEPS = [
+  { key: "recording", label: "Gravando" },
+  { key: "processing", label: "Transcrevendo" },
+  { key: "done", label: "Analisando" },
+] as const;
+
+function getProcessingStep(status: Meeting["status"]): number {
+  if (status === "bot_joining") return 0;
+  if (status === "recording") return 0;
+  if (status === "processing") return 1;
+  return 2;
+}
 
 export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
   const { status, error_message } = meeting;
@@ -11,10 +25,41 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
         : status === "recording"
           ? "O bot está gravando esta reunião…"
           : "O bot está entrando na reunião…";
+
+    const step = getProcessingStep(status);
+
     return (
-      <div className="mb-6 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-        <Info size={16} className="shrink-0 text-brand" />
-        {label}
+      <div className="surface-toolbar mb-6 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/12">
+            <Info size={14} className="text-brand status-pulse" />
+          </span>
+          <div className="min-w-0 flex-1 space-y-3">
+            <p className="text-sm text-foreground">{label}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {PROCESSING_STEPS.map((item, index) => (
+                <span key={item.key} className="inline-flex items-center gap-1.5 text-xs">
+                  <span
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      index <= step ? "bg-brand status-pulse" : "bg-muted-foreground/30"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      index <= step ? "font-medium text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                  {index < PROCESSING_STEPS.length - 1 && (
+                    <span className="text-muted-foreground/40">→</span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
