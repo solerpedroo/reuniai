@@ -1,8 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MeetingsDataTable } from "@/components/meetings/meetings-data-table";
+import { getMeetingsForUser } from "@/lib/meetings/queries";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ReunioesPage() {
+export default async function ReunioesPage() {
+  const supabase = await createClient();
+  const meetings = await getMeetingsForUser(supabase, 50);
+
   return (
     <div>
       <PageHeader
@@ -11,22 +15,7 @@ export default function ReunioesPage() {
         meta="Biblioteca"
       />
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>Nenhuma reunião ainda</CardTitle>
-            <Badge variant="secondary">Placeholder</Badge>
-          </div>
-          <CardDescription>
-            A data table com filtros por status, plataforma e data será implementada na Onda 4.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Zoom, Google Meet e Microsoft Teams serão suportados via bot nas chamadas.
-          </p>
-        </CardContent>
-      </Card>
+      <MeetingsDataTable meetings={meetings} />
     </div>
   );
 }
