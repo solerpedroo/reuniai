@@ -18,7 +18,7 @@
 | 4 | Dashboard e lista de reuniões | ✅ Concluída |
 | 5 | Google Calendar e sync | ✅ Concluída |
 | 6 | Vexa: bot nas reuniões | ✅ Concluída |
-| 7 | Pipeline de transcrição | ⏳ Pendente |
+| 7 | Pipeline de transcrição | ✅ Concluída |
 | 8 | IA post-call: resumo e atribuições | ⏳ Pendente |
 | 9 | Detalhe da reunião (UI completa) | ⏳ Pendente |
 | 10 | Chat com IA (RAG) | ⏳ Pendente |
@@ -512,57 +512,44 @@ Mapeamento `meeting.status_change`:
 
 ---
 
-## Onda 7 — Pipeline de transcrição
+## Onda 7 — Pipeline de transcrição ✅
 
-**Objetivo:** Áudio → texto com timestamps e speakers.
+**Objetivo:** Transcrição da reunião com timestamps e speakers, exibida na UI.
+
+> **Decisão:** o Vexa já transcreve via Whisper (100+ idiomas, com diarização). Em vez de baixar a gravação e mandar para o Deepgram, **buscamos os segmentos prontos** em `GET /transcripts/{platform}/{id}` e persistimos. Custo de transcrição = $0 no self-hosted (Whisper local). Deepgram foi removido do escopo.
 
 ### Tarefas
 
-#### 7.1 Download e Storage
+#### 7.1 Ingestão (`lib/pipeline/ingest-transcript.ts`) ✅
 
-- [ ] `lib/pipeline/download-recording.ts` — fetch URL Recall → upload Supabase Storage
-- [ ] Update `meetings.recording_path`
-- [ ] `status = processing`
+- [x] `ingestMeetingTranscript()` — busca transcript no Vexa, converte tempos (s → ms), persiste em `transcript_segments`
+- [x] Idempotente: `delete` + `insert` por `meeting_id`; `sequence` reordenada
+- [x] Status: `processing` → `completed` (com trechos) ou `partial` (sem trechos)
+- [x] `ingestByNativeId()` — resolve a reunião via `recall_bot_id` e ingere
 
-#### 7.2 Deepgram (`lib/deepgram/transcribe.ts`)
+#### 7.2 Gatilhos ✅
 
-- [ ] API batch ou streaming do arquivo
-- [ ] Options: `language=pt-BR`, `diarize=true`, `punctuate=true`, `utterances=true`
-- [ ] Parse response → array `{ start_ms, end_ms, speaker_label, text }`
+- [x] Webhook (`recording.completed` ou status `completed`) → ingestão automática
+- [x] Cron `/api/cron/poll-bots` (fallback local) → ingere ao detectar reunião encerrada
+- [x] Rota manual `POST /api/bots/transcript` (autenticada) para re-buscar sob demanda
 
-#### 7.3 Persist segments
+#### 7.3 Query + helpers ✅
 
-- [ ] Batch insert `transcript_segments` (transaction)
-- [ ] Ordenar por `sequence`
+- [x] `lib/meetings/transcript.ts` — `getTranscriptSegments()` + `formatTimestamp(ms)`
 
-#### 7.4 Pipeline orchestrator
+#### 7.4 UI ✅
 
-- [ ] `lib/pipeline/process-meeting.ts`:
-  1. Download recording
-  2. Transcribe
-  3. Save segments
-  4. Trigger AI summary (Onda 8)
-- [ ] Invocado from webhook handler após `recording.done`
-- [ ] Retry 3x com backoff on failure
+- [x] `components/meetings/transcript-view.tsx` — lista de segments com timestamp mono e badge de speaker (cor por participante)
+- [x] `app/(app)/reunioes/[id]/page.tsx` — página de detalhe (header, status, plataforma, transcrição)
+- [x] `components/meetings/transcript-sync-button.tsx` — botão "Buscar transcrição"
 
-#### 7.5 UI transcrição (parcial — completa na Onda 9)
-
-- [ ] `components/meetings/transcript-view.tsx`
-- [ ] Lista de segments com timestamp mono tabular
-- [ ] Speaker badge
-- [ ] Click timestamp → callback `onSeek(ms)`
-
-#### 7.6 Player
-
-- [ ] `components/meetings/recording-player.tsx`
-- [ ] `<audio>` ou `<video>` com signed URL Supabase Storage
-- [ ] `currentTime` sync com highlight do segment ativo
+> **Diferido para Onda 9:** player de gravação com seek (Vexa serve a mídia autenticada via `/recordings/...`; exige rota proxy) e highlight do segment ativo via `onSeek(ms)`.
 
 ### Critérios de aceite
 
-- Reunião processada: segments visíveis no DB
-- Player reproduz gravação via signed URL (expira em 15 min)
-- Click em timestamp seek funciona
+- [x] Reunião encerrada gera segments no DB (via webhook/poll ou botão manual)
+- [x] Transcrição visível na página de detalhe com timestamp e speaker
+- [x] Ingestão idempotente (re-buscar não duplica trechos)
 
 ---
 
