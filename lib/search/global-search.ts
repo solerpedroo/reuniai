@@ -4,6 +4,7 @@ import type { createClient } from "@/lib/supabase/server";
 import {
   cosineSimilarity,
   embedQuery,
+  formatVector,
   isEmbeddingsConfigured,
   parseVector,
 } from "@/lib/embeddings/generate";
@@ -20,15 +21,23 @@ function truncateSnippet(text: string, max = 160): string {
   return `${trimmed.slice(0, max - 1)}…`;
 }
 
-async function semanticSearch(
+type RpcRow = {
+  segment_id: string;
+  meeting_id: string;
+  start_ms: number;
+  speaker_label: string;
+  segment_text: string;
+  meeting_title: string;
+  started_at: string;
+  similarity: number;
+};
+
+async function semanticSearchFallback(
   supabase: Client,
   query: string
 ): Promise<SearchResultHit[] | null> {
-  if (!isEmbeddingsConfigured()) return null;
-
   try {
     const queryVec = await embedQuery(query);
-
     const { data: rows, error } = await supabase
       .from("transcript_embeddings")
       .select(
@@ -71,9 +80,53 @@ async function semanticSearch(
       .slice(0, TOP_K);
 
     return scored.length > 0 ? scored : null;
-  } catch (err) {
-    console.error("Busca semântica falhou:", err);
+  } catch {
     return null;
+  }
+}
+
+async function semanticSearchRpc(
+  supabase: Client,
+  query: string
+): Promise<SearchResultHit[] | null> {
+  if (!isEmbeddingsConfigured()) return null;
+
+  try {
+    const queryVec = await embedQuery(query);
+
+    type RpcClient = {
+      rpc: (
+        fn: string,
+        args: { query_embedding: string; match_count: number }
+      ) => Promise<{ data: RpcRow[] | null; error: Error | null }>;
+    };
+
+    const { data: rows, error } = await (supabase as unknown as RpcClient).rpc(
+      "match_transcript_embeddings",
+      {
+        query_embedding: formatVector(queryVec),
+        match_count: TOP_K,
+      }
+    );
+
+    if (error || !rows?.length) {
+      return semanticSearchFallback(supabase, query);
+    }
+
+    return rows.map((row) => ({
+      meetingId: row.meeting_id,
+      meetingTitle: row.meeting_title,
+      startedAt: row.started_at,
+      segmentId: row.segment_id,
+      startMs: row.start_ms,
+      speaker: row.speaker_label,
+      snippet: truncateSnippet(row.segment_text),
+      score: row.similarity,
+      mode: "semantic" as const,
+    }));
+  } catch (err) {
+    console.error("Busca semântica RPC falhou:", err);
+    return semanticSearchFallback(supabase, query);
   }
 }
 
@@ -141,7 +194,7 @@ export async function globalSearch(
     return { query: "", mode: "text", hits: [] };
   }
 
-  const semantic = await semanticSearch(supabase, trimmed);
+  const semantic = await semanticSearchRpc(supabase, trimmed);
   if (semantic) {
     return { query: trimmed, mode: "semantic", hits: semantic };
   }
