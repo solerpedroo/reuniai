@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PaperPlaneTilt, Quotes, Robot, Sparkle } from "@phosphor-icons/react";
+import { Copy, PaperPlaneTilt, Quotes, Robot, Sparkle, User } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { ChatMarkdown } from "@/components/ia/chat-markdown";
+import { useTypewriter } from "@/components/ia/use-typewriter";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -21,16 +23,78 @@ type UiMessage = {
   role: "user" | "assistant";
   content: string;
   citations: Citation[];
+  animate?: boolean;
 };
+
+function AssistantBubble({
+  content,
+  citations,
+  animate,
+  onCitationClick,
+}: {
+  content: string;
+  citations: Citation[];
+  animate?: boolean;
+  onCitationClick?: (citation: Citation) => void;
+}) {
+  const displayed = useTypewriter(content, Boolean(animate));
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Resposta copiada.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  }
+
+  return (
+    <div className="flex gap-2.5">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand ring-1 ring-brand/15">
+        <Robot size={16} weight="duotone" />
+      </span>
+      <div className="group min-w-0 max-w-[85%]">
+        <div className="rounded-2xl border border-border bg-card px-4 py-2.5 text-sm text-foreground">
+          <ChatMarkdown content={displayed} />
+          {citations.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border/50 pt-2">
+              {citations.map((c, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onCitationClick?.(c)}
+                  className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground transition-colors hover:bg-brand/10 hover:text-brand"
+                >
+                  <Quotes size={10} />
+                  {formatTimestamp(c.start_ms)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={copy}
+          className="mt-1 inline-flex items-center gap-1 px-1 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+        >
+          <Copy size={12} />
+          Copiar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function MeetingChat({
   meetingId,
   initialMessages,
   llmEnabled,
+  onCitationClick,
 }: {
   meetingId: string;
   initialMessages: UiMessage[];
   llmEnabled: boolean;
+  onCitationClick?: (citation: Citation) => void;
 }) {
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -85,6 +149,7 @@ export function MeetingChat({
           role: "assistant",
           content: data.content,
           citations: data.citations ?? [],
+          animate: true,
         },
       ]);
     } catch {
@@ -121,40 +186,32 @@ export function MeetingChat({
           </EmptyState>
         )}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-brand text-brand-foreground"
-                  : "border border-border bg-card text-foreground"
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-              {msg.citations.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border/50 pt-2">
-                  {msg.citations.map((c, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => toast(formatTimestamp(c.start_ms), { description: c.text })}
-                      className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Quotes size={10} />
-                      {formatTimestamp(c.start_ms)}
-                    </button>
-                  ))}
-                </div>
-              )}
+        {messages.map((msg) =>
+          msg.role === "user" ? (
+            <div key={msg.id} className="flex justify-end gap-2.5">
+              <div className="max-w-[85%] rounded-2xl bg-brand px-4 py-2.5 text-sm leading-relaxed text-brand-foreground">
+                <p className="whitespace-pre-wrap">{msg.content}</p>
+              </div>
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground ring-1 ring-border/60">
+                <User size={16} />
+              </span>
             </div>
-          </div>
-        ))}
+          ) : (
+            <AssistantBubble
+              key={msg.id}
+              content={msg.content}
+              citations={msg.citations}
+              animate={msg.animate}
+              onCitationClick={onCitationClick}
+            />
+          )
+        )}
 
         {loading && (
-          <div className="flex justify-start">
+          <div className="flex gap-2.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand">
+              <Robot size={16} weight="duotone" />
+            </span>
             <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground">
               <span className="flex gap-1">
                 <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
