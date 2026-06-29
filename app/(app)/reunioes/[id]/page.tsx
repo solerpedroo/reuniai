@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
+import { BotActions } from "@/components/meetings/bot-actions";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
 import { MeetingStatusBanner } from "@/components/meetings/meeting-status-banner";
@@ -69,6 +70,7 @@ export default async function MeetingDetailPage({
         description={`Duração: ${formatDuration(getMeetingDurationMs(meeting))}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <BotActions meetingId={meeting.id} status={meeting.status} />
             <ExportMeetingButton meetingId={meeting.id} />
             <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
             <TranscriptSyncButton meetingId={meeting.id} />

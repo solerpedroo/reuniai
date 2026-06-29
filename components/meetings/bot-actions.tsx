@@ -60,7 +60,7 @@ export function BotActions({
     return (
       <Button
         size="sm"
-        variant="outline"
+        variant="brand"
         disabled={loading}
         onClick={() => call("/api/bots/start", "Bot enviado para a reunião.")}
       >

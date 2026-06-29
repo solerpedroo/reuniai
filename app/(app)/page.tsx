@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AttentionCard } from "@/components/dashboard/attention-card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { RecentMeetingsTable } from "@/components/dashboard/recent-meetings-table";
+import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { getDashboardData } from "@/lib/meetings/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +18,7 @@ export default async function HomePage() {
         title="Visão geral"
         description="Resumo das suas reuniões, indicadores e itens que precisam de atenção."
         meta="Dashboard"
+        actions={<JoinMeetingDialog />}
       />
 
       <KpiCards stats={stats} />

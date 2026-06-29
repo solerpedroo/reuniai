@@ -9,6 +9,7 @@ import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS, PRODUCT } from "@/components/shell/nav-config";
+import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { MeetingSearch } from "@/components/shell/meeting-search";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +108,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="truncate text-xs text-muted-foreground">{current.description}</p>
               </div>
               <MeetingSearch />
+            </div>
+            <div className="hidden items-center gap-2 md:flex">
+              <JoinMeetingDialog triggerClassName="h-8 px-3 text-xs" />
             </div>
             <div className="hidden items-center gap-3 sm:flex">
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
