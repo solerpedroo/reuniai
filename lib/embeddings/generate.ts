@@ -32,6 +32,11 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+/** Converte number[] para literal pgvector. */
+export function formatVector(values: number[]): string {
+  return `[${values.join(",")}]`;
+}
+
 /** Converte o formato pgvector (`[a,b,c]`) de volta para number[]. */
 export function parseVector(value: string): number[] {
   return value

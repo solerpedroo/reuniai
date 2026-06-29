@@ -4,6 +4,10 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
+import { SeriesChat } from "@/components/series/series-chat";
+import { SeriesTopicDiff } from "@/components/series/series-topic-diff";
+import { getMeetingSummary } from "@/lib/meetings/insights";
+import { computeTopicDiff } from "@/lib/series/topic-diff";
 import { getMeetingsInSeries } from "@/lib/series/queries";
 import {
   formatDuration,
@@ -26,6 +30,23 @@ export default async function SeriesPage({
 
   const title = meetings[0]?.title ?? "Série de reuniões";
 
+  const summaries = await Promise.all(
+    meetings.slice(0, 4).map(async (meeting) => ({
+      meetingId: meeting.id,
+      startedAt: meeting.started_at,
+      summary: await getMeetingSummary(supabase, meeting.id),
+    }))
+  );
+
+  const diffs = [];
+  for (let i = 0; i < summaries.length - 1; i++) {
+    const current = summaries[i]!;
+    const previous = summaries[i + 1]!;
+    if (current.summary && previous.summary) {
+      diffs.push(computeTopicDiff(previous, current));
+    }
+  }
+
   return (
     <div>
       <Link
@@ -42,7 +63,9 @@ export default async function SeriesPage({
         meta="Série"
       />
 
-      <div className="surface-card divide-y divide-border/60 overflow-hidden">
+      <SeriesTopicDiff diffs={diffs} />
+
+      <div className="surface-card mb-6 divide-y divide-border/60 overflow-hidden">
         {meetings.map((meeting) => (
           <Link
             key={meeting.id}
@@ -62,6 +85,8 @@ export default async function SeriesPage({
           </Link>
         ))}
       </div>
+
+      <SeriesChat recurringEventId={recurringEventId} />
     </div>
   );
 }

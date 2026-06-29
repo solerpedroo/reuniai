@@ -9,13 +9,6 @@ import { StatusBadge } from "@/components/meetings/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -23,16 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Meeting, MeetingPlatform, MeetingStatus } from "@/lib/supabase/types";
+import type { MeetingWithTags } from "@/lib/meetings/filter-queries";
 import {
-  MEETING_PLATFORMS,
-  MEETING_STATUSES,
-  PLATFORM_LABELS,
-  STATUS_LABELS,
   formatDuration,
   formatMeetingDate,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
+import { MeetingTagBadges } from "@/components/meetings/meeting-tag-badges";
 
 type SortDir = "asc" | "desc";
 
@@ -40,39 +30,34 @@ export function MeetingsDataTable({
   meetings,
   initialQuery = "",
   searchMode = false,
+  serverFiltered = false,
 }: {
-  meetings: Meeting[];
+  meetings: MeetingWithTags[];
   initialQuery?: string;
   searchMode?: boolean;
+  serverFiltered?: boolean;
 }) {
   const [search, setSearch] = useState(initialQuery);
-  const [status, setStatus] = useState<MeetingStatus | "all">("all");
-  const [platform, setPlatform] = useState<MeetingPlatform | "all">("all");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const filtered = useMemo(() => {
-    if (searchMode) {
-      return meetings
-        .filter((m) => (status === "all" ? true : m.status === status))
-        .filter((m) => (platform === "all" ? true : m.platform === platform))
-        .sort((a, b) => {
-          const diff = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
-          return sortDir === "asc" ? diff : -diff;
-        });
+    if (searchMode || serverFiltered) {
+      return [...meetings].sort((a, b) => {
+        const diff = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
+        return sortDir === "asc" ? diff : -diff;
+      });
     }
 
     const term = search.trim().toLowerCase();
     return meetings
-      .filter((m) => (status === "all" ? true : m.status === status))
-      .filter((m) => (platform === "all" ? true : m.platform === platform))
       .filter((m) => (term ? m.title.toLowerCase().includes(term) : true))
       .sort((a, b) => {
         const diff = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
         return sortDir === "asc" ? diff : -diff;
       });
-  }, [meetings, search, status, platform, sortDir, searchMode]);
+  }, [meetings, search, sortDir, searchMode, serverFiltered]);
 
-  const hasFilters = search.trim() !== "" || status !== "all" || platform !== "all";
+  const hasFilters = search.trim() !== "" || serverFiltered;
 
   return (
     <div className="space-y-4">
@@ -83,41 +68,19 @@ export function MeetingsDataTable({
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            placeholder={searchMode ? "Busca ativa (título + transcrição)…" : "Buscar por título…"}
+            placeholder={
+              searchMode
+                ? "Busca ativa (título + transcrição)…"
+                : serverFiltered
+                  ? "Busca local por título…"
+                  : "Buscar por título…"
+            }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
             readOnly={searchMode}
           />
         </div>
-
-        <Select value={status} onValueChange={(v) => setStatus(v as MeetingStatus | "all")}>
-          <SelectTrigger className="sm:w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            {MEETING_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={platform} onValueChange={(v) => setPlatform(v as MeetingPlatform | "all")}>
-          <SelectTrigger className="sm:w-44">
-            <SelectValue placeholder="Plataforma" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as plataformas</SelectItem>
-            {MEETING_PLATFORMS.map((p) => (
-              <SelectItem key={p} value={p}>
-                {PLATFORM_LABELS[p]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="surface-card overflow-hidden">
@@ -170,9 +133,10 @@ export function MeetingsDataTable({
                   <TableCell className="font-medium">
                     <Link
                       href={`/reunioes/${meeting.id}`}
-                      className="block max-w-[28ch] truncate transition-colors group-hover:text-brand"
+                      className="block max-w-[28ch] transition-colors group-hover:text-brand"
                     >
-                      {meeting.title}
+                      <span className="truncate">{meeting.title}</span>
+                      <MeetingTagBadges tags={meeting.tags} />
                     </Link>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">

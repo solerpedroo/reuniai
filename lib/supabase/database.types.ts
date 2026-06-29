@@ -18,6 +18,7 @@ export type Database = {
           onboarding_completed: boolean;
           timezone: string;
           notification_prefs: Json;
+          saved_views: Json;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +30,7 @@ export type Database = {
           onboarding_completed?: boolean;
           timezone?: string;
           notification_prefs?: Json;
+          saved_views?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +42,7 @@ export type Database = {
           onboarding_completed?: boolean;
           timezone?: string;
           notification_prefs?: Json;
+          saved_views?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -545,7 +548,22 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      match_transcript_embeddings: {
+        Args: {
+          query_embedding: string;
+          match_count?: number;
+        };
+        Returns: {
+          segment_id: string;
+          meeting_id: string;
+          start_ms: number;
+          speaker_label: string;
+          segment_text: string;
+          meeting_title: string;
+          started_at: string;
+          similarity: number;
+        }[];
+      };
     };
     Enums: {
       meeting_platform: "google_meet" | "zoom" | "teams" | "other";

@@ -7,6 +7,8 @@ import { analyzeMeeting } from "@/lib/llm/meeting-analysis";
 import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
 import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
 import { createNotification } from "@/lib/notifications/create";
+import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
+import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -102,8 +104,10 @@ export async function analyzeMeetingById(
         body: `O resumo e follow-up de "${meeting.title}" estão prontos.`,
         href: `/reunioes/${meetingId}`,
       });
+      await sendMeetingCompletedEmail(admin, meetingId);
+      await suggestAndApplyTags(admin, meetingId);
     } catch (err) {
-      console.error("Falha ao gerar follow-up/notificação (não bloqueante):", err);
+      console.error("Falha pós-análise (não bloqueante):", err);
     }
 
     return { status: "completed", actionItems: analysis.action_items.length };

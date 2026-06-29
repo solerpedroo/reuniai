@@ -22,6 +22,15 @@ const PatchSchema = z.object({
     })
     .optional(),
   timezone: z.string().optional(),
+  saved_views: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        filters: z.record(z.string(), z.unknown()),
+      })
+    )
+    .optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -60,6 +69,10 @@ export async function PATCH(request: NextRequest) {
 
   if (parsed.data.timezone) {
     updates.timezone = parsed.data.timezone;
+  }
+
+  if (parsed.data.saved_views) {
+    updates.saved_views = parsed.data.saved_views as Database["public"]["Tables"]["profiles"]["Update"]["saved_views"];
   }
 
   if (Object.keys(updates).length === 0) {
