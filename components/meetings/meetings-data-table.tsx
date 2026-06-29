@@ -35,13 +35,31 @@ import {
 
 type SortDir = "asc" | "desc";
 
-export function MeetingsDataTable({ meetings }: { meetings: Meeting[] }) {
-  const [search, setSearch] = useState("");
+export function MeetingsDataTable({
+  meetings,
+  initialQuery = "",
+  searchMode = false,
+}: {
+  meetings: Meeting[];
+  initialQuery?: string;
+  searchMode?: boolean;
+}) {
+  const [search, setSearch] = useState(initialQuery);
   const [status, setStatus] = useState<MeetingStatus | "all">("all");
   const [platform, setPlatform] = useState<MeetingPlatform | "all">("all");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const filtered = useMemo(() => {
+    if (searchMode) {
+      return meetings
+        .filter((m) => (status === "all" ? true : m.status === status))
+        .filter((m) => (platform === "all" ? true : m.platform === platform))
+        .sort((a, b) => {
+          const diff = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
+          return sortDir === "asc" ? diff : -diff;
+        });
+    }
+
     const term = search.trim().toLowerCase();
     return meetings
       .filter((m) => (status === "all" ? true : m.status === status))
@@ -51,7 +69,7 @@ export function MeetingsDataTable({ meetings }: { meetings: Meeting[] }) {
         const diff = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
         return sortDir === "asc" ? diff : -diff;
       });
-  }, [meetings, search, status, platform, sortDir]);
+  }, [meetings, search, status, platform, sortDir, searchMode]);
 
   const hasFilters = search.trim() !== "" || status !== "all" || platform !== "all";
 
@@ -64,10 +82,11 @@ export function MeetingsDataTable({ meetings }: { meetings: Meeting[] }) {
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            placeholder="Buscar por título…"
+            placeholder={searchMode ? "Busca ativa (título + transcrição)…" : "Buscar por título…"}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
+            readOnly={searchMode}
           />
         </div>
 
