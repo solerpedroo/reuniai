@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAuthPath, isOnboardingPath, ONBOARDING_PATH } from "@/lib/auth/paths";
+import { withSessionCookies } from "@/lib/auth/session-cookies";
 
 type CookieToSet = {
   name: string;
@@ -38,7 +40,55 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+
+  if (!user && !isAuthPath(pathname)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("next", pathname);
+    return withSessionCookies(
+      supabaseResponse,
+      NextResponse.redirect(loginUrl)
+    );
+  }
+
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return withSessionCookies(supabaseResponse, NextResponse.redirect(homeUrl));
+  }
+
+  if (user && !isAuthPath(pathname)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const onboardingDone = profile?.onboarding_completed === true;
+
+    if (!onboardingDone && !isOnboardingPath(pathname)) {
+      const onboardingUrl = request.nextUrl.clone();
+      onboardingUrl.pathname = ONBOARDING_PATH;
+      onboardingUrl.search = "";
+      return withSessionCookies(
+        supabaseResponse,
+        NextResponse.redirect(onboardingUrl)
+      );
+    }
+
+    if (onboardingDone && isOnboardingPath(pathname)) {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = "/";
+      homeUrl.search = "";
+      return withSessionCookies(supabaseResponse, NextResponse.redirect(homeUrl));
+    }
+  }
 
   return supabaseResponse;
 }
