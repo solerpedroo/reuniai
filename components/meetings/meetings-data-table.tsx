@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, MagnifyingGlass, VideoCamera } from "@phosphor-icons/react";
+import { motion } from "motion/react";
 import { BotActions } from "@/components/meetings/bot-actions";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
@@ -40,11 +42,16 @@ export function MeetingsDataTable({
   meetings,
   initialQuery = "",
   searchMode = false,
+  showSearchInput = false,
+  searchAction = "/reunioes",
 }: {
   meetings: Meeting[];
   initialQuery?: string;
   searchMode?: boolean;
+  showSearchInput?: boolean;
+  searchAction?: string;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState(initialQuery);
   const [status, setStatus] = useState<MeetingStatus | "all">("all");
   const [platform, setPlatform] = useState<MeetingPlatform | "all">("all");
@@ -82,13 +89,30 @@ export function MeetingsDataTable({
             size={16}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
-          <Input
-            placeholder={searchMode ? "Busca ativa (título + transcrição)…" : "Buscar por título…"}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            readOnly={searchMode}
-          />
+          {showSearchInput ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const term = search.trim();
+                router.push(term ? `${searchAction}?q=${encodeURIComponent(term)}` : searchAction);
+              }}
+            >
+              <Input
+                placeholder="Buscar título ou transcrição…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </form>
+          ) : (
+            <Input
+              placeholder={searchMode ? "Busca ativa (título + transcrição)…" : "Buscar por título…"}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+              readOnly={searchMode}
+            />
+          )}
         </div>
 
         <Select value={status} onValueChange={(v) => setStatus(v as MeetingStatus | "all")}>
@@ -162,15 +186,19 @@ export function MeetingsDataTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((meeting) => (
-                <TableRow
+              filtered.map((meeting, index) => (
+                <motion.tr
                   key={meeting.id}
-                  className="group cursor-pointer transition-colors hover:bg-brand/5"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.03, 0.24), duration: 0.25 }}
+                  className="group cursor-pointer border-b transition-colors hover:bg-brand/5"
                 >
                   <TableCell className="font-medium">
                     <Link
                       href={`/reunioes/${meeting.id}`}
                       className="block max-w-[28ch] truncate transition-colors group-hover:text-brand"
+                      title={meeting.title}
                     >
                       {meeting.title}
                     </Link>
@@ -190,7 +218,7 @@ export function MeetingsDataTable({
                   <TableCell className="text-right">
                     <BotActions meetingId={meeting.id} status={meeting.status} />
                   </TableCell>
-                </TableRow>
+                </motion.tr>
               ))
             )}
           </TableBody>

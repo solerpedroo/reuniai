@@ -6,6 +6,7 @@ import {
   ArrowsClockwise,
   DotsThreeVertical,
   DownloadSimple,
+  FilePdf,
   Spinner,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -76,6 +77,7 @@ export function MeetingActionsMenu({
               label="Exportar Markdown"
               onSelect={() => setOpen(false)}
             />
+            <MenuDisabledItem icon={FilePdf} label="Exportar PDF" hint="Em breve" />
             <SyncMenuItem meetingId={meetingId} onDone={() => setOpen(false)} />
             <div className="my-1 h-px bg-border/70" />
             <DeleteMeetingButton
@@ -115,6 +117,30 @@ function MenuLink({
       <Icon size={16} className="text-muted-foreground" />
       {label}
     </a>
+  );
+}
+
+function MenuDisabledItem({
+  icon: Icon,
+  label,
+  hint,
+}: {
+  icon: typeof FilePdf;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <div
+      role="menuitem"
+      aria-disabled
+      className="flex w-full cursor-not-allowed items-center justify-between gap-2 px-3 py-2 text-sm text-muted-foreground/60"
+    >
+      <span className="flex items-center gap-2.5">
+        <Icon size={16} />
+        {label}
+      </span>
+      <span className="text-[10px] uppercase tracking-wide">{hint}</span>
+    </div>
   );
 }
 
