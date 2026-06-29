@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { ingestMeetingTranscript } from "@/lib/pipeline/ingest-transcript";
+import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -59,9 +60,10 @@ export async function POST(request: NextRequest) {
       platform: parsed.platform,
       nativeMeetingId: meeting.recall_bot_id,
     });
-    return NextResponse.json({ ok: true, ...result });
+    const analysis = await analyzeMeetingById(admin, meeting.id);
+    return NextResponse.json({ ok: true, ...result, analysis: analysis.status });
   } catch (err) {
-    console.error("Erro ao buscar transcrição:", err);
-    return NextResponse.json({ error: "Falha ao buscar transcrição" }, { status: 500 });
+    console.error("Erro ao processar reunião:", err);
+    return NextResponse.json({ error: "Falha ao processar reunião" }, { status: 500 });
   }
 }
