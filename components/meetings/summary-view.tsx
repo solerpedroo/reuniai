@@ -1,9 +1,17 @@
 import { Gavel, Quotes, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { TalkTimeChart } from "@/components/meetings/talk-time-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { parseDecisions, parseTopics } from "@/lib/meetings/insights";
+import type { SpeakerTalkTime } from "@/lib/meetings/talk-time";
 import type { MeetingSummary } from "@/lib/supabase/types";
 
-export function SummaryView({ summary }: { summary: MeetingSummary | null }) {
+export function SummaryView({
+  summary,
+  talkTime = [],
+}: {
+  summary: MeetingSummary | null;
+  talkTime?: SpeakerTalkTime[];
+}) {
   if (!summary) {
     return (
       <EmptyState
@@ -34,6 +42,8 @@ export function SummaryView({ summary }: { summary: MeetingSummary | null }) {
           </blockquote>
         </section>
       )}
+
+      {talkTime.length > 1 && <TalkTimeChart data={talkTime} />}
 
       {topics.length > 0 && (
         <section className="space-y-4">
