@@ -4,10 +4,12 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnection } from "@/components/settings/calendar-connection";
 import { RetentionSettings } from "@/components/settings/retention-settings";
+import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
+import type { NotificationPrefs } from "@/lib/workflow/types";
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
   connected: { tone: "ok", text: "Google Calendar conectado e sincronizado." },
@@ -31,18 +33,27 @@ export default async function ConfiguracoesPage({
 
   let autoJoin = true;
   let retentionDays = 365;
+  let notificationPrefs: NotificationPrefs = {
+    email: false,
+    push: false,
+    prep: true,
+    completed: true,
+  };
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("auto_join_enabled, retention_days")
+      .select("auto_join_enabled, retention_days, notification_prefs")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile) {
-      const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days">;
+      const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days"> & {
+        notification_prefs?: NotificationPrefs;
+      };
       autoJoin = typed.auto_join_enabled;
       retentionDays = typed.retention_days;
+      if (typed.notification_prefs) notificationPrefs = typed.notification_prefs;
     }
   }
 
@@ -117,6 +128,8 @@ export default async function ConfiguracoesPage({
             <ThemeToggle />
           </CardContent>
         </Card>
+
+        <NotificationSettings initialPrefs={notificationPrefs} />
       </div>
     </div>
   );
