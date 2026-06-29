@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
-import { ingestByNativeId } from "@/lib/pipeline/ingest-transcript";
+import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
 import { applyMeetingStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
@@ -86,9 +86,9 @@ export async function POST(request: NextRequest) {
     const platform = resolvePlatform(payload.meeting?.platform);
     if (platform) {
       try {
-        await ingestByNativeId(admin, platform, nativeMeetingId);
+        await processMeetingByNativeId(admin, platform, nativeMeetingId);
       } catch (err) {
-        console.error("Falha ao ingerir transcrição (webhook):", err);
+        console.error("Falha ao processar reunião (webhook):", err);
       }
     }
   }
