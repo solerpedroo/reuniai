@@ -1,0 +1,1252 @@
+# ReuniAI — Plano de Implementação por Ondas
+
+> SaaS individual de inteligência de reuniões (estilo Fireflies).  
+> Stack: Next.js 15 · Supabase · Recall.ai · Deepgram · LLM  
+> UI: patterns de `case_agi` + design system **shadcn/ui Official** (design lab)
+
+**Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
+**Última atualização:** junho 2026
+
+---
+
+## Índice
+
+1. [Visão geral das ondas](#visão-geral-das-ondas)
+2. [Pré-requisitos](#pré-requisitos)
+3. [Onda 0 — Bootstrap do projeto](#onda-0--bootstrap-do-projeto)
+4. [Onda 1 — Design system e shell UI](#onda-1--design-system-e-shell-ui)
+5. [Onda 2 — Supabase: schema, RLS e Storage](#onda-2--supabase-schema-rls-e-storage)
+6. [Onda 3 — Autenticação e onboarding](#onda-3--autenticação-e-onboarding)
+7. [Onda 4 — Dashboard e lista de reuniões](#onda-4--dashboard-e-lista-de-reuniões)
+8. [Onda 5 — Google Calendar e sync](#onda-5--google-calendar-e-sync)
+9. [Onda 6 — Recall.ai: bot nas reuniões](#onda-6--recallai-bot-nas-reuniões)
+10. [Onda 7 — Pipeline de transcrição](#onda-7--pipeline-de-transcrição)
+11. [Onda 8 — IA post-call: resumo e atribuições](#onda-8--ia-post-call-resumo-e-atribuições)
+12. [Onda 9 — Detalhe da reunião (UI completa)](#onda-9--detalhe-da-reunião-ui-completa)
+13. [Onda 10 — Chat com IA (RAG)](#onda-10--chat-com-ia-rag)
+14. [Onda 11 — Segurança, LGPD e polish](#onda-11--segurança-lgpd-e-polish)
+15. [Ondas futuras — visão geral](#ondas-futuras--visão-geral)
+16. [Onda 12 — Descoberta e organização](#onda-12--descoberta-e-organização)
+17. [Onda 13 — Inteligência proativa](#onda-13--inteligência-proativa)
+18. [Onda 14 — Colaboração e privacidade](#onda-14--colaboração-e-privacidade)
+19. [Onda 15 — Qualidade da reunião e personalização](#onda-15--qualidade-da-reunião-e-personalização)
+20. [Onda 16 — Multi-plataforma enterprise](#onda-16--multi-plataforma-enterprise)
+21. [Onda 17 — Integrações e automações](#onda-17--integrações-e-automações)
+22. [Onda 18 — Monetização e API](#onda-18--monetização-e-api)
+23. [Onda 19 — Escala e infra própria](#onda-19--escala-e-infra-própria)
+24. [Variáveis de ambiente](#variáveis-de-ambiente)
+25. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+
+---
+
+## Visão geral das ondas
+
+```mermaid
+flowchart TD
+    O0[Onda 0: Bootstrap] --> O1[Onda 1: Shell UI]
+    O1 --> O2[Onda 2: Supabase]
+    O2 --> O3[Onda 3: Auth]
+    O3 --> O4[Onda 4: Dashboard]
+    O4 --> O5[Onda 5: Calendar]
+    O5 --> O6[Onda 6: Recall Bot]
+    O6 --> O7[Onda 7: Transcrição]
+    O7 --> O8[Onda 8: IA Resumo]
+    O8 --> O9[Onda 9: Detalhe UI]
+    O9 --> O10[Onda 10: Chat RAG]
+    O10 --> O11[Onda 11: LGPD Polish]
+    O11 --> O12[Onda 12: Fase 2]
+```
+
+| Onda | Nome | Duração | Depende de | Entrega principal |
+|------|------|---------|------------|-------------------|
+| 0 | Bootstrap | 1–2 dias | — | Repo Next.js rodando |
+| 1 | Shell UI | 2–3 dias | 0 | AppShell + tokens shadcn |
+| 2 | Supabase | 2–3 dias | 0 | Schema + RLS + Storage |
+| 3 | Auth | 2–3 dias | 1, 2 | Login + onboarding |
+| 4 | Dashboard | 2–3 dias | 3 | KPIs + tabela reuniões |
+| 5 | Calendar | 3–5 dias | 3, 2 | Sync eventos Google |
+| 6 | Recall Bot | 3–5 dias | 5 | Bot entra na call |
+| 7 | Transcrição | 3–5 dias | 6 | Deepgram + segments |
+| 8 | IA Resumo | 2–3 dias | 7 | Summary + action items |
+| 9 | Detalhe UI | 3–4 dias | 8 | Abas completas |
+| 10 | Chat RAG | 3–4 dias | 8, 9 | Chat contextual |
+| 11 | LGPD Polish | 3–5 dias | 10 | MVP production-ready |
+| 12–19 | Ondas futuras | contínuo | 11 | Ver seção [Ondas futuras](#ondas-futuras--visão-geral) |
+
+---
+
+## Pré-requisitos
+
+### Contas e APIs (criar antes da Onda 5)
+
+| Serviço | Uso | Quando |
+|---------|-----|--------|
+| [Supabase](https://supabase.com) | Auth, DB, Storage | Onda 2 |
+| [Vercel](https://vercel.com) | Deploy | Onda 0 |
+| [Google Cloud Console](https://console.cloud.google.com) | OAuth + Calendar API | Onda 5 |
+| [Recall.ai](https://recall.ai) | Meeting bots | Onda 6 |
+| [Deepgram](https://deepgram.com) | ASR + diarização | Onda 7 |
+| Anthropic ou OpenAI | Resumo + chat | Onda 8 |
+
+### Referências locais
+
+| Recurso | Caminho |
+|---------|---------|
+| UI patterns | `C:\Users\pedro\Desktop\case_agi` |
+| Design tokens shadcn | `design-lab.html` → bip-ai-hub `SystemShadcn` + `lab.css` |
+
+---
+
+## Onda 0 — Bootstrap do projeto
+
+**Objetivo:** Repositório funcional com dependências alinhadas ao `case_agi`.
+
+### Tarefas
+
+- [x] Inicializar Next.js 15 (App Router, TypeScript, Tailwind v4, `src/` ou `app/` flat)
+- [x] Copiar `package.json` deps de case_agi: `next`, `react`, `tailwindcss`, `@phosphor-icons/react`, `motion`, `sonner`, `zod`, `class-variance-authority`, `clsx`, `tailwind-merge`
+- [x] Adicionar `@supabase/supabase-js`, `@supabase/ssr`
+- [x] Configurar `components.json` (shadcn new-york, phosphor icons)
+- [x] Instalar componentes shadcn base: `button`, `card`, `input`, `label`, `tabs`, `badge`, `separator`, `skeleton`, `dialog`, `select`, `tooltip`, `sonner`
+- [x] Configurar `tsconfig` paths `@/*`
+- [x] Configurar ESLint (eslint-config-next)
+- [x] Criar `.env.local.example` com todas as vars documentadas
+- [x] Configurar `middleware.ts` placeholder para Supabase session refresh
+- [x] README com setup local
+
+### Estrutura inicial
+
+```
+reuniai/
+├── app/
+│   ├── layout.tsx
+│   ├── globals.css
+│   └── page.tsx
+├── components/ui/
+├── lib/utils.ts
+├── supabase/          # vazio até Onda 2
+├── components.json
+├── package.json
+├── postcss.config.mjs
+├── .env.local.example
+└── implementation-plan.md
+```
+
+### Critérios de aceite
+
+- `npm run dev` sem erros
+- `npm run build` passa
+- Página raiz renderiza
+
+---
+
+## Onda 1 — Design system e shell UI
+
+**Objetivo:** Visual shadcn neutral + navegação persistente (port de case_agi).
+
+### Tarefas
+
+#### 1.1 Tokens CSS (`app/globals.css`)
+
+- [ ] Portar tokens de `lab.css` `.shadcn-scope` → `:root` global
+- [ ] Incluir `--chart-1` … `--chart-5`
+- [ ] Dark mode: `[data-theme="dark"]` ou `.dark` (tokens do design lab)
+- [ ] `--brand` teal para ícones IA: `oklch(0.55 0.15 180)`
+- [ ] Utilities: `.label-caps`, `.glass`, `.nav-active` (de case_agi `globals.css`)
+- [ ] Geist Sans + Geist Mono via `next/font/google`
+
+#### 1.2 Shell (`components/shell/`)
+
+- [ ] `nav-config.ts` — rotas ReuniAI + `PRODUCT` metadata
+- [ ] `app-shell.tsx` — sidebar 260px, header 52px, mobile drawer
+- [ ] Logo ReuniAI (`components/brand/reuniai-logo.tsx`)
+- [ ] Layout `(app)/layout.tsx` com `AppShell`
+
+#### 1.3 Motion e layout
+
+- [ ] `components/motion/presets.ts` — `fadeUp`, easings
+- [ ] `components/motion/page-transition.tsx`
+- [ ] `components/layout/page-header.tsx`
+
+#### 1.4 Providers
+
+- [ ] `components/providers/app-providers.tsx` (mínimo: theme se necessário)
+- [ ] `Toaster` em root layout
+
+### Nav items (MVP)
+
+| href | label | icon |
+|------|-------|------|
+| `/` | Visão geral | House |
+| `/reunioes` | Reuniões | VideoCamera |
+| `/configuracoes` | Configurações | Gear |
+
+### Critérios de aceite
+
+- Sidebar + header responsivos
+- Navegação entre rotas placeholder funciona
+- Visual idêntico ao SystemShadcn (neutral, cards com border + shadow-sm)
+
+---
+
+## Onda 2 — Supabase: schema, RLS e Storage
+
+**Objetivo:** Banco completo com isolamento multi-usuário nativo.
+
+### Tarefas
+
+#### 2.1 Projeto Supabase
+
+- [ ] Criar projeto Supabase (região próxima — ex: South America se disponível)
+- [ ] Habilitar extensão `vector` (pgvector)
+- [ ] Configurar `supabase/config.toml` para CLI local (opcional)
+
+#### 2.2 Migration: enums e tabelas
+
+```sql
+-- Enums
+CREATE TYPE meeting_platform AS ENUM ('google_meet', 'zoom', 'teams', 'other');
+CREATE TYPE meeting_status AS ENUM (
+  'scheduled', 'bot_joining', 'recording', 'processing',
+  'completed', 'failed', 'cancelled', 'partial'
+);
+CREATE TYPE action_item_status AS ENUM ('open', 'done', 'cancelled');
+CREATE TYPE calendar_provider AS ENUM ('google', 'outlook');
+```
+
+**Tabelas:**
+
+| Tabela | Colunas principais |
+|--------|-------------------|
+| `profiles` | `id` (FK auth.users), `display_name`, `auto_join_enabled`, `retention_days`, `onboarding_completed`, `created_at` |
+| `calendar_connections` | `id`, `user_id`, `provider`, `email`, `refresh_token_encrypted`, `sync_token`, `last_synced_at` |
+| `meetings` | `id`, `user_id`, `calendar_event_id`, `title`, `started_at`, `ended_at`, `platform`, `meeting_url`, `status`, `recall_bot_id`, `duration_ms`, `recording_path`, `error_message` |
+| `participants` | `id`, `meeting_id`, `name`, `email` |
+| `transcript_segments` | `id`, `meeting_id`, `start_ms`, `end_ms`, `speaker_label`, `text`, `sequence` |
+| `meeting_summaries` | `id`, `meeting_id`, `executive_summary`, `topics` (jsonb), `decisions` (jsonb), `raw_json` (jsonb) |
+| `action_items` | `id`, `meeting_id`, `user_id`, `title`, `assignee`, `due_date`, `status`, `source` ('ai' \| 'manual') |
+| `chat_messages` | `id`, `meeting_id`, `user_id`, `role`, `content`, `citations` (jsonb) |
+| `transcript_embeddings` | `id`, `segment_id`, `meeting_id`, `embedding` vector(1536) |
+| `webhook_events` | `id`, `provider`, `event_id`, `payload` (jsonb), `processed_at` — idempotência |
+
+#### 2.3 RLS policies
+
+- [ ] `profiles`: user só acessa `id = auth.uid()`
+- [ ] Todas as tabelas com `user_id`: policy `auth.uid() = user_id`
+- [ ] `participants`, `transcript_segments`, etc.: via join `meetings.user_id = auth.uid()`
+- [ ] Trigger `on_auth_user_created` → insert `profiles`
+
+#### 2.4 Storage
+
+- [ ] Bucket `recordings` — **private**
+- [ ] Policy SELECT/INSERT/DELETE: `(storage.foldername(name))[1] = auth.uid()::text`
+- [ ] Path convention: `{user_id}/{meeting_id}/recording.mp4`
+
+#### 2.5 Client Supabase
+
+- [ ] `lib/supabase/client.ts` — browser client
+- [ ] `lib/supabase/server.ts` — server component / route handler
+- [ ] `lib/supabase/middleware.ts` — session refresh
+- [ ] `lib/supabase/admin.ts` — service role (só importar em `app/api/`)
+- [ ] `npm run gen:types` → `lib/supabase/database.types.ts`
+
+### Critérios de aceite
+
+- Migrations aplicam sem erro
+- Usuário A não pode SELECT meetings de usuário B (testar manualmente ou script)
+- Upload teste no bucket respeita RLS
+
+---
+
+## Onda 3 — Autenticação e onboarding
+
+**Objetivo:** Usuários podem criar conta, logar e completar setup inicial.
+
+### Tarefas
+
+#### 3.1 Auth pages (`app/(auth)/`)
+
+- [ ] `/login` — email + senha + Google OAuth
+- [ ] `/signup` — email + senha + confirmação
+- [ ] `/auth/callback` — route handler Supabase OAuth
+- [ ] Redirect: não autenticado → `/login`; autenticado em `/login` → `/`
+
+#### 3.2 Middleware
+
+- [ ] Proteger rotas `(app)/*` exceto auth e webhooks
+- [ ] Refresh session em cada request
+
+#### 3.3 Onboarding (`app/(app)/onboarding/`)
+
+Fluxo em steps (cards shadcn):
+
+1. **Boas-vindas** — o que ReuniAI faz
+2. **Consentimento LGPD** — checkbox obrigatório (gravação de voz, termos)
+3. **Auto-join** — toggle `auto_join_enabled` default on
+4. **Conectar calendário** — CTA (implementação real na Onda 5; aqui pode ser skip com flag)
+
+- [ ] Ao completar: `profiles.onboarding_completed = true`
+
+#### 3.4 Settings base
+
+- [ ] `/configuracoes` layout com cards placeholder
+- [ ] Botão logout
+- [ ] Link deletar conta (stub até Onda 11)
+
+### Critérios de aceite
+
+- Signup → login → onboarding → dashboard (shell vazio)
+- Session persiste após refresh
+- Google OAuth funciona em produção (Vercel)
+
+---
+
+## Onda 4 — Dashboard e lista de reuniões
+
+**Objetivo:** UI principal com dados mock; depois plugar Supabase real.
+
+### Tarefas
+
+#### 4.1 Dashboard (`app/(app)/page.tsx`)
+
+Layout SystemShadcn (4 KPI cards + grid):
+
+| KPI | Valor exemplo | Detalhe |
+|-----|---------------|---------|
+| Reuniões este mês | `12` | +2 vs mês anterior |
+| Horas gravadas | `8.5h` | Total processado |
+| Action items abertos | `5` | Pendentes |
+| Próxima reunião | `14:00` | Título do evento |
+
+- [ ] `components/dashboard/kpi-cards.tsx`
+- [ ] `components/dashboard/recent-meetings-table.tsx` — colunas: título, data, plataforma, status, duração
+- [ ] `components/dashboard/attention-card.tsx` — action items vencidos/próximos
+- [ ] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, opcional MVP)
+
+#### 4.2 Lista de reuniões (`app/(app)/reunioes/page.tsx`)
+
+- [ ] Data table com sort por data
+- [ ] Filtros: status, plataforma, range de datas
+- [ ] Badge de status com cores (scheduled=muted, recording=warning, completed=success, failed=destructive)
+- [ ] Link row → `/reunioes/[id]`
+
+#### 4.3 Data layer
+
+- [ ] `lib/meetings/queries.ts` — `getMeetingsForUser`, `getMeetingById`
+- [ ] Server Components fetching Supabase (inicialmente seed/mock se sem dados)
+- [ ] `lib/meetings/types.ts` + Zod schemas
+
+#### 4.4 Status badges
+
+```typescript
+const STATUS_LABELS: Record<MeetingStatus, string> = {
+  scheduled: 'Agendada',
+  bot_joining: 'Bot entrando',
+  recording: 'Gravando',
+  processing: 'Processando',
+  completed: 'Concluída',
+  failed: 'Falhou',
+  cancelled: 'Cancelada',
+  partial: 'Parcial',
+};
+```
+
+### Critérios de aceite
+
+- Dashboard renderiza com 0 reuniões (empty state elegante)
+- Seed script opcional popula 5 reuniões mock para dev
+- Tabela pagina ou limita a 50 items
+
+---
+
+## Onda 5 — Google Calendar e sync
+
+**Objetivo:** Ler eventos do calendário, detectar links de reunião, criar registros `meetings`.
+
+### Tarefas
+
+#### 5.1 Google Cloud setup
+
+- [ ] Projeto GCP com Calendar API habilitada
+- [ ] OAuth credentials (Web application)
+- [ ] Scopes: `https://www.googleapis.com/auth/calendar.readonly`
+- [ ] Redirect URI: `{APP_URL}/api/calendar/callback`
+
+#### 5.2 OAuth flow
+
+- [ ] `GET /api/calendar/connect` — redirect Google OAuth
+- [ ] `GET /api/calendar/callback` — recebe tokens, salva em `calendar_connections`
+- [ ] Encrypt refresh_token antes de salvar (`lib/crypto/token-encrypt.ts` — AES-256-GCM com `ENCRYPTION_KEY` env)
+
+#### 5.3 Sync job
+
+- [ ] `POST /api/calendar/sync` — manual trigger (botão em configurações)
+- [ ] Cron Vercel `/api/cron/calendar-sync` — cada 15 min (proteger com `CRON_SECRET`)
+- [ ] `lib/calendar/google.ts`:
+  - Listar eventos próximos 7 dias + passados 30 dias
+  - Extrair URL de meeting (regex Meet/Zoom/Teams)
+  - Upsert `meetings` por `calendar_event_id`
+  - Detectar `platform` enum
+
+#### 5.4 Detecção de plataforma
+
+```typescript
+function detectPlatform(url: string): MeetingPlatform {
+  if (url.includes('meet.google.com')) return 'google_meet';
+  if (url.includes('zoom.us')) return 'zoom';
+  if (url.includes('teams.microsoft.com') || url.includes('teams.live.com')) return 'teams';
+  return 'other';
+}
+```
+
+#### 5.5 UI configurações
+
+- [ ] Card "Google Calendar" — conectado/desconectado, email, último sync
+- [ ] Botão "Sincronizar agora"
+- [ ] Toggle auto-join (salva em `profiles`)
+
+### Critérios de aceite
+
+- Conectar calendário → eventos com link aparecem em `/reunioes` com status `scheduled`
+- Re-sync não duplica meetings (unique constraint `user_id + calendar_event_id`)
+- Desconectar remove connection (não meetings históricas)
+
+---
+
+## Onda 6 — Recall.ai: bot nas reuniões
+
+**Objetivo:** Bot ReuniAI entra automaticamente nas reuniões agendadas.
+
+### Tarefas
+
+#### 6.1 Recall setup
+
+- [ ] Conta Recall.ai + API key
+- [ ] Configurar webhook URL: `{APP_URL}/api/webhooks/recall`
+- [ ] Verificar signing secret para validação HMAC
+
+#### 6.2 Client Recall (`lib/recall/client.ts`)
+
+- [ ] `createBot({ meetingUrl, joinAt, botName })` → `recall_bot_id`
+- [ ] `getBot(botId)` — status
+- [ ] `deleteBot(botId)` — cancelar
+
+#### 6.3 Scheduler
+
+- [ ] Após calendar sync: para meetings `scheduled` com `auto_join_enabled` e `started_at` dentro de janela (ex: join 2 min antes)
+- [ ] `lib/recall/scheduler.ts` — `scheduleBotsForUpcomingMeetings()`
+- [ ] Cron `/api/cron/schedule-bots` — cada 5 min
+- [ ] Update meeting: `status = bot_joining`, `recall_bot_id`
+
+#### 6.4 Webhook handler (`app/api/webhooks/recall/route.ts`)
+
+Eventos a processar:
+
+| Evento | Ação |
+|--------|------|
+| `bot.joining_call` | `status = bot_joining` |
+| `bot.in_call_recording` | `status = recording` |
+| `bot.call_ended` | `ended_at`, `duration_ms` |
+| `recording.done` | enqueue transcrição (Onda 7) |
+| `bot.removed` | `status = partial` ou `cancelled` |
+| `bot.fatal` | `status = failed`, `error_message` |
+
+- [ ] Idempotência via `webhook_events.event_id`
+- [ ] Validar signature
+- [ ] Service role para updates
+
+#### 6.5 Bot branding
+
+- [ ] Nome: `ReuniAI Bot` (configurável em settings futuro)
+- [ ] Página pública `/recording-notice` — explica gravação para participantes
+
+### Critérios de aceite
+
+- Reunião de teste Zoom/Meet: bot aparece na call
+- Webhook `recording.done` recebido e logado
+- Meeting status atualiza na UI em tempo real (polling 30s ou Supabase Realtime opcional)
+
+---
+
+## Onda 7 — Pipeline de transcrição
+
+**Objetivo:** Áudio → texto com timestamps e speakers.
+
+### Tarefas
+
+#### 7.1 Download e Storage
+
+- [ ] `lib/pipeline/download-recording.ts` — fetch URL Recall → upload Supabase Storage
+- [ ] Update `meetings.recording_path`
+- [ ] `status = processing`
+
+#### 7.2 Deepgram (`lib/deepgram/transcribe.ts`)
+
+- [ ] API batch ou streaming do arquivo
+- [ ] Options: `language=pt-BR`, `diarize=true`, `punctuate=true`, `utterances=true`
+- [ ] Parse response → array `{ start_ms, end_ms, speaker_label, text }`
+
+#### 7.3 Persist segments
+
+- [ ] Batch insert `transcript_segments` (transaction)
+- [ ] Ordenar por `sequence`
+
+#### 7.4 Pipeline orchestrator
+
+- [ ] `lib/pipeline/process-meeting.ts`:
+  1. Download recording
+  2. Transcribe
+  3. Save segments
+  4. Trigger AI summary (Onda 8)
+- [ ] Invocado from webhook handler após `recording.done`
+- [ ] Retry 3x com backoff on failure
+
+#### 7.5 UI transcrição (parcial — completa na Onda 9)
+
+- [ ] `components/meetings/transcript-view.tsx`
+- [ ] Lista de segments com timestamp mono tabular
+- [ ] Speaker badge
+- [ ] Click timestamp → callback `onSeek(ms)`
+
+#### 7.6 Player
+
+- [ ] `components/meetings/recording-player.tsx`
+- [ ] `<audio>` ou `<video>` com signed URL Supabase Storage
+- [ ] `currentTime` sync com highlight do segment ativo
+
+### Critérios de aceite
+
+- Reunião processada: segments visíveis no DB
+- Player reproduz gravação via signed URL (expira em 15 min)
+- Click em timestamp seek funciona
+
+---
+
+## Onda 8 — IA post-call: resumo e atribuições
+
+**Objetivo:** Extrair valor automaticamente da transcrição.
+
+### Tarefas
+
+#### 8.1 LLM client (`lib/llm/client.ts`)
+
+- [ ] Anthropic Claude ou OpenAI com env `LLM_API_KEY`
+- [ ] `complete({ system, user, schema })` com timeout 60s
+
+#### 8.2 Schema de resumo (Zod)
+
+```typescript
+const MeetingAnalysisSchema = z.object({
+  executive_summary: z.string().max(500),
+  topics: z.array(z.object({
+    title: z.string(),
+    summary: z.string(),
+  })),
+  decisions: z.array(z.string()),
+  action_items: z.array(z.object({
+    title: z.string(),
+    assignee: z.string().nullable(),
+    due_date: z.string().nullable(), // ISO date
+  })),
+});
+```
+
+#### 8.3 Prompt engineering
+
+- [ ] System: "Analise transcrição de reunião em PT-BR. Não invente informações."
+- [ ] User: transcript chunked se > 100k chars (map → merge summaries)
+- [ ] `promptVersion` em metadata para auditoria
+
+#### 8.4 Persist
+
+- [ ] Insert `meeting_summaries`
+- [ ] Insert `action_items` com `source = 'ai'`
+- [ ] `meetings.status = completed`
+
+#### 8.5 Embeddings (prep para Onda 10)
+
+- [ ] `lib/embeddings/generate.ts` — OpenAI `text-embedding-3-small`
+- [ ] Chunk segments (~500 tokens) → insert `transcript_embeddings`
+- [ ] Rodar no mesmo pipeline após summary
+
+### Critérios de aceite
+
+- Reunião com transcript → summary + 2+ action items no DB
+- Resumo em PT-BR coerente com conteúdo real
+- Falha LLM → `status = failed` com mensagem, não corrompe dados
+
+---
+
+## Onda 9 — Detalhe da reunião (UI completa)
+
+**Objetivo:** Página `/reunioes/[id]` com todas as abas funcionais.
+
+### Tarefas
+
+#### 9.1 Layout (`app/(app)/reunioes/[id]/page.tsx`)
+
+- [ ] `PageHeader` — título, data, duração, platform badge, lista participantes
+- [ ] Tabs shadcn: Resumo | Transcrição | Atribuições | Chat
+
+#### 9.2 Aba Resumo
+
+- [ ] `components/meetings/summary-tab.tsx`
+- [ ] Executive summary em card
+- [ ] Lista de tópicos (accordion ou cards)
+- [ ] Lista de decisões (bullet)
+
+#### 9.3 Aba Transcrição
+
+- [ ] Player fixo no topo ou sticky bottom
+- [ ] Transcript scroll com highlight segment ativo
+- [ ] Auto-scroll opcional durante playback
+
+#### 9.4 Aba Atribuições
+
+- [ ] `components/meetings/action-items-tab.tsx`
+- [ ] Lista com checkbox (toggle `done`)
+- [ ] Editar assignee e due_date inline
+- [ ] Adicionar item manual (`source = manual`)
+- [ ] Deletar item
+
+#### 9.5 API mutations
+
+- [ ] `PATCH /api/meetings/[id]/action-items/[itemId]`
+- [ ] `POST /api/meetings/[id]/action-items`
+- [ ] `DELETE /api/meetings/[id]/action-items/[itemId]`
+- [ ] Validar ownership via RLS + double-check user_id
+
+#### 9.6 Empty e loading states
+
+- [ ] Skeleton enquanto `processing`
+- [ ] Mensagem clara para `failed` com `error_message`
+- [ ] `partial` — "Bot removido; transcrição parcial disponível"
+
+### Critérios de aceite
+
+- Todas as abas funcionam com dados reais
+- Edição de action item persiste e reflete no dashboard "attention card"
+- Mobile: tabs scroll horizontal, player responsivo
+
+---
+
+## Onda 10 — Chat com IA (RAG)
+
+**Objetivo:** Perguntar sobre a reunião com respostas citando timestamps.
+
+### Tarefas
+
+#### 10.1 Port UI de case_agi
+
+- [ ] `components/ia/meeting-chat.tsx` — de `consultor-chat.tsx`
+- [ ] `components/ia/message-bubble.tsx` — adaptar (citações)
+- [ ] `components/ia/suggested-prompts.tsx` — prompts ReuniAI
+- [ ] `components/ia/ai-thinking.tsx` — loading state
+
+#### 10.2 Suggested prompts
+
+```typescript
+const MEETING_PROMPTS = [
+  'Quais foram as decisões tomadas?',
+  'Liste todos os action items',
+  'Resuma em 3 bullet points',
+  'Quem falou sobre [tópico]?',
+  'O que ficou pendente?',
+];
+```
+
+#### 10.3 RAG (`lib/rag/meeting-context.ts`)
+
+1. Embed user question
+2. `SELECT segment_id, text, start_ms FROM transcript_embeddings WHERE meeting_id = $1 ORDER BY embedding <=> $2 LIMIT 8`
+3. Incluir `meeting_summaries.executive_summary` sempre no contexto
+4. Prompt com chunks numerados + timestamps
+
+#### 10.4 API (`POST /api/meetings/[id]/chat`)
+
+- [ ] Validar `auth.uid()` owns meeting
+- [ ] Rate limit: 20 req/min/user (in-memory ou Upstash opcional)
+- [ ] Persist `chat_messages` (user + assistant)
+- [ ] Response: `{ content, citations: [{ start_ms, text }] }`
+
+#### 10.5 Citações na UI
+
+- [ ] Chips clicáveis "02:34" abaixo da resposta
+- [ ] Click → seek player (se na aba transcrição) ou toast com texto
+
+### Critérios de aceite
+
+- "Quais action items?" retorna lista coerente com DB
+- Citações apontam timestamps reais
+- Chat não responde sobre outras reuniões (scoped)
+- Histórico de chat persiste ao recarregar página
+
+---
+
+## Onda 11 — Segurança, LGPD e polish
+
+**Objetivo:** MVP production-ready.
+
+### Tarefas
+
+#### 11.1 Delete completo
+
+- [ ] `DELETE /api/meetings/[id]` — segments, summary, action_items, embeddings, chat, Storage file, meeting row
+- [ ] `DELETE /api/account` — todas meetings + calendar_connection + profile + auth.users (service role)
+- [ ] UI confirmação com digitar "DELETAR"
+
+#### 11.2 Retenção automática
+
+- [ ] Cron `/api/cron/retention` — deletar meetings > `profiles.retention_days`
+- [ ] Default 365 dias
+
+#### 11.3 Busca
+
+- [ ] Busca full-text em título + transcript (`ILIKE` ou `tsvector` — simples primeiro)
+- [ ] Input no header ou `/reunioes?q=`
+
+#### 11.4 Export
+
+- [ ] `GET /api/meetings/[id]/export?format=md`
+- [ ] Markdown: título, resumo, action items, transcript completo
+
+#### 11.5 Email digest (opcional MVP)
+
+- [ ] Resend ou Supabase Edge + template HTML
+- [ ] Após `status = completed`, email com resumo + link
+
+#### 11.6 Dark mode
+
+- [ ] Toggle em configurações
+- [ ] `data-theme="dark"` no `<html>`
+- [ ] Tokens dark do design lab
+
+#### 11.7 Testes de isolamento
+
+- [ ] Script ou teste: user A cria meeting, user B GET `/api/meetings/{id}` → 404
+- [ ] Storage: user B não acessa signed URL de user A
+
+#### 11.8 Error monitoring
+
+- [ ] Sentry ou Vercel Analytics (opcional)
+- [ ] Structured logging em webhooks
+
+#### 11.9 Performance
+
+- [ ] Índices: `meetings(user_id, started_at)`, `transcript_segments(meeting_id, sequence)`
+- [ ] Paginação cursor-based na lista de reuniões
+
+### Critérios de aceite
+
+- Checklist LGPD: consentimento, delete, retenção, gravações privadas
+- Build produção sem warnings
+- Lighthouse performance > 80 na dashboard
+
+---
+
+## Ondas futuras — visão geral
+
+As ondas 0–11 entregam o **MVP monetizável**. As ondas 12–19 expandem valor, integrações e escala — **não bloqueiam o launch**. Priorizar por feedback de usuários e custo operacional.
+
+```mermaid
+flowchart LR
+    MVP[Ondas 0-11 MVP] --> F2[Fase 2: 12-15 Produto]
+    F2 --> F3[Fase 3: 16-18 Plataforma]
+    F3 --> F4[Fase 4: 19 Escala]
+```
+
+| Onda | Fase | Tema | Prioridade sugerida |
+|------|------|------|---------------------|
+| 12 | Produto | Descoberta e organização | Alta — retorno imediato após MVP |
+| 13 | Produto | Inteligência proativa | Alta — diferencial vs Fireflies |
+| 14 | Produto | Colaboração e privacidade | Média — antes de share público |
+| 15 | Produto | Qualidade e personalização | Média — polish de IA |
+| 16 | Plataforma | Multi-plataforma enterprise | Média — Outlook/Teams nativo |
+| 17 | Plataforma | Integrações | Média — workflow do usuário |
+| 18 | Plataforma | Monetização e API | Alta — quando houver usuários pagantes |
+| 19 | Escala | Infra própria | Baixa — só com volume/custo |
+
+**Features recomendadas originalmente** (distribuídas nas ondas abaixo):
+
+| Feature | Onda |
+|---------|------|
+| Meeting Prep | 13 |
+| Follow-up draft | 13 |
+| Detecção de compromissos | 13 |
+| Highlight bookmarks | 15 |
+| Talk-time analytics | 15 |
+| PT-BR default + multi-idioma | 15 |
+
+**Quatro features novas recomendadas:**
+
+| Feature | Onda | Por quê |
+|---------|------|---------|
+| Séries de reuniões recorrentes | 12 | Standups semanais são o caso de uso #1; contexto entre ocorrências |
+| Mapeamento persistente de speakers | 15 | Diarização genérica ("Speaker 1") frustra; nomes reais aumentam confiança |
+| Redação de PII no share/export | 14 | LGPD + share seguro sem vazar dados sensíveis falados na call |
+| Templates de análise por tipo de reunião | 15 | Standup ≠ vendas ≠ 1:1; resumos genéricos perdem precisão |
+
+---
+
+## Onda 12 — Descoberta e organização
+
+**Objetivo:** Encontrar e organizar reuniões quando a biblioteca cresce (50+ calls).
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Onda 11 (MVP), embeddings da Onda 8
+
+### Features
+
+#### 12.1 Busca semântica global
+
+- Perguntas em linguagem natural em **todas** as reuniões: "o que decidimos sobre pricing?"
+- `pgvector` cross-meeting: embed query → top segments de qualquer `meeting_id` do usuário
+- UI: barra de busca no header → página `/busca` com resultados agrupados por reunião + snippet + link ao timestamp
+- Fallback full-text (`tsvector`) para título e participantes
+
+#### 12.2 Tags e pastas
+
+- Tabelas: `tags`, `meeting_tags`; pastas opcionais `folders` com `parent_id`
+- UI: multi-select tags na lista; filtro por tag/pasta
+- Auto-tag por IA (opcional): LLM sugere 2–3 tags após processamento
+
+#### 12.3 Séries de reuniões recorrentes *(nova)*
+
+- Agrupar por `calendar_recurring_event_id` do Google Calendar
+- Página `/series/[id]` — timeline de todas as ocorrências
+- Card na dashboard: "Sua série Weekly Sync — 8 reuniões"
+- Chat scoped à série: "o que mudou nas últimas 3 semanas?"
+- Evolução de tópicos: diff automático entre resumos consecutivos
+
+#### 12.4 Filtros avançados na lista
+
+- Por participante (email), plataforma, duração, presença de action items abertos
+- Salvar filtros como "vistas" (`saved_views` jsonb em `profiles`)
+
+### Critérios de aceite
+
+- Busca retorna resultado relevante em < 2s com 100 reuniões seed
+- Série recorrente agrupa 4+ ocorrências automaticamente
+- Tags persistem e filtram corretamente
+
+---
+
+## Onda 13 — Inteligência proativa
+
+**Objetivo:** IA que age **antes e depois** da reunião, não só durante a revisão.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Onda 5 (calendar), Onda 8 (summaries)
+
+### Features
+
+#### 13.1 Meeting Prep
+
+- Cron 5 min antes de `started_at`: se há participantes em comum com reuniões anteriores
+- Gera briefing: decisões pendentes, action items abertos, resumo da última call com o mesmo grupo
+- Entrega: notificação in-app + email opcional + card na home "Próxima: Weekly Sync em 5 min"
+- Link direto ao histórico da série (Onda 12.3)
+
+#### 13.2 Follow-up draft
+
+- Após `status = completed`: LLM gera email de follow-up em PT-BR
+- Estrutura: agradecimento, decisões, action items com responsáveis, próximos passos
+- UI: aba ou modal "Copiar email" + editar antes de enviar (não envia automaticamente no MVP desta onda)
+
+#### 13.3 Detecção de compromissos
+
+- Segunda passada LLM no transcript: frases com compromisso temporal ("mando na sexta", "até amanhã")
+- Sugere `action_items` com `due_date` inferida + badge "Sugerido pela IA"
+- Usuário aceita/rejeita em batch na aba Atribuições
+
+#### 13.4 Digest semanal
+
+- Email resumo: N reuniões, top decisões, action items vencendo, horas gravadas
+- Cron domingo 8h (timezone do usuário em `profiles`)
+
+### Critérios de aceite
+
+- Prep aparece para reunião com histórico de participantes em comum
+- Follow-up coerente com action items do DB
+- Compromisso "envio o relatório na sexta" gera sugestão com data
+
+---
+
+## Onda 14 — Colaboração e privacidade
+
+**Objetivo:** Compartilhar insights com segurança; ampliar alcance sem data leak.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Onda 11 (LGPD base)
+
+### Features
+
+#### 14.1 Share links read-only
+
+- `share_tokens` table: `meeting_id`, `token`, `expires_at`, `scopes` (summary_only | full_transcript)
+- URL pública `/s/[token]` — sem login, layout simplificado sem sidebar
+- Revogar link em configurações da reunião
+
+#### 14.2 Export avançado
+
+- PDF formatado (resumo + action items + transcript paginado)
+- Markdown (já no MVP Onda 11) + JSON estruturado para integrações
+
+#### 14.3 Redação de PII *(nova)*
+
+- Antes de share/export: scan LLM + regex para emails, telefones, CPF/CNPJ, cartões, senhas faladas
+- UI toggle: "Redigir dados sensíveis" (default **on** para share links)
+- Substituir com `[REDACTED]` no texto exportado; gravação original intacta no Storage
+- Log de redações em `export_audit` para compliance
+
+#### 14.4 Comentários internos (leve)
+
+- `meeting_comments` — notas do usuário em timestamp específico
+- Não é colaboração multi-user no SaaS individual; é anotação pessoal na timeline
+
+### Critérios de aceite
+
+- Link expirado retorna 404
+- Export com redação não contém CPF de teste inserido no transcript
+- PDF abre e é legível
+
+---
+
+## Onda 15 — Qualidade da reunião e personalização
+
+**Objetivo:** Transcrição e resumos mais úteis; métricas de eficiência da call.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Onda 7 (segments), Onda 8 (summary)
+
+### Features
+
+#### 15.1 Talk-time analytics
+
+- Agregar `transcript_segments` por `speaker_label`: % tempo de fala, palavras, turnos
+- UI: bar chart na aba Resumo ou card dedicado
+- Útil para coaching, reuniões desbalanceadas, standups
+
+#### 15.2 Highlight bookmarks
+
+- `meeting_highlights`: `meeting_id`, `start_ms`, `end_ms`, `label`, `created_by`
+- UI: botão "Marcar momento" no player + lista de highlights clicáveis
+- Export inclui seção "Momentos marcados"
+
+#### 15.3 Mapeamento persistente de speakers *(nova)*
+
+- UI após primeira reunião: "Speaker 1 → Pedro", "Speaker 2 → Maria"
+- `speaker_mappings`: `user_id`, `participant_email` ou `label_pattern`, `display_name`
+- Pipeline reprocessa labels em segments futuros quando email do participante coincide
+- Heurística: primeiro speaker ≈ host quando metadata do Recall disponível
+
+#### 15.4 Templates de análise por tipo *(nova)*
+
+- `analysis_templates`: standup, vendas, 1:1, retrospectiva, genérico
+- Usuário escolhe template na reunião ou auto-detect por título do calendário ("Daily", "Demo")
+- Cada template: system prompt diferente + schema Zod (ex: standup → blockers + yesterday + today)
+- Settings: template default por série recorrente
+
+#### 15.5 Multi-idioma na transcrição
+
+- Deepgram `detect_language` ou hint por `profiles.locale`
+- PT-BR default; EN, ES como opções
+- Resumo sempre no idioma preferido do usuário
+
+### Critérios de aceite
+
+- Talk-time soma ~100% da duração falada
+- Template standup não gera seção "decisões de pricing"
+- Speaker mapping persiste na segunda reunião com mesmos participantes
+
+---
+
+## Onda 16 — Multi-plataforma enterprise
+
+**Objetivo:** Outlook, Teams nativo, Meet Workspace — para usuários que já gravam na plataforma.
+
+**Estimativa:** 2–3 semanas  
+**Depende de:** Onda 5 (calendar patterns)
+
+### Features
+
+#### 16.1 Outlook Calendar
+
+- Microsoft Graph OAuth + sync paralelo ao Google
+- `calendar_connections.provider = outlook`
+
+#### 16.2 Teams native transcripts
+
+- Graph API: `onlineMeetings/transcripts` quando organizador tem Teams Premium/Enterprise
+- Modo "bring your own recording": webhook quando transcript disponível → ingest sem bot
+- Reduz custo Recall para clientes enterprise
+
+#### 16.3 Google Meet REST artifacts
+
+- Meet API: `conferenceRecords/transcripts` para Workspace com gravação nativa
+- Fallback chain: bot Recall → artifact nativo → falha com mensagem clara
+
+#### 16.4 PWA + notificações push *(nova — 5ª feature extra)*
+
+- `next-pwa` ou manifest manual; service worker para cache de shell
+- Push quando `status = completed` ou Meeting Prep disponível
+- Instalar no celular para revisar reunião no commute
+
+> Nota: a 5ª feature extra (PWA) complementa Meeting Prep e digest — notificações no momento certo.
+
+### Critérios de aceite
+
+- Usuário Outlook vê eventos em `/reunioes`
+- Transcript Teams importado sem bot na call
+- PWA instalável no Chrome mobile
+
+---
+
+## Onda 17 — Integrações e automações
+
+**Objetivo:** ReuniAI no fluxo de trabalho existente do usuário.
+
+**Estimativa:** 2 semanas  
+**Depende de:** Onda 8 (action items), Onda 14 (export)
+
+### Features
+
+#### 17.1 Slack
+
+- Post-meeting digest no canal escolhido (Block Kit: resumo + action items)
+- OAuth Slack; settings por workspace Slack do usuário
+
+#### 17.2 Notion
+
+- Export página Notion: resumo + transcript colapsável + checklist action items
+- OAuth Notion API
+
+#### 17.3 Webhooks outbound
+
+- Usuário registra URL + secret
+- Eventos: `meeting.completed`, `action_item.created`
+- HMAC signature; retry 3x
+
+#### 17.4 Zapier / Make (via webhooks)
+
+- Documentação OpenAPI mínima para triggers
+
+#### 17.5 Comparador de reuniões *(nova — 6ª feature extra)*
+
+- UI side-by-side ou `/compare?a=&b=`
+- LLM gera "o que mudou" entre duas ocorrências da mesma série
+- Diff de action items: resolvidos vs novos
+
+### Critérios de aceite
+
+- Slack recebe mensagem após reunião de teste
+- Webhook entrega payload válido com signature verificável
+
+---
+
+## Onda 18 — Monetização e API
+
+**Objetivo:** SaaS sustentável + ecossistema.
+
+**Estimativa:** 2–3 semanas  
+**Depende de:** Onda 11 (produção estável)
+
+### Features
+
+#### 18.1 Stripe billing
+
+- Tiers: Free (60 min/mês), Pro (500 min), Unlimited
+- Metering: `usage_minutes` agregado por `user_id` mensal
+- Portal Stripe para upgrade/cancel
+- Hard stop ou aviso quando limite atingido (bot não entra)
+
+#### 18.2 API pública REST
+
+- API keys em `api_keys` table com scopes
+- Endpoints: list meetings, get transcript, get summary, search
+- Rate limit por key
+
+#### 18.3 MCP server *(nova — 7ª feature extra)*
+
+- Model Context Protocol para Cursor/Claude Desktop
+- Tools: `search_meetings`, `get_meeting_summary`, `list_action_items`
+- Diferencial forte para devs e power users
+
+#### 18.4 Dark mode
+
+- Se não entregue na Onda 11: tokens dark do design lab + toggle persistente
+
+### Critérios de aceite
+
+- Upgrade Pro via Stripe reflete limite imediatamente
+- API key lista meetings do owner apenas
+- MCP tool retorna resumo de reunião de teste
+
+---
+
+## Onda 19 — Escala e infra própria
+
+**Objetivo:** Reduzir custo por minuto e suportar volume; só quando Recall custo > benefício.
+
+**Estimativa:** 3–6 meses (projeto paralelo)  
+**Depende de:** Onda 18 (receita para justificar)
+
+### Features
+
+#### 19.1 Bots self-hosted
+
+- Zoom Meeting SDK em containers Linux (K8s ou Fly Machines)
+- Pool regional; fila de jobs para join
+- Meet/Teams ainda via Recall ou automação até API estável
+
+#### 19.2 Desktop capture SDK
+
+- Alternativa "sem bot visível" para tier premium
+- Recall Desktop SDK ou captura OS-level
+
+#### 19.3 Multi-workspace / times
+
+- `organizations`, `org_members`, roles (admin, member)
+- RLS por `org_id`; migração SaaS individual → teams
+
+#### 19.4 SSO / SAML
+
+- Enterprise tier; Supabase SSO ou WorkOS
+
+#### 19.5 SOC 2 / auditoria avançada
+
+- Audit log export, retenção legal hold, BAA HIPAA opcional
+
+#### 19.6 BYOS (Bring Your Own Storage)
+
+- Gravações no S3/GCS do cliente; ReuniAI só metadata + transcript
+
+### Critérios de aceite
+
+- Bot self-hosted join Zoom call em staging
+- Org com 2 membros isolados por RLS
+
+---
+
+## Roadmap resumido (todas as features futuras)
+
+| # | Feature | Onda |
+|---|---------|------|
+| 1 | Busca semântica global | 12 |
+| 2 | Tags e pastas | 12 |
+| 3 | Séries de reuniões recorrentes | 12 |
+| 4 | Filtros / vistas salvas | 12 |
+| 5 | Meeting Prep | 13 |
+| 6 | Follow-up draft | 13 |
+| 7 | Detecção de compromissos | 13 |
+| 8 | Digest semanal | 13 |
+| 9 | Share links read-only | 14 |
+| 10 | Export PDF | 14 |
+| 11 | Redação de PII | 14 |
+| 12 | Comentários em timestamp | 14 |
+| 13 | Talk-time analytics | 15 |
+| 14 | Highlight bookmarks | 15 |
+| 15 | Mapeamento de speakers | 15 |
+| 16 | Templates por tipo de reunião | 15 |
+| 17 | Multi-idioma transcrição | 15 |
+| 18 | Outlook Calendar | 16 |
+| 19 | Teams native transcripts | 16 |
+| 20 | Meet Workspace artifacts | 16 |
+| 21 | PWA + push notifications | 16 |
+| 22 | Slack digest | 17 |
+| 23 | Notion export | 17 |
+| 24 | Webhooks outbound | 17 |
+| 25 | Comparador de reuniões | 17 |
+| 26 | Stripe billing | 18 |
+| 27 | API pública | 18 |
+| 28 | MCP server | 18 |
+| 29 | Bots self-hosted | 19 |
+| 30 | Desktop capture | 19 |
+| 31 | Workspaces / times | 19 |
+| 32 | SSO enterprise | 19 |
+
+---
+
+## Variáveis de ambiente
+
+```bash
+# App
+NEXT_PUBLIC_APP_URL=https://reuniai.vercel.app
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Encryption (calendar tokens)
+ENCRYPTION_KEY=                          # 32 bytes hex
+
+# Google Calendar (separado do Supabase Google OAuth)
+GOOGLE_CALENDAR_CLIENT_ID=
+GOOGLE_CALENDAR_CLIENT_SECRET=
+
+# Recall.ai
+RECALL_API_KEY=
+RECALL_WEBHOOK_SECRET=
+
+# Deepgram
+DEEPGRAM_API_KEY=
+
+# LLM (um dos dois)
+ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
+
+# Cron protection
+CRON_SECRET=
+
+# Email (opcional)
+RESEND_API_KEY=
+```
+
+---
+
+## Critérios de aceite do MVP
+
+Fluxo end-to-end que deve funcionar em produção:
+
+1. Usuário cria conta e completa onboarding com consentimento LGPD
+2. Conecta Google Calendar
+3. Reunião com link Meet/Zoom aparece em `/reunioes`
+4. Bot ReuniAI entra na call automaticamente
+5. Após a call: gravação processada, status → `completed`
+6. Usuário abre detalhe: vê resumo, transcrição sincronizada com player
+7. Action items extraídos pela IA; usuário edita e marca como done
+8. Chat: "Quais foram as decisões?" → resposta com citações
+9. Usuário deleta reunião → dados e arquivo removidos
+10. Segundo usuário não acessa dados do primeiro
+
+---
+
+## Convenções de código
+
+- **Server Components** para fetch de dados; Client Components só onde há interação
+- **Zod** em todas as API routes (input + LLM output)
+- **Nunca** importar `lib/supabase/admin.ts` em componentes client
+- **Commits** atômicos por onda ou sub-tarefa
+- **PT-BR** em toda UI; código em inglês
+
+---
+
+## Diagrama de dependências de API externas
+
+```mermaid
+flowchart TB
+    User[Usuário] --> Next[Next.js App]
+    Next --> SupaAuth[Supabase Auth]
+    Next --> SupaDB[Supabase Postgres]
+    Next --> SupaStorage[Supabase Storage]
+    Next --> GoogleCal[Google Calendar API]
+    Next --> Recall[Recall.ai API]
+    Recall -->|webhook| Next
+    Next --> Deepgram[Deepgram API]
+    Next --> LLM[Claude/GPT API]
+```
+
+---
+
+*Documento vivo — atualizar checkboxes e datas conforme progresso.*
