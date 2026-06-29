@@ -6,6 +6,8 @@ import { BotActions } from "@/components/meetings/bot-actions";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
 import { MeetingReview } from "@/components/meetings/meeting-review";
+import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
+import { ShareLinkDialog } from "@/components/meetings/share-link-dialog";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
@@ -20,6 +22,9 @@ import {
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getFollowUpForMeeting } from "@/lib/meetings/follow-up";
+import { getTagsForMeeting } from "@/lib/tags/queries";
 import type { Meeting } from "@/lib/supabase/types";
 
 export default async function MeetingDetailPage({
@@ -41,11 +46,13 @@ export default async function MeetingDetailPage({
 
   if (!meeting) notFound();
 
-  const [segments, summary, actionItems, chatMessages] = await Promise.all([
+  const [segments, summary, actionItems, chatMessages, tags, followUp] = await Promise.all([
     getTranscriptSegments(supabase, meeting.id),
     getMeetingSummary(supabase, meeting.id),
     getActionItems(supabase, meeting.id),
     getChatMessages(supabase, meeting.id),
+    getTagsForMeeting(supabase, meeting.id),
+    getFollowUpForMeeting(createAdminClient(), meeting.id),
   ]);
 
   const chatUiMessages = chatMessages.map((m) => ({
@@ -74,6 +81,7 @@ export default async function MeetingDetailPage({
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <BotActions meetingId={meeting.id} status={meeting.status} />
+            <ShareLinkDialog meetingId={meeting.id} />
             <ExportMeetingButton meetingId={meeting.id} />
             <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
             <TranscriptSyncButton meetingId={meeting.id} />
@@ -96,6 +104,10 @@ export default async function MeetingDetailPage({
         )}
       </div>
 
+      <div className="mb-6">
+        <MeetingTagsEditor meetingId={meeting.id} initialTags={tags} />
+      </div>
+
       <MeetingReview
         meeting={meeting}
         hasRecording={meetingHasRecording(meeting)}
@@ -105,6 +117,7 @@ export default async function MeetingDetailPage({
         chatMessages={chatUiMessages}
         llmEnabled={isLlmConfigured()}
         initialSeekMs={Number.isFinite(initialSeekMs) ? initialSeekMs : undefined}
+        followUp={followUp}
       />
     </div>
   );
