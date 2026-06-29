@@ -44,6 +44,7 @@ export type NotificationPrefs = {
   push: boolean;
   prep: boolean;
   completed: boolean;
+  digest: boolean;
 };
 
 export type AppNotification = {
