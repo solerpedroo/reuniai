@@ -16,7 +16,7 @@ import { formatDuration, formatMeetingDate, getMeetingDurationMs } from "@/lib/m
 
 export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle>Reuniões recentes</CardTitle>
@@ -48,9 +48,12 @@ export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
             </TableHeader>
             <TableBody>
               {meetings.map((meeting) => (
-                <TableRow key={meeting.id} className="group cursor-pointer">
+                <TableRow key={meeting.id} className="group cursor-pointer transition-colors hover:bg-brand/5">
                   <TableCell className="font-medium">
-                    <Link href={`/reunioes/${meeting.id}`} className="block truncate hover:underline">
+                    <Link
+                      href={`/reunioes/${meeting.id}`}
+                      className="block truncate transition-colors group-hover:text-brand"
+                    >
                       {meeting.title}
                     </Link>
                   </TableCell>

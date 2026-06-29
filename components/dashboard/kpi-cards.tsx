@@ -54,7 +54,7 @@ export function KpiCards({ stats }: { stats: DashboardStats }) {
       {kpis.map((kpi) => {
         const Glyph = kpi.icon;
         return (
-          <Card key={kpi.label} className="shadow-sm">
+          <Card key={kpi.label} className="hover-lift">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardDescription>{kpi.label}</CardDescription>

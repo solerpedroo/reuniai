@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
 
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader className="space-y-4">
         <ReuniaiLogo />
         <div>

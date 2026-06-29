@@ -72,7 +72,7 @@ export default async function ConfiguracoesPage({
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Conta</CardTitle>
             <CardDescription>E-mail da sessão atual</CardDescription>
@@ -83,7 +83,7 @@ export default async function ConfiguracoesPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Google Calendar</CardTitle>
             <CardDescription>Conectar calendário para sync automático</CardDescription>
@@ -97,7 +97,7 @@ export default async function ConfiguracoesPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Auto-join do bot</CardTitle>
             <CardDescription>ReuniAI entra automaticamente nas calls agendadas</CardDescription>
@@ -107,7 +107,7 @@ export default async function ConfiguracoesPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Privacidade e dados</CardTitle>
             <CardDescription>Retenção automática e aparência</CardDescription>

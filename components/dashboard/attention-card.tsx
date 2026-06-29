@@ -13,7 +13,7 @@ export function AttentionCard({
   meetingTitleById: Map<string, string>;
 }) {
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Warning size={18} className="text-amber-500" aria-hidden />

@@ -75,7 +75,7 @@ export function OnboardingFlow() {
   const current = STEPS[step];
 
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader className="space-y-4">
         <ReuniaiLogo />
         <div>
