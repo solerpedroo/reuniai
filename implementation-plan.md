@@ -14,7 +14,7 @@
 | 0 | Bootstrap do projeto | ✅ Concluída |
 | 1 | Design system e shell UI | ✅ Concluída |
 | 2 | Supabase: schema, RLS e Storage | ✅ Concluída |
-| 3 | Autenticação e onboarding | ⏳ Pendente |
+| 3 | Autenticação e onboarding | ✅ Concluída |
 | 4 | Dashboard e lista de reuniões | ⏳ Pendente |
 | 5 | Google Calendar e sync | ⏳ Pendente |
 | 6 | Recall.ai: bot nas reuniões | ⏳ Pendente |
@@ -284,32 +284,26 @@ CREATE TYPE calendar_provider AS ENUM ('google', 'outlook');
 
 #### 3.1 Auth pages (`app/(auth)/`)
 
-- [ ] `/login` — email + senha + Google OAuth
-- [ ] `/signup` — email + senha + confirmação
-- [ ] `/auth/callback` — route handler Supabase OAuth
-- [ ] Redirect: não autenticado → `/login`; autenticado em `/login` → `/`
+- [x] `/login` — email + senha + Google OAuth
+- [x] `/signup` — email + senha + confirmação
+- [x] `/auth/callback` — route handler Supabase OAuth
+- [x] Redirect: não autenticado → `/login`; autenticado em `/login` → `/`
 
 #### 3.2 Middleware
 
-- [ ] Proteger rotas `(app)/*` exceto auth e webhooks
-- [ ] Refresh session em cada request
+- [x] Proteger rotas `(app)/*` exceto auth e webhooks
+- [x] Refresh session em cada request
 
-#### 3.3 Onboarding (`app/(app)/onboarding/`)
+#### 3.3 Onboarding (`app/(onboarding)/onboarding/`)
 
-Fluxo em steps (cards shadcn):
-
-1. **Boas-vindas** — o que ReuniAI faz
-2. **Consentimento LGPD** — checkbox obrigatório (gravação de voz, termos)
-3. **Auto-join** — toggle `auto_join_enabled` default on
-4. **Conectar calendário** — CTA (implementação real na Onda 5; aqui pode ser skip com flag)
-
-- [ ] Ao completar: `profiles.onboarding_completed = true`
+- [x] Fluxo em steps (boas-vindas, LGPD, auto-join, calendário skip)
+- [x] Ao completar: `profiles.onboarding_completed = true`
 
 #### 3.4 Settings base
 
-- [ ] `/configuracoes` layout com cards placeholder
-- [ ] Botão logout
-- [ ] Link deletar conta (stub até Onda 11)
+- [x] `/configuracoes` com e-mail e auto-join
+- [x] Botão logout
+- [x] Link deletar conta (stub até Onda 11)
 
 ### Critérios de aceite
 
