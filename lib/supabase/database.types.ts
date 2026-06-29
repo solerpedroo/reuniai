@@ -19,6 +19,7 @@ export type Database = {
           timezone: string;
           notification_prefs: Json;
           saved_views: Json;
+          last_weekly_digest_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -31,6 +32,7 @@ export type Database = {
           timezone?: string;
           notification_prefs?: Json;
           saved_views?: Json;
+          last_weekly_digest_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -43,6 +45,7 @@ export type Database = {
           timezone?: string;
           notification_prefs?: Json;
           saved_views?: Json;
+          last_weekly_digest_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -576,7 +579,7 @@ export type Database = {
         | "failed"
         | "cancelled"
         | "partial";
-      action_item_status: "open" | "done" | "cancelled";
+      action_item_status: "open" | "done" | "cancelled" | "suggested";
       action_item_source: "ai" | "manual";
       calendar_provider: "google" | "outlook";
       chat_message_role: "user" | "assistant";

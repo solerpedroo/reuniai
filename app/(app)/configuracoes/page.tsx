@@ -38,6 +38,7 @@ export default async function ConfiguracoesPage({
     push: false,
     prep: true,
     completed: true,
+    digest: true,
   };
 
   if (user) {

@@ -4,17 +4,23 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import { generateMeetingPrep } from "@/lib/llm/meeting-prep";
 import { isLlmConfigured } from "@/lib/llm/client";
 import { createNotification } from "@/lib/notifications/create";
+import { sendMeetingPrepEmail } from "@/lib/email/meeting-prep";
+import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { MeetingPrepCard } from "@/lib/workflow/types";
 import type { ActionItem, Meeting, MeetingSummary } from "@/lib/supabase/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-const PREP_WINDOW_MINUTES = 10;
+const PREP_WINDOW_MINUTES = 5;
 
 export async function getActivePrepCard(
   admin: AdminClient,
   userId: string
-): Promise<(MeetingPrepCard & { meeting: Pick<Meeting, "id" | "title" | "started_at"> }) | null> {
+): Promise<
+  (MeetingPrepCard & {
+    meeting: Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">;
+  }) | null
+> {
   const now = new Date().toISOString();
 
   const { data: prep, error } = await admin
@@ -32,9 +38,11 @@ export async function getActivePrepCard(
   const card = prep as MeetingPrepCard;
   const { data: meeting } = await admin
     .from("meetings")
-    .select("id, title, started_at")
+    .select("id, title, started_at, calendar_recurring_event_id")
     .eq("id", card.meeting_id)
-    .maybeSingle<Pick<Meeting, "id" | "title" | "started_at">>();
+    .maybeSingle<
+      Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">
+    >();
 
   if (!meeting) return null;
 
@@ -59,7 +67,7 @@ async function findRelatedMeeting(
 
   const { data: pastMeetings } = await admin
     .from("meetings")
-    .select("id, title, started_at, status")
+    .select("id, title, started_at, status, calendar_recurring_event_id")
     .eq("user_id", userId)
     .neq("id", upcomingMeetingId)
     .in("status", ["completed", "partial"])
@@ -123,11 +131,12 @@ export async function generatePrepForMeeting(
     .filter((e): e is string => Boolean(e));
 
   const related = await findRelatedMeeting(admin, meeting.user_id, meetingId, participantEmails);
+  if (!related) return null;
 
   const { data: openItems } = await admin
     .from("action_items")
     .select("title, assignee")
-    .eq("user_id", meeting.user_id)
+    .eq("meeting_id", related.meeting.id)
     .eq("status", "open")
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(8);
@@ -135,8 +144,8 @@ export async function generatePrepForMeeting(
   const prep = await generateMeetingPrep({
     upcomingTitle: meeting.title,
     upcomingStartsAt: meeting.started_at,
-    relatedMeetingTitle: related?.meeting.title,
-    relatedSummary: related?.summary?.executive_summary,
+    relatedMeetingTitle: related.meeting.title,
+    relatedSummary: related.summary?.executive_summary,
     openActionItems: (openItems ?? []) as Pick<ActionItem, "title" | "assignee">[],
     participantOverlap: ((participants ?? []) as { name: string }[]).map((p) => p.name),
   });
@@ -150,7 +159,7 @@ export async function generatePrepForMeeting(
         meeting_id: meetingId,
         user_id: meeting.user_id,
         briefing: prep.briefing,
-        related_meeting_id: related?.meeting.id ?? null,
+        related_meeting_id: related.meeting.id,
         expires_at: expiresAt,
       },
       { onConflict: "meeting_id" }
@@ -160,12 +169,24 @@ export async function generatePrepForMeeting(
 
   if (error) throw error;
 
-  await createNotification(admin, {
-    userId: meeting.user_id,
-    title: "Prep disponível",
-    body: `Briefing pronto para "${meeting.title}".`,
-    href: `/reunioes/${meetingId}`,
-  });
+  const prefs = await getUserNotificationPrefs(admin, meeting.user_id);
+
+  if (prefs.prep) {
+    await createNotification(admin, {
+      userId: meeting.user_id,
+      title: "Prep disponível",
+      body: `Briefing pronto para "${meeting.title}".`,
+      href: `/reunioes/${meetingId}`,
+    });
+  }
+
+  if (prefs.prep && prefs.email) {
+    try {
+      await sendMeetingPrepEmail(admin, meetingId, prep.briefing, related.meeting.id);
+    } catch (err) {
+      console.error("Falha ao enviar email de prep (não bloqueante):", err);
+    }
+  }
 
   return data as MeetingPrepCard;
 }

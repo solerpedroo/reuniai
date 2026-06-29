@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/profile/notification-prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ const PatchSchema = z.object({
       push: z.boolean().optional(),
       prep: z.boolean().optional(),
       completed: z.boolean().optional(),
+      digest: z.boolean().optional(),
     })
     .optional(),
   timezone: z.string().optional(),
@@ -57,12 +59,7 @@ export async function PATCH(request: NextRequest) {
       .maybeSingle();
 
     const current = (profile as { notification_prefs?: NotificationPrefs } | null)
-      ?.notification_prefs ?? {
-      email: false,
-      push: false,
-      prep: true,
-      completed: true,
-    };
+      ?.notification_prefs ?? DEFAULT_NOTIFICATION_PREFS;
 
     updates.notification_prefs = { ...current, ...parsed.data.notification_prefs };
   }
