@@ -13,7 +13,7 @@
 |------|------|--------|
 | 0 | Bootstrap do projeto | ✅ Concluída |
 | 1 | Design system e shell UI | ✅ Concluída |
-| 2 | Supabase: schema, RLS e Storage | ⏳ Pendente |
+| 2 | Supabase: schema, RLS e Storage | ✅ Concluída |
 | 3 | Autenticação e onboarding | ⏳ Pendente |
 | 4 | Dashboard e lista de reuniões | ⏳ Pendente |
 | 5 | Google Calendar e sync | ⏳ Pendente |
@@ -215,9 +215,9 @@ reuniai/
 
 #### 2.1 Projeto Supabase
 
-- [ ] Criar projeto Supabase (região próxima — ex: South America se disponível)
-- [ ] Habilitar extensão `vector` (pgvector)
-- [ ] Configurar `supabase/config.toml` para CLI local (opcional)
+- [x] Criar projeto Supabase (região próxima — ex: South America se disponível)
+- [x] Habilitar extensão `vector` (pgvector)
+- [x] Configurar `supabase/config.toml` para CLI local (opcional)
 
 #### 2.2 Migration: enums e tabelas
 
@@ -249,24 +249,24 @@ CREATE TYPE calendar_provider AS ENUM ('google', 'outlook');
 
 #### 2.3 RLS policies
 
-- [ ] `profiles`: user só acessa `id = auth.uid()`
-- [ ] Todas as tabelas com `user_id`: policy `auth.uid() = user_id`
-- [ ] `participants`, `transcript_segments`, etc.: via join `meetings.user_id = auth.uid()`
-- [ ] Trigger `on_auth_user_created` → insert `profiles`
+- [x] `profiles`: user só acessa `id = auth.uid()`
+- [x] Todas as tabelas com `user_id`: policy `auth.uid() = user_id`
+- [x] `participants`, `transcript_segments`, etc.: via join `meetings.user_id = auth.uid()`
+- [x] Trigger `on_auth_user_created` → insert `profiles`
 
 #### 2.4 Storage
 
-- [ ] Bucket `recordings` — **private**
-- [ ] Policy SELECT/INSERT/DELETE: `(storage.foldername(name))[1] = auth.uid()::text`
-- [ ] Path convention: `{user_id}/{meeting_id}/recording.mp4`
+- [x] Bucket `recordings` — **private**
+- [x] Policy SELECT/INSERT/DELETE: `(storage.foldername(name))[1] = auth.uid()::text`
+- [x] Path convention: `{user_id}/{meeting_id}/recording.mp4`
 
 #### 2.5 Client Supabase
 
-- [ ] `lib/supabase/client.ts` — browser client
-- [ ] `lib/supabase/server.ts` — server component / route handler
-- [ ] `lib/supabase/middleware.ts` — session refresh
-- [ ] `lib/supabase/admin.ts` — service role (só importar em `app/api/`)
-- [ ] `npm run gen:types` → `lib/supabase/database.types.ts`
+- [x] `lib/supabase/client.ts` — browser client
+- [x] `lib/supabase/server.ts` — server component / route handler
+- [x] `lib/supabase/middleware.ts` — session refresh
+- [x] `lib/supabase/admin.ts` — service role (só importar em `app/api/`)
+- [x] `npm run gen:types` → `lib/supabase/database.types.ts`
 
 ### Critérios de aceite
 
