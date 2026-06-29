@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PageHeader } from "@/components/layout/page-header";
 import { MeetingActionsMenu } from "@/components/meetings/meeting-actions-menu";
 import { MeetingLiveBanner } from "@/components/meetings/meeting-live-banner";
@@ -8,7 +7,6 @@ import { MeetingTabs } from "@/components/meetings/meeting-tabs";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { SummaryView } from "@/components/meetings/summary-view";
-import { TranscriptView } from "@/components/meetings/transcript-view";
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
 import { getTranscriptSegments } from "@/lib/meetings/transcript";
@@ -53,13 +51,12 @@ export default async function MeetingDetailPage({
 
   return (
     <div>
-      <Link
-        href="/reunioes"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft size={14} />
-        Voltar para reuniões
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: "Reuniões", href: "/reunioes" },
+          { label: meeting.title },
+        ]}
+      />
 
       <PageHeader
         title={meeting.title}
@@ -94,7 +91,7 @@ export default async function MeetingDetailPage({
       <MeetingTabs
         meetingId={meeting.id}
         summary={<SummaryView summary={summary} />}
-        transcript={<TranscriptView segments={segments} />}
+        segments={segments}
         actionItems={actionItems}
         chatMessages={chatUiMessages}
         llmEnabled={isLlmConfigured()}
