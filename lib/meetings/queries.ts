@@ -18,15 +18,133 @@ export type DashboardData = {
   attentionItems: ActionItem[];
 };
 
+export type MeetingsCursor = {
+  startedAt: string;
+  id: string;
+};
+
+export type MeetingsPage = {
+  meetings: Meeting[];
+  nextCursor: MeetingsCursor | null;
+};
+
+function dedupeMeetings(meetings: Meeting[]): Meeting[] {
+  const seen = new Set<string>();
+  return meetings.filter((meeting) => {
+    if (seen.has(meeting.id)) return false;
+    seen.add(meeting.id);
+    return true;
+  });
+}
+
+function sortMeetingsDesc(meetings: Meeting[]): Meeting[] {
+  return [...meetings].sort((a, b) => {
+    const dateDiff = new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return b.id.localeCompare(a.id);
+  });
+}
+
 export async function getMeetingsForUser(supabase: Client, limit = 50): Promise<Meeting[]> {
-  const { data, error } = await supabase
+  const page = await getMeetingsForUserPaginated(supabase, { limit });
+  return page.meetings;
+}
+
+export async function getMeetingsForUserPaginated(
+  supabase: Client,
+  options: { limit?: number; cursor?: MeetingsCursor } = {}
+): Promise<MeetingsPage> {
+  const limit = options.limit ?? 50;
+
+  let query = supabase
     .from("meetings")
     .select("*")
     .order("started_at", { ascending: false })
-    .limit(limit);
+    .order("id", { ascending: false })
+    .limit(limit + 1);
 
+  if (options.cursor) {
+    const { startedAt, id } = options.cursor;
+    query = query.or(`started_at.lt.${startedAt},and(started_at.eq.${startedAt},id.lt.${id})`);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+
+  const rows = (data ?? []) as Meeting[];
+  const hasMore = rows.length > limit;
+  const meetings = hasMore ? rows.slice(0, limit) : rows;
+  const last = meetings.at(-1);
+
+  return {
+    meetings,
+    nextCursor:
+      hasMore && last
+        ? { startedAt: last.started_at, id: last.id }
+        : null,
+  };
+}
+
+export async function searchMeetings(
+  supabase: Client,
+  term: string,
+  options: { limit?: number; cursor?: MeetingsCursor } = {}
+): Promise<MeetingsPage> {
+  const query = term.trim();
+  if (!query) {
+    return getMeetingsForUserPaginated(supabase, options);
+  }
+
+  const limit = options.limit ?? 50;
+  const pattern = `%${query}%`;
+
+  const [titleRes, segmentRes] = await Promise.all([
+    supabase.from("meetings").select("*").ilike("title", pattern),
+    supabase.from("transcript_segments").select("meeting_id").ilike("text", pattern),
+  ]);
+
+  if (titleRes.error) throw titleRes.error;
+  if (segmentRes.error) throw segmentRes.error;
+
+  const segmentIds = [
+    ...new Set(
+      ((segmentRes.data ?? []) as { meeting_id: string }[]).map((row) => row.meeting_id)
+    ),
+  ];
+
+  let segmentMeetings: Meeting[] = [];
+  if (segmentIds.length > 0) {
+    const { data, error } = await supabase.from("meetings").select("*").in("id", segmentIds);
+    if (error) throw error;
+    segmentMeetings = (data ?? []) as Meeting[];
+  }
+
+  let merged = sortMeetingsDesc(
+    dedupeMeetings([...((titleRes.data ?? []) as Meeting[]), ...segmentMeetings])
+  );
+
+  if (options.cursor) {
+    const { startedAt, id } = options.cursor;
+    merged = merged.filter((meeting) => {
+      const meetingTime = new Date(meeting.started_at).getTime();
+      const cursorTime = new Date(startedAt).getTime();
+      if (meetingTime < cursorTime) return true;
+      if (meetingTime > cursorTime) return false;
+      return meeting.id < id;
+    });
+  }
+
+  const hasMore = merged.length > limit;
+  const meetings = hasMore ? merged.slice(0, limit) : merged;
+  const last = meetings.at(-1);
+
+  return {
+    meetings,
+    nextCursor:
+      hasMore && last
+        ? { startedAt: last.started_at, id: last.id }
+        : null,
+  };
 }
 
 export async function getMeetingById(supabase: Client, id: string): Promise<Meeting | null> {

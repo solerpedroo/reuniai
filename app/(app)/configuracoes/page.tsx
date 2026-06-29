@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnection } from "@/components/settings/calendar-connection";
+import { RetentionSettings } from "@/components/settings/retention-settings";
+import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -28,16 +30,19 @@ export default async function ConfiguracoesPage({
   } = await supabase.auth.getUser();
 
   let autoJoin = true;
+  let retentionDays = 365;
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("auto_join_enabled")
+      .select("auto_join_enabled, retention_days")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile) {
-      autoJoin = (profile as Pick<Profile, "auto_join_enabled">).auto_join_enabled;
+      const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days">;
+      autoJoin = typed.auto_join_enabled;
+      retentionDays = typed.retention_days;
     }
   }
 
@@ -99,6 +104,17 @@ export default async function ConfiguracoesPage({
           </CardHeader>
           <CardContent>
             <AutoJoinToggle initialEnabled={autoJoin} />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Privacidade e dados</CardTitle>
+            <CardDescription>Retenção automática e aparência</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <RetentionSettings initialDays={retentionDays} />
+            <ThemeToggle />
           </CardContent>
         </Card>
       </div>

@@ -22,7 +22,7 @@
 | 8 | IA post-call: resumo e atribuições | ✅ Concluída |
 | 9 | Detalhe da reunião (UI completa) | ✅ Concluída |
 | 10 | Chat com IA (RAG) | ✅ Concluída |
-| 11 | Segurança, LGPD e polish | ⏳ Pendente |
+| 11 | Segurança, LGPD e polish | ✅ Concluída |
 | 12–19 | Ondas futuras (post-MVP) | 📋 Planejadas |
 
 ---
@@ -713,24 +713,24 @@ Mapeamento `meeting.status_change`:
 
 #### 11.1 Delete completo
 
-- [ ] `DELETE /api/meetings/[id]` — segments, summary, action_items, embeddings, chat, Storage file, meeting row
-- [ ] `DELETE /api/account` — todas meetings + calendar_connection + profile + auth.users (service role)
-- [ ] UI confirmação com digitar "DELETAR"
+- [x] `DELETE /api/meetings/[id]` — segments, summary, action_items, embeddings, chat, Storage file, meeting row
+- [x] `DELETE /api/account` — todas meetings + calendar_connection + profile + auth.users (service role)
+- [x] UI confirmação com digitar "DELETAR"
 
 #### 11.2 Retenção automática
 
-- [ ] Cron `/api/cron/retention` — deletar meetings > `profiles.retention_days`
-- [ ] Default 365 dias
+- [x] Cron `/api/cron/retention` — deletar meetings > `profiles.retention_days`
+- [x] Default 365 dias
 
 #### 11.3 Busca
 
-- [ ] Busca full-text em título + transcript (`ILIKE` ou `tsvector` — simples primeiro)
-- [ ] Input no header ou `/reunioes?q=`
+- [x] Busca full-text em título + transcript (`ILIKE` ou `tsvector` — simples primeiro)
+- [x] Input no header ou `/reunioes?q=`
 
 #### 11.4 Export
 
-- [ ] `GET /api/meetings/[id]/export?format=md`
-- [ ] Markdown: título, resumo, action items, transcript completo
+- [x] `GET /api/meetings/[id]/export?format=md`
+- [x] Markdown: título, resumo, action items, transcript completo
 
 #### 11.5 Email digest (opcional MVP)
 
@@ -739,24 +739,24 @@ Mapeamento `meeting.status_change`:
 
 #### 11.6 Dark mode
 
-- [ ] Toggle em configurações
-- [ ] `data-theme="dark"` no `<html>`
-- [ ] Tokens dark do design lab
+- [x] Toggle em configurações
+- [x] `data-theme="dark"` no `<html>`
+- [x] Tokens dark do design lab
 
 #### 11.7 Testes de isolamento
 
-- [ ] Script ou teste: user A cria meeting, user B GET `/api/meetings/{id}` → 404
-- [ ] Storage: user B não acessa signed URL de user A
+- [x] Script ou teste: user A cria meeting, user B GET `/api/meetings/{id}` → 404
+- [x] Storage: user B não acessa signed URL de user A (ver `supabase/tests/rls_isolation_notes.sql`)
 
 #### 11.8 Error monitoring
 
+- [x] Structured logging em webhooks
 - [ ] Sentry ou Vercel Analytics (opcional)
-- [ ] Structured logging em webhooks
 
 #### 11.9 Performance
 
-- [ ] Índices: `meetings(user_id, started_at)`, `transcript_segments(meeting_id, sequence)`
-- [ ] Paginação cursor-based na lista de reuniões
+- [x] Índices: `meetings(user_id, started_at)`, `transcript_segments(meeting_id, sequence)`
+- [x] Paginação cursor-based na lista de reuniões
 
 ### Critérios de aceite
 

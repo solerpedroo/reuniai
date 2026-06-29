@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { logStructured } from "@/lib/logging/structured";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
   if (secret) {
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${secret}`) {
+      logStructured("warn", "vexa.webhook.unauthorized");
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
   }
@@ -39,13 +41,21 @@ export async function POST(request: NextRequest) {
   try {
     payload = await request.json();
   } catch {
+    logStructured("warn", "vexa.webhook.invalid_json");
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
   const nativeMeetingId = payload.meeting?.native_meeting_id;
   if (!nativeMeetingId) {
+    logStructured("info", "vexa.webhook.ignored", { reason: "sem native_meeting_id" });
     return NextResponse.json({ ok: true, ignored: "sem native_meeting_id" });
   }
+
+  logStructured("info", "vexa.webhook.received", {
+    eventType: payload.event_type,
+    nativeMeetingId,
+    status: payload.status_change?.to ?? payload.meeting?.status,
+  });
 
   const admin = createAdminClient();
 
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
     .insert({ provider: "vexa", event_id: eventId, payload: payload as never });
 
   if (insertError) {
-    // Violação de unicidade = evento repetido; responder 200 para não gerar retries.
+    logStructured("info", "vexa.webhook.duplicate", { eventId });
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
@@ -88,7 +98,11 @@ export async function POST(request: NextRequest) {
       try {
         await processMeetingByNativeId(admin, platform, nativeMeetingId);
       } catch (err) {
-        console.error("Falha ao processar reunião (webhook):", err);
+        logStructured("error", "vexa.webhook.process_failed", {
+          nativeMeetingId,
+          platform,
+          message: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   }
@@ -98,6 +112,8 @@ export async function POST(request: NextRequest) {
     .update({ processed_at: new Date().toISOString() })
     .eq("provider", "vexa")
     .eq("event_id", eventId);
+
+  logStructured("info", "vexa.webhook.processed", { eventId, nativeMeetingId });
 
   return NextResponse.json({ ok: true });
 }
