@@ -135,7 +135,23 @@ export function NotificationSettings({
           {prefs.push ? (
             <Switch
               checked
-              onCheckedChange={() => void savePrefs({ ...prefs, push: false })}
+              onCheckedChange={async () => {
+                try {
+                  const registration = await navigator.serviceWorker.ready;
+                  const subscription = await registration.pushManager.getSubscription();
+                  if (subscription) {
+                    await fetch("/api/notifications/subscribe", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ endpoint: subscription.endpoint }),
+                    });
+                    await subscription.unsubscribe();
+                  }
+                } catch {
+                  // best effort
+                }
+                await savePrefs({ ...prefs, push: false });
+              }}
             />
           ) : (
             <Button size="sm" variant="outline" onClick={enablePush} disabled={pushLoading}>

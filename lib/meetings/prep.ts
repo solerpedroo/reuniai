@@ -177,6 +177,7 @@ export async function generatePrepForMeeting(
       title: "Prep disponível",
       body: `Briefing pronto para "${meeting.title}".`,
       href: `/reunioes/${meetingId}`,
+      kind: "prep",
     });
   }
 

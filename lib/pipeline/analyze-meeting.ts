@@ -115,6 +115,7 @@ export async function analyzeMeetingById(
         title: "Reunião processada",
         body: `O resumo e follow-up de "${meeting.title}" estão prontos.`,
         href: `/reunioes/${meetingId}?tab=followup`,
+        kind: "completed",
       });
       await sendMeetingCompletedEmail(admin, meetingId);
       await suggestAndApplyTags(admin, meetingId);
