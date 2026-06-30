@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getBotAvatarUrl, getBotScreenUrl } from "@/lib/brand/config";
+import { getBotAvatarUrlCandidates, getBotScreenUrlCandidates } from "@/lib/brand/bot-image-urls";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { listVexaMeetings, setBotAvatar, setBotScreen } from "@/lib/vexa/client";
 
@@ -92,21 +92,37 @@ export type ApplyBotBrandingResult = {
   errors: string[];
 };
 
+/** Tenta cada URL em ordem até achar uma acessível publicamente. */
+async function resolveReachableUrl(
+  candidates: string[],
+  label: string
+): Promise<{ url: string | null; errors: string[] }> {
+  const errors: string[] = [];
+  for (const url of candidates) {
+    if (await isAssetReachable(url)) return { url, errors };
+    errors.push(`${label} inacessível: ${url}`);
+  }
+  return { url: null, errors };
+}
+
 async function applyAvatarBranding(
   platform: BotPlatform,
   nativeMeetingId: string,
-  avatarUrl: string,
+  avatarCandidates: string[],
   maxAttempts = AVATAR_ATTEMPTS
 ): Promise<{ ok: boolean; errors: string[] }> {
   const errors: string[] = [];
-  const reachable = await isAssetReachable(avatarUrl);
-  if (!reachable) {
+  const resolved = await resolveReachableUrl(avatarCandidates, "Imagem da câmera");
+  errors.push(...resolved.errors);
+
+  if (!resolved.url) {
     errors.push(
-      `Imagem da câmera inacessível (${avatarUrl}). Verifique NEXT_PUBLIC_APP_URL ou BOT_AVATAR_URL.`
+      "Nenhuma URL de câmera acessível. Rode npm run brand:upload ou defina BOT_AVATAR_URL."
     );
     return { ok: false, errors };
   }
 
+  const avatarUrl = resolved.url;
   const imageBase64 = await fetchImageAsBase64(avatarUrl);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -129,14 +145,18 @@ async function applyAvatarBranding(
 async function applyScreenBranding(
   platform: BotPlatform,
   nativeMeetingId: string,
-  screenUrl: string
+  screenCandidates: string[]
 ): Promise<{ ok: boolean; errors: string[] }> {
   const errors: string[] = [];
-  const reachable = await isAssetReachable(screenUrl);
-  if (!reachable) {
-    errors.push(`Imagem de tela inacessível (${screenUrl}).`);
+  const resolved = await resolveReachableUrl(screenCandidates, "Imagem de tela");
+  errors.push(...resolved.errors);
+
+  if (!resolved.url) {
+    errors.push("Nenhuma URL de tela acessível. Rode npm run brand:upload ou defina BOT_SCREEN_URL.");
     return { ok: false, errors };
   }
+
+  const screenUrl = resolved.url;
 
   for (let attempt = 0; attempt < SCREEN_ATTEMPTS; attempt += 1) {
     try {
@@ -166,8 +186,8 @@ export async function applyBotBranding(
   nativeMeetingId: string,
   options: ApplyBotBrandingOptions = {}
 ): Promise<ApplyBotBrandingResult> {
-  const avatarUrl = getBotAvatarUrl();
-  const screenUrl = getBotScreenUrl();
+  const avatarCandidates = getBotAvatarUrlCandidates();
+  const screenCandidates = getBotScreenUrlCandidates();
   const errors: string[] = [];
   let avatar = false;
   let screen = false;
@@ -183,7 +203,7 @@ export async function applyBotBranding(
   }
 
   if (platform === "teams") {
-    const screenResult = await applyScreenBranding(platform, nativeMeetingId, screenUrl);
+    const screenResult = await applyScreenBranding(platform, nativeMeetingId, screenCandidates);
     screen = screenResult.ok;
     errors.push(...screenResult.errors);
     return { avatar, screen, errors };
@@ -194,7 +214,7 @@ export async function applyBotBranding(
   const avatarResult = await applyAvatarBranding(
     platform,
     nativeMeetingId,
-    avatarUrl,
+    avatarCandidates,
     avatarAttempts
   );
   avatar = avatarResult.ok;
