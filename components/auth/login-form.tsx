@@ -65,7 +65,7 @@ export function LoginForm({ nextPath, authError }: LoginFormProps) {
   return (
     <AuthFormShell
       title="Entrar"
-      description="Acesse suas transcrições, resumos e action items."
+      description="Transcrições, resumos e action items das suas reuniões."
       footer={
         <>
           Não tem conta?{" "}
