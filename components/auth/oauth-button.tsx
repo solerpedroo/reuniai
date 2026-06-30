@@ -4,8 +4,13 @@ import { useState } from "react";
 import { GoogleLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
-export function OAuthButton() {
+type OAuthButtonProps = {
+  label?: string;
+};
+
+export function OAuthButton({ label = "Continuar com Google" }: OAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +25,9 @@ export function OAuthButton() {
       provider: "google",
       options: {
         redirectTo: `${origin}/auth/callback`,
+        queryParams: {
+          prompt: "select_account",
+        },
       },
     });
 
@@ -34,14 +42,22 @@ export function OAuthButton() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        size="lg"
+        className={cn(
+          "h-11 w-full rounded-xl border-border/80 bg-background/70 text-sm font-medium",
+          "transition-all hover:border-brand/30 hover:bg-background hover:shadow-sm"
+        )}
         onClick={signInWithGoogle}
         disabled={loading}
       >
         <GoogleLogo size={18} weight="bold" aria-hidden />
-        {loading ? "Redirecionando…" : "Continuar com Google"}
+        {loading ? "Redirecionando…" : label}
       </Button>
-      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

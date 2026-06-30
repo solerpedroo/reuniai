@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import { syncProfileFromAuthUser } from "@/lib/auth/sync-profile";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CookieToSet = {
@@ -50,10 +51,15 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
+  }
+
+  const user = sessionData.user;
+  if (user) {
+    await syncProfileFromAuthUser(supabase, user.id, user.user_metadata, user.email);
   }
 
   return NextResponse.redirect(`${origin}${next}`);

@@ -333,6 +333,58 @@ html {
       inset 0 1px 0 oklch(1 0 0 / 0.05);
   }
 
+  /* Auth screens — mesh, aurora e glass panel */
+  .auth-canvas {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--brand) 10%, transparent), transparent 42%),
+      radial-gradient(circle at 100% 100%, color-mix(in oklab, var(--brand) 8%, transparent), transparent 38%);
+  }
+
+  .auth-grid {
+    background-image:
+      linear-gradient(color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(circle at center, black 20%, transparent 78%);
+  }
+
+  .auth-glass {
+    background-color: color-mix(in oklab, var(--card) 88%, transparent);
+    backdrop-filter: blur(18px) saturate(1.25);
+    -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  }
+
+  .auth-aurora {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(70px);
+    opacity: 0.55;
+    animation: authAurora 14s ease-in-out infinite alternate;
+  }
+
+  .auth-aurora-a {
+    top: 8%;
+    left: -8%;
+    width: 320px;
+    height: 320px;
+    background: oklch(0.72 0.16 250);
+  }
+
+  .auth-aurora-b {
+    right: -10%;
+    bottom: 10%;
+    width: 380px;
+    height: 380px;
+    background: oklch(0.58 0.2 265);
+    animation-delay: -4s;
+  }
+
+  .auth-input {
+    @apply h-11 rounded-xl border-border/80 bg-background/70 text-sm shadow-sm transition-all duration-200;
+    @apply focus-visible:border-brand/40 focus-visible:ring-2 focus-visible:ring-brand/20;
+  }
+
   .surface-toolbar {
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
@@ -435,6 +487,15 @@ html {
   50% {
     opacity: 0.55;
     transform: scale(0.92);
+  }
+}
+
+@keyframes authAurora {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(24px, -18px, 0) scale(1.08);
   }
 }
 

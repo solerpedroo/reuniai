@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { z } from "zod";
+import { ArrowRight, EnvelopeSimple, LockKey } from "@phosphor-icons/react";
+import { AuthDivider } from "@/components/auth/auth-divider";
+import { AuthField } from "@/components/auth/auth-field";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { OAuthButton } from "@/components/auth/oauth-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -21,7 +26,12 @@ function safeNextPath(next?: string): string {
   return next;
 }
 
-export function LoginForm({ nextPath }: { nextPath?: string }) {
+type LoginFormProps = {
+  nextPath?: string;
+  authError?: boolean;
+};
+
+export function LoginForm({ nextPath, authError }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,47 +63,80 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <AuthFormShell
+      badge="Acesso seguro"
+      title="Bem-vindo de volta"
+      description="Entre para revisar transcrições, resumos e action items das suas reuniões."
+      footer={
+        <>
+          Não tem conta?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-foreground underline-offset-4 transition-colors hover:text-brand hover:underline"
+          >
+            Criar conta grátis
+          </Link>
+        </>
+      }
+    >
+      {authError && (
+        <div
+          className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
+          Não foi possível autenticar. Tente novamente ou use outro método.
+        </div>
+      )}
+
       <OAuthButton />
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">ou e-mail</span>
-        </div>
-      </div>
+
+      <AuthDivider />
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+        <AuthField id="email" label="E-mail" icon={EnvelopeSimple}>
           <Input
             id="email"
             type="email"
             autoComplete="email"
+            placeholder="voce@empresa.com"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
+            className="auth-input"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+        </AuthField>
+
+        <AuthField id="password" label="Senha" icon={LockKey}>
           <PasswordInput
             id="password"
             autoComplete="current-password"
+            placeholder="••••••••"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
+            className="auth-input"
           />
-        </div>
+        </AuthField>
+
         {error && (
-          <p className="text-sm text-destructive" role="alert">{error}</p>
+          <p className="rounded-xl border border-destructive/25 bg-destructive/8 px-4 py-3 text-sm text-destructive" role="alert">
+            {error}
+          </p>
         )}
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Entrando…" : "Entrar"}
+
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          className={cn("h-11 w-full rounded-xl text-sm font-semibold brand-glow")}
+          disabled={loading}
+        >
+          {loading ? "Entrando…" : "Entrar na plataforma"}
+          {!loading && <ArrowRight size={18} weight="bold" />}
         </Button>
       </form>
-    </div>
+    </AuthFormShell>
   );
 }
