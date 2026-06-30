@@ -112,19 +112,24 @@ async function applyAvatarBranding(
 
   const avatarUrl = resolved.url;
 
+  // A câmera virtual do Meet é experimental: o `PUT /avatar` responde 202
+  // ("Avatar set command sent") sem confirmar que o replaceTrack do WebRTC
+  // renderizou. Como não há como detectar sucesso real, reenviamos o comando
+  // algumas vezes espaçadas — assim que a conexão WebRTC do bot estabiliza, uma
+  // das tentativas "pega" e a imagem passa a aparecer no tile do bot.
+  let sent = 0;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      // URL direta — com camera_enabled=true o bot já publica track de vídeo.
       await setBotAvatar(platform, nativeMeetingId, { url: avatarUrl });
-      return { ok: true, errors };
+      sent += 1;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao definir câmera virtual.";
-      if (attempt === maxAttempts - 1) errors.push(msg);
-      if (attempt < maxAttempts - 1) await sleep(AVATAR_DELAY_MS);
+      if (attempt === maxAttempts - 1 && sent === 0) errors.push(msg);
     }
+    if (attempt < maxAttempts - 1) await sleep(AVATAR_DELAY_MS);
   }
 
-  return { ok: false, errors };
+  return { ok: sent > 0, errors };
 }
 
 async function applyScreenBranding(
@@ -197,7 +202,10 @@ export async function applyBotBranding(
     return { avatar, screen, errors };
   }
 
-  // Meet/Zoom: câmera ligada com a imagem de marca (comportamento Fireflies).
+  // Meet/Zoom: câmera virtual com a imagem de marca (comportamento Fireflies).
+  // Sem fallback para screen share — ele tomaria o palco principal da reunião.
+  // Mantemos o branding discreto no tile do bot, reenviando o avatar com
+  // persistência (ver applyAvatarBranding) para contornar a câmera intermitente.
   const avatarAttempts = options.quickRetry ? AVATAR_QUICK_ATTEMPTS : AVATAR_ATTEMPTS;
   const avatarResult = await applyAvatarBranding(
     platform,
@@ -207,13 +215,6 @@ export async function applyBotBranding(
   );
   avatar = avatarResult.ok;
   errors.push(...avatarResult.errors);
-
-  // Fallback: screen share se câmera virtual falhar (Vexa recomenda para Meet).
-  if (!avatar) {
-    const screenResult = await applyScreenBranding(platform, nativeMeetingId, screenCandidates);
-    screen = screenResult.ok;
-    errors.push(...screenResult.errors);
-  }
 
   return { avatar, screen, errors };
 }
