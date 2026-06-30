@@ -102,9 +102,9 @@ flowchart TD
 | [Supabase](https://supabase.com) | Auth, DB, Storage | Onda 2 |
 | [Vercel](https://vercel.com) | Deploy | Onda 0 |
 | [Google Cloud Console](https://console.cloud.google.com) | OAuth + Calendar API | Onda 5 |
-| [Recall.ai](https://recall.ai) | Meeting bots | Onda 6 |
-| [Deepgram](https://deepgram.com) | ASR + diarização | Onda 7 |
-| Anthropic ou OpenAI | Resumo + chat | Onda 8 |
+| [Vexa](https://github.com/Vexa-ai/vexa) | Meeting bots + transcrição Whisper | Onda 6 |
+| Anthropic, OpenAI ou Groq | Resumo + chat | Onda 8 |
+| OpenAI (embeddings) | RAG vetorial (opcional) | Onda 8 |
 
 ### Referências locais
 
@@ -1207,22 +1207,33 @@ ENCRYPTION_KEY=                          # 32 bytes hex
 GOOGLE_CALENDAR_CLIENT_ID=
 GOOGLE_CALENDAR_CLIENT_SECRET=
 
-# Recall.ai
-RECALL_API_KEY=
-RECALL_WEBHOOK_SECRET=
+# Vexa (bot + transcrição Whisper)
+VEXA_API_BASE=https://api.cloud.vexa.ai
+VEXA_API_KEY=
+VEXA_WEBHOOK_SECRET=
 
-# Deepgram
-DEEPGRAM_API_KEY=
+# Recall.ai / Deepgram (legado — não usados)
 
-# LLM (um dos dois)
+# LLM — um provedor com chave (ordem padrão: groq > openai > anthropic)
+LLM_PROVIDER=groq
+GROQ_API_KEY=
+# GROQ_MODEL=llama-3.3-70b-versatile
 ANTHROPIC_API_KEY=
+# ANTHROPIC_MODEL=claude-3-5-sonnet-latest
 OPENAI_API_KEY=
+# OPENAI_MODEL=gpt-4o-mini
+
+# Embeddings para RAG (opcional — API OpenAI-compatible; sem chave usa transcrição completa)
+EMBEDDINGS_API_KEY=
+# EMBEDDINGS_MODEL=text-embedding-3-small
+# EMBEDDINGS_API_BASE=https://api.openai.com/v1
 
 # Cron protection
 CRON_SECRET=
 
 # Email (opcional)
 RESEND_API_KEY=
+RESEND_FROM=ReuniAI <onboarding@resend.dev>
 ```
 
 ---
@@ -1263,10 +1274,9 @@ flowchart TB
     Next --> SupaDB[Supabase Postgres]
     Next --> SupaStorage[Supabase Storage]
     Next --> GoogleCal[Google Calendar API]
-    Next --> Recall[Recall.ai API]
-    Recall -->|webhook| Next
-    Next --> Deepgram[Deepgram API]
-    Next --> LLM[Claude/GPT API]
+    Next --> Vexa[Vexa API]
+    Vexa -->|webhook| Next
+    Next --> LLM[Groq/OpenAI/Anthropic]
 ```
 
 ---
