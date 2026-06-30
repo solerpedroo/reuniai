@@ -103,6 +103,9 @@ export type Database = {
           duration_ms: number | null;
           recording_path: string | null;
           error_message: string | null;
+          transcript_source: Database["public"]["Enums"]["transcript_source"] | null;
+          native_artifact_id: string | null;
+          prefer_native_transcript: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -121,6 +124,9 @@ export type Database = {
           duration_ms?: number | null;
           recording_path?: string | null;
           error_message?: string | null;
+          transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
+          native_artifact_id?: string | null;
+          prefer_native_transcript?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -139,6 +145,9 @@ export type Database = {
           duration_ms?: number | null;
           recording_path?: string | null;
           error_message?: string | null;
+          transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
+          native_artifact_id?: string | null;
+          prefer_native_transcript?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -651,6 +660,7 @@ export type Database = {
       action_item_status: "open" | "done" | "cancelled" | "suggested";
       action_item_source: "ai" | "manual";
       calendar_provider: "google" | "outlook";
+      transcript_source: "vexa" | "teams_native" | "meet_native";
       chat_message_role: "user" | "assistant";
       share_scope: "summary_only" | "full_transcript";
     };
