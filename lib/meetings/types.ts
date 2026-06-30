@@ -61,9 +61,14 @@ export function formatMeetingDate(iso: string): string {
   return dateFormatter.format(new Date(iso)).replace(".", "");
 }
 
-/** Ex.: "14:00" */
-export function formatMeetingTime(iso: string): string {
-  return timeFormatter.format(new Date(iso));
+/** Ex.: "14:00" — use `timezone` (ex. America/Sao_Paulo) em código server-side. */
+export function formatMeetingTime(iso: string, timezone?: string): string {
+  if (!timezone) return timeFormatter.format(new Date(iso));
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: timezone,
+  }).format(new Date(iso));
 }
 
 /** Duração de uma reunião a partir de duration_ms ou do intervalo started/ended. */
