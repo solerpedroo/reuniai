@@ -2,7 +2,7 @@ import "server-only";
 
 import { getBotAvatarUrl, getBotScreenUrl } from "@/lib/brand/config";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
-import { getRunningBots, setBotAvatar, setBotScreen } from "@/lib/vexa/client";
+import { listVexaMeetings, setBotAvatar, setBotScreen } from "@/lib/vexa/client";
 
 /** Quanto tempo esperamos o bot sair de `joining`/`awaiting_admission` e ficar `active`. */
 const ACTIVE_POLL_ATTEMPTS = 20;
@@ -36,13 +36,13 @@ async function waitForBotActive(
 ): Promise<boolean> {
   for (let attempt = 0; attempt < ACTIVE_POLL_ATTEMPTS; attempt += 1) {
     try {
-      const bots = await getRunningBots();
-      const bot = bots.find(
-        (b) => b.native_meeting_id === nativeMeetingId && b.platform === platform
+      const meetings = await listVexaMeetings();
+      const meeting = meetings.find(
+        (item) =>
+          item.native_meeting_id === nativeMeetingId && item.platform === platform
       );
-      if (bot?.status === "active") return true;
-      // Bot sumiu da lista após alguns ciclos → encerrou/falhou; não adianta esperar.
-      if (!bot && attempt > 2) return false;
+      if (meeting?.status === "active") return true;
+      if (meeting && ["completed", "failed"].includes(meeting.status)) return false;
     } catch {
       /* status indisponível neste ciclo; tenta de novo */
     }
