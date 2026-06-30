@@ -37,7 +37,7 @@
 6. [Onda 3 — Autenticação e onboarding](#onda-3--autenticação-e-onboarding)
 7. [Onda 4 — Dashboard e lista de reuniões](#onda-4--dashboard-e-lista-de-reuniões)
 8. [Onda 5 — Google Calendar e sync](#onda-5--google-calendar-e-sync)
-9. [Onda 6 — Recall.ai: bot nas reuniões](#onda-6--recallai-bot-nas-reuniões)
+9. [Onda 6 — Vexa: bot nas reuniões](#onda-6--vexa-bot-nas-reuniões)
 10. [Onda 7 — Pipeline de transcrição](#onda-7--pipeline-de-transcrição)
 11. [Onda 8 — IA post-call: resumo e atribuições](#onda-8--ia-post-call-resumo-e-atribuições)
 12. [Onda 9 — Detalhe da reunião (UI completa)](#onda-9--detalhe-da-reunião-ui-completa)
@@ -66,7 +66,7 @@ flowchart TD
     O2 --> O3[Onda 3: Auth]
     O3 --> O4[Onda 4: Dashboard]
     O4 --> O5[Onda 5: Calendar]
-    O5 --> O6[Onda 6: Recall Bot]
+    O5 --> O6[Onda 6: Vexa Bot]
     O6 --> O7[Onda 7: Transcrição]
     O7 --> O8[Onda 8: IA Resumo]
     O8 --> O9[Onda 9: Detalhe UI]
@@ -470,6 +470,7 @@ Mapeamento `meeting.status_change`:
 #### 6.5 Fallback de status + UI ✅
 
 - [x] Cron `/api/cron/poll-bots` — fallback sem webhook público (localhost): consulta `getRunningBots()` e fecha reuniões encerradas
+- [x] Cron `/api/cron/poll-native-transcripts` — fallback para transcrições nativas (Teams/Meet) quando o webhook não dispara; agendado em `.github/workflows/cron.yml`
 - [x] Rotas manuais `/api/bots/start` e `/api/bots/stop` (autenticadas)
 - [x] UI: `components/meetings/bot-actions.tsx` na tabela (Enviar bot / Parar bot)
 
