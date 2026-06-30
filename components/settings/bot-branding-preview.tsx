@@ -12,7 +12,7 @@ export function BotBrandingPreview({ botDisplayName }: BotBrandingPreviewProps) 
       <div className="overflow-hidden rounded-xl border border-border bg-muted/30">
         <div className="relative aspect-video w-full bg-black">
           <Image
-            src={BRAND_ASSETS.botCamera}
+            src={BRAND_ASSETS.botBackground}
             alt={`${botDisplayName} com câmera ligada`}
             fill
             className="object-cover"
@@ -26,9 +26,9 @@ export function BotBrandingPreview({ botDisplayName }: BotBrandingPreviewProps) 
       </div>
       <p className="text-xs text-muted-foreground">
         Nas calls, o bot aparece como{" "}
-        <strong className="font-medium text-foreground">{botDisplayName}</strong> — câmera ligada e
-        fundo personalizado do {PRODUCT_NAME}. O compartilhamento de tela exibe o wallpaper de marca
-        como fallback em plataformas sem câmera virtual.
+        <strong className="font-medium text-foreground">{botDisplayName}</strong> com a câmera
+        ligada exibindo a imagem de marca do {PRODUCT_NAME} (como o Fireflies). No Teams, usa
+        compartilhamento de tela como alternativa.
       </p>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Image
