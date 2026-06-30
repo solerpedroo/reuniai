@@ -25,9 +25,20 @@ export type CreateAdhocResult =
   | { ok: false; error: string };
 
 const ACTIVE_STATUSES = ["scheduled", "bot_joining", "recording"] as const;
+const DEFAULT_TIMEZONE = "America/Sao_Paulo";
 
-function defaultTitle(platformLabel: string): string {
-  return `Reunião ${platformLabel} · ${formatMeetingTime(new Date().toISOString())}`;
+async function resolveUserTimezone(admin: AdminClient, userId: string): Promise<string> {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("timezone")
+    .eq("id", userId)
+    .maybeSingle<{ timezone: string | null }>();
+
+  return profile?.timezone ?? DEFAULT_TIMEZONE;
+}
+
+function defaultTitle(platformLabel: string, timezone: string): string {
+  return `Reunião ${platformLabel} · ${formatMeetingTime(new Date().toISOString(), timezone)}`;
 }
 
 /** Cria reunião ad-hoc (fora do calendário) e opcionalmente envia o bot. */
@@ -78,7 +89,10 @@ export async function createAdhocMeeting(
 
   const title =
     input.title?.trim() ||
-    defaultTitle(preview.platformLabel ?? preview.platform);
+    defaultTitle(
+      preview.platformLabel ?? preview.platform,
+      await resolveUserTimezone(admin, userId)
+    );
 
   const { data: meeting, error } = await admin
     .from("meetings")
