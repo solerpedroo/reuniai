@@ -20,12 +20,18 @@ import type { ShareToken } from "@/lib/workflow/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+export type ShareParticipant = {
+  name: string;
+  email: string | null;
+};
+
 export type ResolvedShare = {
   token: ShareToken;
   meeting: Meeting;
   summary: MeetingSummary | null;
   actionItems: ActionItem[];
   segments: TranscriptSegment[];
+  participants: ShareParticipant[];
 };
 
 export async function resolveShareToken(
@@ -52,7 +58,7 @@ export async function resolveShareToken(
 
   if (!meeting) return null;
 
-  const [summaryRes, actionItemsRes, segmentsRes] = await Promise.all([
+  const [summaryRes, actionItemsRes, segmentsRes, participantsRes] = await Promise.all([
     admin
       .from("meeting_summaries")
       .select("*")
@@ -71,14 +77,21 @@ export async function resolveShareToken(
           .eq("meeting_id", meeting.id)
           .order("sequence", { ascending: true })
       : Promise.resolve({ data: [], error: null }),
+    admin
+      .from("participants")
+      .select("name, email")
+      .eq("meeting_id", meeting.id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (actionItemsRes.error) throw actionItemsRes.error;
   if (segmentsRes.error) throw segmentsRes.error;
+  if (participantsRes.error) throw participantsRes.error;
 
   let summary = summaryRes.data ?? null;
   let actionItems = (actionItemsRes.data ?? []) as ActionItem[];
   let segments = (segmentsRes.data ?? []) as TranscriptSegment[];
+  let participants = (participantsRes.data ?? []) as ShareParticipant[];
 
   if (row.redact_pii !== false) {
     const texts: string[] = [];
@@ -96,6 +109,10 @@ export async function resolveShareToken(
     }
     for (const segment of segments) {
       texts.push(segment.text, segment.speaker_label);
+    }
+    for (const participant of participants) {
+      texts.push(participant.name);
+      if (participant.email) texts.push(participant.email);
     }
 
     const { texts: redacted, audit } = await redactManyTexts(texts, { useLlm: true });
@@ -125,6 +142,11 @@ export async function resolveShareToken(
       speaker_label: next(),
     }));
 
+    participants = participants.map((participant) => ({
+      name: next(),
+      email: participant.email ? next() : participant.email,
+    }));
+
     await logExportAudit(admin, {
       userId: row.user_id,
       meetingId: meeting.id,
@@ -134,7 +156,7 @@ export async function resolveShareToken(
     });
   }
 
-  return { token: row, meeting, summary, actionItems, segments };
+  return { token: row, meeting, summary, actionItems, segments, participants };
 }
 
 export function buildShareSummaryText(
