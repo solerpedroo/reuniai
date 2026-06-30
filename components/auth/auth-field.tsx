@@ -27,11 +27,11 @@ export function AuthField({ id, label, hint, icon: Icon, error, children, classN
         {Icon && (
           <Icon
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground"
             aria-hidden
           />
         )}
-        <div className={cn(Icon && "[&_input]:pl-10 [&_button]:pl-10")}>{children}</div>
+        <div className={cn(Icon && "[&_input]:pl-10 [&_[role=combobox]]:pl-10")}>{children}</div>
       </div>
       {error && (
         <p className="text-xs text-destructive" role="alert">
