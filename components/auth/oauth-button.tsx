@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GoogleLogo } from "@phosphor-icons/react";
+import { GoogleBrandIcon } from "@/components/brand/google-brand-icon";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ export function OAuthButton({ label = "Continuar com Google" }: OAuthButtonProps
         onClick={signInWithGoogle}
         disabled={loading}
       >
-        <GoogleLogo size={18} weight="bold" aria-hidden />
+        <GoogleBrandIcon size={18} />
         {loading ? "Redirecionando…" : label}
       </Button>
       {error && (
