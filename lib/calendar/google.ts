@@ -1,9 +1,12 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
-import type { TablesInsert } from "@/lib/supabase/database.types";
 import { decryptToken } from "@/lib/crypto/token-encrypt";
-import { detectPlatform, findMeetingUrlInText } from "@/lib/calendar/platform";
+import { findMeetingUrlInText } from "@/lib/calendar/platform";
+import {
+  upsertMeetingsFromCalendar,
+  type SyncResult,
+} from "@/lib/calendar/sync-meetings";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -16,6 +19,7 @@ export const CALENDAR_SCOPES = [
   "openid",
   "email",
   "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/meetings.space.readonly",
 ];
 
 function getClientId(): string {
@@ -178,13 +182,6 @@ function getEventEnd(event: GoogleEvent): string | null {
   return null;
 }
 
-export type SyncResult = {
-  scanned: number;
-  withLink: number;
-  inserted: number;
-  updated: number;
-};
-
 type ConnectionInput = {
   userId: string;
   connectionId: string;
@@ -210,123 +207,34 @@ export async function syncCalendarConnection(
       const url = extractMeetingUrl(event);
       const startedAt = getEventStart(event);
       if (!url || !startedAt) return null;
-      return { event, url, startedAt, endedAt: getEventEnd(event) };
+      const isMeet = url.includes("meet.google.com");
+      return {
+        calendarEventId: event.id,
+        recurringEventId: event.recurringEventId ?? null,
+        title: event.summary?.trim() || "Reunião sem título",
+        url,
+        startedAt,
+        endedAt: getEventEnd(event),
+        preferNativeTranscript: isMeet,
+        attendees: (event.attendees ?? [])
+          .filter((a) => a.responseStatus !== "declined")
+          .map((attendee) => ({
+            name:
+              attendee.displayName?.trim() ||
+              attendee.email?.split("@")[0] ||
+              "Participante",
+            email: attendee.email ?? null,
+          })),
+      };
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);
 
-  const eventIds = candidates.map((c) => c.event.id);
-
-  const existingByEventId = new Map<string, string>();
-  if (eventIds.length > 0) {
-    const { data: existing, error } = await admin
-      .from("meetings")
-      .select("id, calendar_event_id")
-      .eq("user_id", connection.userId)
-      .in("calendar_event_id", eventIds);
-
-    if (error) throw error;
-    for (const row of existing ?? []) {
-      if (row.calendar_event_id) existingByEventId.set(row.calendar_event_id, row.id);
-    }
-  }
-
-  const toInsert: TablesInsert<"meetings">[] = [];
-  let updated = 0;
-
-  for (const { event, url, startedAt, endedAt } of candidates) {
-    const title = event.summary?.trim() || "Reunião sem título";
-    const platform = detectPlatform(url);
-    const existingId = existingByEventId.get(event.id);
-
-    if (existingId) {
-      // Atualiza apenas dados de agendamento; não mexe no status já processado.
-      const { error } = await admin
-        .from("meetings")
-        .update({
-          title,
-          started_at: startedAt,
-          ended_at: endedAt,
-          platform,
-          meeting_url: url,
-          calendar_recurring_event_id: event.recurringEventId ?? null,
-        })
-        .eq("id", existingId);
-      if (error) throw error;
-      updated += 1;
-    } else {
-      toInsert.push({
-        user_id: connection.userId,
-        calendar_event_id: event.id,
-        calendar_recurring_event_id: event.recurringEventId ?? null,
-        title,
-        started_at: startedAt,
-        ended_at: endedAt,
-        platform,
-        meeting_url: url,
-        status: "scheduled",
-      });
-    }
-  }
-
-  if (toInsert.length > 0) {
-    const { error } = await admin.from("meetings").insert(toInsert);
-    if (error) throw error;
-  }
-
-  await syncParticipantsForMeetings(admin, connection.userId, candidates);
-
-  await admin
-    .from("calendar_connections")
-    .update({ last_synced_at: new Date().toISOString() })
-    .eq("id", connection.connectionId);
-
-  return {
-    scanned: events.length,
-    withLink: candidates.length,
-    inserted: toInsert.length,
-    updated,
-  };
-}
-
-async function syncParticipantsForMeetings(
-  admin: AdminClient,
-  userId: string,
-  candidates: { event: GoogleEvent }[]
-): Promise<void> {
-  const eventIds = candidates.map((c) => c.event.id);
-  if (eventIds.length === 0) return;
-
-  const { data: meetings, error } = await admin
-    .from("meetings")
-    .select("id, calendar_event_id")
-    .eq("user_id", userId)
-    .in("calendar_event_id", eventIds);
-
-  if (error) throw error;
-
-  const meetingByEventId = new Map(
-    ((meetings ?? []) as { id: string; calendar_event_id: string | null }[])
-      .filter((m) => m.calendar_event_id)
-      .map((m) => [m.calendar_event_id!, m.id])
+  return upsertMeetingsFromCalendar(
+    admin,
+    { userId: connection.userId, connectionId: connection.connectionId },
+    events.length,
+    candidates
   );
-
-  for (const { event } of candidates) {
-    const meetingId = meetingByEventId.get(event.id);
-    if (!meetingId || !event.attendees?.length) continue;
-
-    await admin.from("participants").delete().eq("meeting_id", meetingId);
-
-    const rows = event.attendees
-      .filter((a) => a.responseStatus !== "declined")
-      .map((attendee) => ({
-        meeting_id: meetingId,
-        name: attendee.displayName?.trim() || attendee.email?.split("@")[0] || "Participante",
-        email: attendee.email ?? null,
-      }));
-
-    if (rows.length > 0) {
-      const { error: insertError } = await admin.from("participants").insert(rows);
-      if (insertError) console.error("Falha ao sincronizar participantes:", insertError);
-    }
-  }
 }
+
+export type { SyncResult };

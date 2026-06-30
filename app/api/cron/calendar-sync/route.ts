@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { syncCalendarConnection } from "@/lib/calendar/google";
+import { syncCalendarConnectionByProvider } from "@/lib/calendar/sync";
+import type { CalendarProvider } from "@/lib/supabase/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -16,8 +17,7 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const { data: connections, error } = await admin
     .from("calendar_connections")
-    .select("id, user_id, refresh_token_encrypted")
-    .eq("provider", "google");
+    .select("id, user_id, provider, refresh_token_encrypted");
 
   if (error) {
     return NextResponse.json({ error: "Falha ao listar conexões" }, { status: 500 });
@@ -28,10 +28,11 @@ export async function GET(request: NextRequest) {
 
   for (const connection of connections ?? []) {
     try {
-      await syncCalendarConnection(admin, {
+      await syncCalendarConnectionByProvider(admin, {
         userId: connection.user_id,
         connectionId: connection.id,
         refreshTokenEncrypted: connection.refresh_token_encrypted,
+        provider: connection.provider as CalendarProvider,
       });
       synced += 1;
     } catch (err) {

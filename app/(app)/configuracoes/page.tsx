@@ -2,7 +2,7 @@ import type { Profile } from "@/lib/supabase/types";
 import { PageHeader } from "@/components/layout/page-header";
 import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
-import { CalendarConnection } from "@/components/settings/calendar-connection";
+import { CalendarConnections } from "@/components/settings/calendar-connections";
 import { RetentionSettings } from "@/components/settings/retention-settings";
 import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
@@ -26,20 +26,20 @@ const STATUS_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = 
 };
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
-  connected: { tone: "ok", text: "Google Calendar conectado e sincronizado." },
-  error: { tone: "error", text: "Não foi possível conectar o Google Calendar. Tente novamente." },
+  connected: { tone: "ok", text: "Calendário conectado e sincronizado." },
+  error: { tone: "error", text: "Não foi possível conectar o calendário. Tente novamente." },
   no_refresh: {
     tone: "error",
-    text: "O Google não retornou um token de atualização. Remova o acesso do app na sua conta Google e tente novamente.",
+    text: "O provedor não retornou um token de atualização. Remova o acesso do app e tente novamente.",
   },
 };
 
 export default async function ConfiguracoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ calendar?: string; slack?: string; notion?: string }>;
+  searchParams: Promise<{ calendar?: string; provider?: string; slack?: string; notion?: string }>;
 }) {
-  const { calendar, slack, notion } = await searchParams;
+  const { calendar, provider, slack, notion } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -78,19 +78,33 @@ export default async function ConfiguracoesPage({
     }
   }
 
-  const connection = await getCalendarConnection(supabase);
+  const googleConnection = await getCalendarConnection(supabase, "google");
+  const outlookConnection = await getCalendarConnection(supabase, "outlook");
   const email = user?.email ?? "—";
-  const banner =
-    (calendar && CALENDAR_MESSAGES[calendar]) ||
-    (slack && { ...STATUS_MESSAGES[slack], text: slack === "connected" ? "Slack conectado." : STATUS_MESSAGES[slack].text }) ||
-    (notion && { ...STATUS_MESSAGES[notion], text: notion === "connected" ? "Notion conectado." : STATUS_MESSAGES[notion].text }) ||
-    undefined;
+  let banner = calendar ? CALENDAR_MESSAGES[calendar] : undefined;
+  if (banner && provider === "outlook" && calendar === "connected") {
+    banner = { tone: "ok", text: "Outlook Calendar conectado e sincronizado." };
+  } else if (banner && provider === "google" && calendar === "connected") {
+    banner = { tone: "ok", text: "Google Calendar conectado e sincronizado." };
+  }
+  if (!banner && slack) {
+    banner = {
+      ...STATUS_MESSAGES[slack],
+      text: slack === "connected" ? "Slack conectado." : STATUS_MESSAGES[slack].text,
+    };
+  }
+  if (!banner && notion) {
+    banner = {
+      ...STATUS_MESSAGES[notion],
+      text: notion === "connected" ? "Notion conectado." : STATUS_MESSAGES[notion].text,
+    };
+  }
 
   return (
     <div>
       <PageHeader
         title="Configurações"
-        description="Calendário, regras de auto-join, retenção de dados e conta."
+        description="Calendários, auto-join, transcripts nativos, retenção e notificações."
         meta="Conta"
       />
 
@@ -121,14 +135,21 @@ export default async function ConfiguracoesPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Google Calendar</CardTitle>
-            <CardDescription>Conectar calendário para sync automático</CardDescription>
+            <CardTitle>Calendários</CardTitle>
+            <CardDescription>Google e Outlook — sync paralelo de reuniões</CardDescription>
           </CardHeader>
           <CardContent>
-            <CalendarConnection
-              connected={Boolean(connection)}
-              email={connection?.email ?? null}
-              lastSyncedAt={connection?.last_synced_at ?? null}
+            <CalendarConnections
+              google={{
+                connected: Boolean(googleConnection),
+                email: googleConnection?.email ?? null,
+                lastSyncedAt: googleConnection?.last_synced_at ?? null,
+              }}
+              outlook={{
+                connected: Boolean(outlookConnection),
+                email: outlookConnection?.email ?? null,
+                lastSyncedAt: outlookConnection?.last_synced_at ?? null,
+              }}
             />
           </CardContent>
         </Card>
@@ -136,7 +157,9 @@ export default async function ConfiguracoesPage({
         <Card>
           <CardHeader>
             <CardTitle>Auto-join do bot</CardTitle>
-            <CardDescription>ReuniAI entra automaticamente nas calls agendadas</CardDescription>
+            <CardDescription>
+              ReuniAI entra automaticamente nas calls (exceto Teams/Meet com transcript nativo)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <AutoJoinToggle initialEnabled={autoJoin} />
