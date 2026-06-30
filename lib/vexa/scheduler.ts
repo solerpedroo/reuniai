@@ -7,6 +7,7 @@ import { localeToVexaLanguage, parseUserLocale } from "@/lib/profile/locale";
 import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { applyBotBranding } from "@/lib/vexa/branding";
 import { createBot } from "@/lib/vexa/client";
+import { mapVexaStatus } from "@/lib/vexa/sync";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -23,9 +24,18 @@ export async function startBotForMeeting(
   admin: AdminClient,
   meeting: Pick<
     Meeting,
-    "id" | "user_id" | "meeting_url" | "platform" | "prefer_native_transcript" | "native_artifact_id"
+    | "id"
+    | "user_id"
+    | "meeting_url"
+    | "platform"
+    | "status"
+    | "prefer_native_transcript"
+    | "native_artifact_id"
   >
 ): Promise<StartBotResult> {
+  if (["bot_joining", "recording", "processing"].includes(meeting.status)) {
+    return { ok: false, reason: "Bot já está ativo ou em processamento nesta reunião." };
+  }
   if (meeting.prefer_native_transcript) {
     return {
       ok: false,
@@ -70,8 +80,9 @@ export async function startBotForMeeting(
     metadataFullName: metadata?.full_name ?? metadata?.name,
   });
 
+  let vexaMeeting;
   try {
-    await createBot({
+    vexaMeeting = await createBot({
       platform: parsed.platform,
       nativeMeetingId: parsed.nativeMeetingId,
       passcode: parsed.passcode,
@@ -82,6 +93,8 @@ export async function startBotForMeeting(
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : "Falha ao criar bot." };
   }
+
+  const initialStatus = mapVexaStatus(vexaMeeting.status) ?? "bot_joining";
 
   // Branding (câmera + fundo) em background — não bloqueia o join.
   void applyBotBranding(parsed.platform, parsed.nativeMeetingId)
@@ -101,7 +114,11 @@ export async function startBotForMeeting(
 
   const { error } = await admin
     .from("meetings")
-    .update({ status: "bot_joining", recall_bot_id: parsed.nativeMeetingId, error_message: null })
+    .update({
+      status: initialStatus,
+      recall_bot_id: parsed.nativeMeetingId,
+      error_message: null,
+    })
     .eq("id", meeting.id);
 
   if (error) {
@@ -126,7 +143,9 @@ export async function scheduleBotsForUpcomingMeetings(
 
   const { data: meetings, error } = await admin
     .from("meetings")
-    .select("id, user_id, meeting_url, platform, prefer_native_transcript, native_artifact_id")
+    .select(
+      "id, user_id, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+    )
     .eq("status", "scheduled")
     .not("meeting_url", "is", null)
     .gte("started_at", lowerBound)
@@ -137,7 +156,13 @@ export async function scheduleBotsForUpcomingMeetings(
   const rows = (meetings ?? []) as Array<
     Pick<
       Meeting,
-      "id" | "user_id" | "meeting_url" | "platform" | "prefer_native_transcript" | "native_artifact_id"
+      | "id"
+      | "user_id"
+      | "meeting_url"
+      | "status"
+      | "platform"
+      | "prefer_native_transcript"
+      | "native_artifact_id"
     >
   >;
   if (rows.length === 0) return { candidates: 0, started: 0, skipped: 0 };
