@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -18,21 +19,23 @@ type UserMenuProps = {
   email?: string | null;
 };
 
-function getInitials(name?: string | null, email?: string | null): string {
-  const source = name?.trim() || email?.trim() || "";
-  if (!source) return "?";
-  const parts = source.split(/\s+/).filter(Boolean);
+function getInitials(name?: string | null): string {
+  const trimmed = name?.trim();
+  if (!trimmed) return "?";
+
+  const parts = trimmed.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
-  return source.slice(0, 2).toUpperCase();
+
+  return trimmed.slice(0, 2).toUpperCase();
 }
 
 export function UserMenu({ name, email }: UserMenuProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const initials = getInitials(name, email);
-  const label = name?.trim() || email?.trim() || "Conta";
+  const displayName = name?.trim() || "Minha conta";
+  const initials = getInitials(name);
 
   async function handleLogout() {
     setLoading(true);
@@ -54,22 +57,19 @@ export function UserMenu({ name, email }: UserMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[15rem]">
-        <DropdownMenuItem asChild className="cursor-pointer p-0 focus:bg-transparent">
-          <Link
-            href="/perfil"
-            className="flex w-full items-center gap-3 rounded-sm px-2.5 py-2 transition-colors hover:bg-accent"
-          >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-semibold text-brand-foreground">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium leading-tight">{label}</p>
-              {email && (
-                <p className="truncate text-xs text-muted-foreground">{email}</p>
-              )}
-            </div>
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuLabel className="flex items-center gap-3 px-2.5 py-2 font-normal">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-semibold text-brand-foreground">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium leading-tight text-foreground">
+              {displayName}
+            </p>
+            {email && (
+              <p className="truncate text-xs text-muted-foreground">{email}</p>
+            )}
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/perfil">
