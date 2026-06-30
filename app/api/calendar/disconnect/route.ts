@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import type { CalendarProvider } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+function resolveProvider(value: unknown): CalendarProvider {
+  return value === "outlook" ? "outlook" : "google";
+}
+
+export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -13,10 +18,13 @@ export async function POST() {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
+  const body = (await request.json().catch(() => ({}))) as { provider?: string };
+  const provider = resolveProvider(body.provider);
+
   const { error } = await supabase
     .from("calendar_connections")
     .delete()
-    .eq("provider", "google");
+    .eq("provider", provider);
 
   if (error) {
     return NextResponse.json({ error: "Falha ao desconectar" }, { status: 500 });
