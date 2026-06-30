@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import { Gear, SignOut } from "@phosphor-icons/react";
+import { Gear, SignOut, UserCircle } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,18 +54,29 @@ export function UserMenu({ name, email }: UserMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[15rem]">
-        <div className="flex items-center gap-3 px-2.5 py-2">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-semibold text-brand-foreground">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium leading-tight">{label}</p>
-            {email && name && (
-              <p className="truncate text-xs text-muted-foreground">{email}</p>
-            )}
-          </div>
-        </div>
+        <DropdownMenuItem asChild className="cursor-pointer p-0 focus:bg-transparent">
+          <Link
+            href="/perfil"
+            className="flex w-full items-center gap-3 rounded-sm px-2.5 py-2 transition-colors hover:bg-accent"
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-semibold text-brand-foreground">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium leading-tight">{label}</p>
+              {email && (
+                <p className="truncate text-xs text-muted-foreground">{email}</p>
+              )}
+            </div>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/perfil">
+            <UserCircle weight="duotone" aria-hidden />
+            Meu perfil
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/configuracoes">
             <Gear weight="duotone" aria-hidden />
