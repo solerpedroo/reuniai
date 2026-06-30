@@ -19,6 +19,10 @@ export type {
   MeetingComment,
   SpeakerMapping,
   MeetingHighlight,
+  IntegrationEvent,
+  SlackConnection,
+  NotionConnection,
+  OutboundWebhook,
 } from "@/lib/workflow/types";
 
 export type MeetingPlatform = Database["public"]["Enums"]["meeting_platform"];
