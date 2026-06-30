@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: ReuniAI Outbound Webhooks
+  version: 1.0.0
+  description: |
+    Triggers para Zapier, Make e integrações customizadas.
+    Configure webhooks em Configurações → Integrações no ReuniAI.
+
+paths:
+  /your-endpoint:
+    post:
+      summary: Receber evento do ReuniAI
+      description: |
+        O ReuniAI envia POST para a URL que você registrou.
+        Verifique `X-Reuniai-Signature` com HMAC-SHA256.
+      parameters:
+        - in: header
+          name: X-Reuniai-Signature
+          required: true
+          schema:
+            type: string
+            example: sha256=abc123...
+        - in: header
+          name: Content-Type
+          required: true
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEnvelope"
+            examples:
+              meetingCompleted:
+                summary: meeting.completed
+                value:
+                  event: meeting.completed
+                  timestamp: "2026-06-30T12:00:00.000Z"
+                  data:
+                    meeting:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: Standup
+                    summary:
+                      executive_summary: Resumo da reunião
+                    action_items: []
+              actionItemCreated:
+                summary: action_item.created
+                value:
+                  event: action_item.created
+                  timestamp: "2026-06-30T12:00:00.000Z"
+                  data:
+                    action_item:
+                      id: "550e8400-e29b-41d4-a716-446655440001"
+                      title: Nova tarefa
+                    meeting:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: Standup
+      responses:
+        "200":
+          description: Entrega aceita
+        "4XX":
+          description: Erro do receptor — ReuniAI tentará novamente até 3x
+
+components:
+  schemas:
+    WebhookEnvelope:
+      type: object
+      required: [event, timestamp, data]
+      properties:
+        event:
+          type: string
+          enum: [meeting.completed, action_item.created]
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object

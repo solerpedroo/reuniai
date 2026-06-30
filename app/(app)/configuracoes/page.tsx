@@ -5,6 +5,7 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnections } from "@/components/settings/calendar-connections";
 import { RetentionSettings } from "@/components/settings/retention-settings";
+import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
@@ -16,6 +17,15 @@ import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+
+const STATUS_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
+  connected: { tone: "ok", text: "Conectado com sucesso." },
+  error: { tone: "error", text: "Não foi possível conectar. Tente novamente." },
+  no_refresh: {
+    tone: "error",
+    text: "O provedor não retornou um token de atualização. Remova o acesso e tente novamente.",
+  },
+};
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
   connected: { tone: "ok", text: "Calendário conectado e sincronizado." },
@@ -29,9 +39,9 @@ const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> 
 export default async function ConfiguracoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ calendar?: string; provider?: string }>;
+  searchParams: Promise<{ calendar?: string; provider?: string; slack?: string; notion?: string }>;
 }) {
-  const { calendar, provider } = await searchParams;
+  const { calendar, provider, slack, notion } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -87,6 +97,18 @@ export default async function ConfiguracoesPage({
     banner = { tone: "ok", text: "Outlook Calendar conectado e sincronizado." };
   } else if (banner && provider === "google" && calendar === "connected") {
     banner = { tone: "ok", text: "Google Calendar conectado e sincronizado." };
+  }
+  if (!banner && slack) {
+    banner = {
+      ...STATUS_MESSAGES[slack],
+      text: slack === "connected" ? "Slack conectado." : STATUS_MESSAGES[slack].text,
+    };
+  }
+  if (!banner && notion) {
+    banner = {
+      ...STATUS_MESSAGES[notion],
+      text: notion === "connected" ? "Notion conectado." : STATUS_MESSAGES[notion].text,
+    };
   }
 
   return (
@@ -173,6 +195,8 @@ export default async function ConfiguracoesPage({
           initialLocale={locale}
           initialDefaultTemplate={defaultTemplate}
         />
+
+        <IntegrationSettings />
       </div>
     </div>
   );

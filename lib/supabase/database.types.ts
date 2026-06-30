@@ -570,6 +570,144 @@ export type Database = {
         };
         Relationships: [];
       };
+      slack_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          team_id: string;
+          team_name: string | null;
+          channel_id: string | null;
+          channel_name: string | null;
+          bot_token_encrypted: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          team_id: string;
+          team_name?: string | null;
+          channel_id?: string | null;
+          channel_name?: string | null;
+          bot_token_encrypted: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          team_id?: string;
+          team_name?: string | null;
+          channel_id?: string | null;
+          channel_name?: string | null;
+          bot_token_encrypted?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notion_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          workspace_id: string;
+          workspace_name: string | null;
+          access_token_encrypted: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          workspace_id: string;
+          workspace_name?: string | null;
+          access_token_encrypted: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          workspace_id?: string;
+          workspace_name?: string | null;
+          access_token_encrypted?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      outbound_webhooks: {
+        Row: {
+          id: string;
+          user_id: string;
+          url: string;
+          secret: string;
+          events: string[];
+          description: string | null;
+          enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          url: string;
+          secret: string;
+          events?: string[];
+          description?: string | null;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          url?: string;
+          secret?: string;
+          events?: string[];
+          description?: string | null;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      webhook_deliveries: {
+        Row: {
+          id: string;
+          webhook_id: string;
+          event: string;
+          payload: Json;
+          status: string;
+          attempts: number;
+          last_error: string | null;
+          delivered_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          webhook_id: string;
+          event: string;
+          payload: Json;
+          status?: string;
+          attempts?: number;
+          last_error?: string | null;
+          delivered_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          webhook_id?: string;
+          event?: string;
+          payload?: Json;
+          status?: string;
+          attempts?: number;
+          last_error?: string | null;
+          delivered_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       meeting_comments: {
         Row: {
           id: string;

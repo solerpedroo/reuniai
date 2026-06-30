@@ -2,15 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowsClockwise,
-  CheckCircle,
-  GoogleLogo,
-  LinkBreak,
-  MicrosoftOutlookLogo,
-} from "@phosphor-icons/react";
+import { ArrowsClockwise, CheckCircle, LinkBreak } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { GoogleIcon, OutlookIcon } from "@/components/brand/provider-icons";
 import type { CalendarProvider } from "@/lib/supabase/types";
 
 type ProviderCardProps = {
@@ -48,13 +43,14 @@ function ProviderCard({
   syncing,
   disconnecting,
 }: ProviderCardProps) {
-  const Icon = provider === "outlook" ? MicrosoftOutlookLogo : GoogleLogo;
+  const renderIcon = (px: number) =>
+    provider === "outlook" ? <OutlookIcon size={px} /> : <GoogleIcon size={px} />;
 
   if (!connected) {
     return (
       <div className="rounded-lg border border-border p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <Icon size={18} weight="bold" />
+          {renderIcon(18)}
           {label}
         </div>
         <p className="text-sm text-muted-foreground">
@@ -64,7 +60,7 @@ function ProviderCard({
         </p>
         <Button asChild size="sm">
           <a href={connectHref}>
-            <Icon size={16} weight="bold" />
+            {renderIcon(16)}
             Conectar {label}
           </a>
         </Button>
@@ -76,7 +72,7 @@ function ProviderCard({
     <div className="rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-center gap-2 text-sm">
         <CheckCircle size={18} weight="fill" className="text-emerald-500" />
-        <Icon size={16} weight="bold" />
+        {renderIcon(16)}
         <span className="font-medium">{email}</span>
       </div>
       <p className="text-xs text-muted-foreground">
