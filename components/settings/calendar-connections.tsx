@@ -2,15 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowsClockwise,
-  CheckCircle,
-  LinkBreak,
-  MicrosoftOutlookLogo,
-} from "@phosphor-icons/react";
+import { ArrowsClockwise, CheckCircle, LinkBreak } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { GoogleIcon } from "@/components/brand/provider-icons";
+import { GoogleIcon, OutlookIcon } from "@/components/brand/provider-icons";
 import type { CalendarProvider } from "@/lib/supabase/types";
 
 type ProviderCardProps = {
@@ -49,11 +44,7 @@ function ProviderCard({
   disconnecting,
 }: ProviderCardProps) {
   const renderIcon = (px: number) =>
-    provider === "outlook" ? (
-      <MicrosoftOutlookLogo size={px} weight="bold" className="text-[#0A66C2]" />
-    ) : (
-      <GoogleIcon size={px} />
-    );
+    provider === "outlook" ? <OutlookIcon size={px} /> : <GoogleIcon size={px} />;
 
   if (!connected) {
     return (
