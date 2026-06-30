@@ -44,8 +44,8 @@ export function OAuthButton({ label = "Continuar com Google" }: OAuthButtonProps
         variant="outline"
         size="lg"
         className={cn(
-          "h-11 w-full rounded-lg border-border/80 bg-background text-sm font-medium",
-          "transition-all hover:border-border hover:bg-muted/30"
+          "h-11 w-full rounded-xl border-border/80 bg-background text-sm font-medium",
+          "transition-colors hover:border-border hover:bg-muted/20"
         )}
         onClick={signInWithGoogle}
         disabled={loading}
