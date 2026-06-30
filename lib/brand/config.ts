@@ -12,7 +12,13 @@ export const BRAND_HEX_DARK = "#0047B8" as const;
 export const BOT_DISPLAY_NAME_FALLBACK = `${PRODUCT_NAME} Bot`;
 
 export function getAppUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "https://reuniai.vercel.app";
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) return `https://${vercelHost.replace(/\/$/, "")}`;
+
+  return "https://reuniai.vercel.app";
 }
 
 /** Caminhos públicos de assets de marca (servidos em /brand/*). */
