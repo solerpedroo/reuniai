@@ -307,7 +307,12 @@ export function SignupForm() {
             onSubmit={handleSubmit}
             className="space-y-4"
           >
-            <AuthField id="signup-password" label="Senha" icon={LockKey}>
+            <AuthField
+              id="signup-password"
+              label="Senha"
+              icon={LockKey}
+              below={password.length > 0 ? <PasswordStrength value={password} /> : undefined}
+            >
               <PasswordInput
                 id="signup-password"
                 autoComplete="new-password"
@@ -318,10 +323,18 @@ export function SignupForm() {
                 disabled={loading}
                 className="auth-input"
               />
-              {password.length > 0 && <PasswordStrength value={password} />}
             </AuthField>
 
-            <AuthField id="signup-confirm" label="Confirmar senha" icon={LockKey}>
+            <AuthField
+              id="signup-confirm"
+              label="Confirmar senha"
+              icon={LockKey}
+              error={
+                confirmPassword.length > 0 && password !== confirmPassword
+                  ? "As senhas não coincidem"
+                  : undefined
+              }
+            >
               <PasswordInput
                 id="signup-confirm"
                 autoComplete="new-password"
@@ -332,9 +345,6 @@ export function SignupForm() {
                 disabled={loading}
                 className="auth-input"
               />
-              {confirmPassword.length > 0 && password !== confirmPassword && (
-                <p className="text-xs text-destructive">As senhas não coincidem</p>
-              )}
             </AuthField>
 
             <Label
