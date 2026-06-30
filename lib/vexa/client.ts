@@ -70,7 +70,11 @@ export type CreateBotInput = {
   language?: string;
   passcode?: string;
   voiceAgentEnabled?: boolean;
-  /** Liga a câmera virtual do bot (obrigatório para avatar no Meet — não vem com voice_agent). */
+  /**
+   * Pede para o bot inicializar a câmera ao entrar. Campo não documentado pela Vexa
+   * (ignorado se não suportado); enviado como dica para a câmera virtual/avatar do
+   * Meet — que é experimental. O avatar de fato é aplicado em applyBotBranding.
+   */
   cameraEnabled?: boolean;
 };
 
@@ -104,6 +108,7 @@ export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
       transcribe_enabled: true,
       transcription_tier: "realtime",
       voice_agent_enabled: voiceAgent,
+      // Não documentado na API da Vexa; tolerado/ignorado se não suportado.
       camera_enabled: wantsCamera,
     }),
   });
