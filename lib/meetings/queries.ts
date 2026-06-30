@@ -100,7 +100,11 @@ export async function searchMeetings(
 
   const [titleRes, segmentRes] = await Promise.all([
     supabase.from("meetings").select("*").ilike("title", pattern),
-    supabase.from("transcript_segments").select("meeting_id").ilike("text", pattern),
+    supabase
+      .from("transcript_segments")
+      .select("meeting_id")
+      .ilike("text", pattern)
+      .limit(1000),
   ]);
 
   if (titleRes.error) throw titleRes.error;
