@@ -19,8 +19,29 @@ export type StartBotResult =
 
 export async function startBotForMeeting(
   admin: AdminClient,
-  meeting: Pick<Meeting, "id" | "user_id" | "meeting_url">
+  meeting: Pick<
+    Meeting,
+    "id" | "user_id" | "meeting_url" | "platform" | "prefer_native_transcript" | "native_artifact_id"
+  >
 ): Promise<StartBotResult> {
+  if (meeting.prefer_native_transcript) {
+    return {
+      ok: false,
+      reason: "Reunião configurada para transcript nativo (sem bot).",
+    };
+  }
+
+  if (meeting.platform === "teams" && meeting.native_artifact_id) {
+    await admin
+      .from("meetings")
+      .update({ status: "recording", prefer_native_transcript: true })
+      .eq("id", meeting.id);
+    return {
+      ok: false,
+      reason: "Aguardando transcript nativo do Teams via Outlook.",
+    };
+  }
+
   if (!meeting.meeting_url) {
     return { ok: false, reason: "Reunião sem link de vídeo." };
   }
@@ -78,7 +99,7 @@ export async function scheduleBotsForUpcomingMeetings(
 
   const { data: meetings, error } = await admin
     .from("meetings")
-    .select("id, user_id, meeting_url")
+    .select("id, user_id, meeting_url, platform, prefer_native_transcript, native_artifact_id")
     .eq("status", "scheduled")
     .not("meeting_url", "is", null)
     .gte("started_at", lowerBound)
@@ -86,7 +107,12 @@ export async function scheduleBotsForUpcomingMeetings(
 
   if (error) throw error;
 
-  const rows = (meetings ?? []) as Array<Pick<Meeting, "id" | "user_id" | "meeting_url">>;
+  const rows = (meetings ?? []) as Array<
+    Pick<
+      Meeting,
+      "id" | "user_id" | "meeting_url" | "platform" | "prefer_native_transcript" | "native_artifact_id"
+    >
+  >;
   if (rows.length === 0) return { candidates: 0, started: 0, skipped: 0 };
 
   const userIds = [...new Set(rows.map((r) => r.user_id))];

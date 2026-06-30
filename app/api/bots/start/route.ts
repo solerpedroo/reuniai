@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type { Meeting } from "@/lib/supabase/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { startBotForMeeting } from "@/lib/vexa/scheduler";
@@ -29,9 +30,22 @@ export async function POST(request: NextRequest) {
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, meeting_url, status")
+    .select(
+      "id, user_id, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+    )
     .eq("id", meetingId)
-    .maybeSingle<{ id: string; user_id: string; meeting_url: string | null; status: string }>();
+    .maybeSingle<
+      Pick<
+        Meeting,
+        | "id"
+        | "user_id"
+        | "meeting_url"
+        | "status"
+        | "platform"
+        | "prefer_native_transcript"
+        | "native_artifact_id"
+      >
+    >();
 
   if (!meeting || meeting.user_id !== user.id) {
     return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });

@@ -23,6 +23,8 @@ export type {
 
 export type MeetingPlatform = Database["public"]["Enums"]["meeting_platform"];
 export type MeetingStatus = Database["public"]["Enums"]["meeting_status"];
+export type CalendarProvider = Database["public"]["Enums"]["calendar_provider"];
+export type TranscriptSource = Database["public"]["Enums"]["transcript_source"];
 export type ActionItemStatus = Database["public"]["Enums"]["action_item_status"];
 export type ActionItemSource = Database["public"]["Enums"]["action_item_source"];
 
