@@ -11,10 +11,20 @@ import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
 import { NotificationBell } from "@/components/shell/notification-bell";
+import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
+import { UserMenu } from "@/components/shell/user-menu";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { cn } from "@/lib/utils";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type SessionUser = { name?: string | null; email?: string | null };
+
+export function AppShell({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user?: SessionUser;
+}) {
   const pathname = usePathname();
   const current = getNavItem(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -92,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-screen flex-1 flex-col lg:pl-[260px]">
         <header className="glass sticky top-0 z-30 border-b border-border/70">
-          <div className="flex h-14 items-center gap-3 px-4 lg:px-8">
+          <div className="flex h-16 items-center gap-3 px-4 lg:px-8">
             <Button
               variant="ghost"
               size="icon"
@@ -102,6 +112,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <List size={20} />
             </Button>
+
+            <div className="hidden w-full max-w-sm lg:block">
+              <CommandTrigger />
+            </div>
 
             <div className="min-w-0 flex-1 lg:hidden">
               <motion.p
@@ -116,13 +130,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="truncate text-xs text-muted-foreground">{current.description}</p>
             </div>
 
-            <div className="hidden max-w-md flex-1 justify-end lg:flex">
-              <CommandTrigger />
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
+              <ThemeToggleButton />
               <NotificationBell />
               <JoinMeetingDialog triggerClassName="h-9 px-3.5 text-xs" />
+              <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+              <UserMenu name={user?.name} email={user?.email} />
             </div>
           </div>
         </header>
@@ -184,7 +197,7 @@ function NavLink({
 
 function SidebarBrand() {
   return (
-    <div className="border-b border-sidebar-border px-5 py-5">
+    <div className="flex h-16 items-center border-b border-sidebar-border px-5">
       <ReuniaiLogo />
     </div>
   );
