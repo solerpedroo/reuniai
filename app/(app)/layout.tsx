@@ -14,7 +14,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .select("display_name")
       .eq("id", user.id)
       .maybeSingle<{ display_name: string | null }>();
-    name = profile?.display_name ?? null;
+
+    const metadata = user.user_metadata as Record<string, unknown> | undefined;
+    const metadataName =
+      typeof metadata?.full_name === "string"
+        ? metadata.full_name
+        : typeof metadata?.display_name === "string"
+          ? metadata.display_name
+          : null;
+
+    name = profile?.display_name?.trim() || metadataName?.trim() || null;
   }
 
   return (
