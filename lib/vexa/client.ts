@@ -93,9 +93,22 @@ export type VexaTranscriptSegment = {
   language?: string;
 };
 
+export type VexaRecordingMediaFile = {
+  id?: string | number;
+  type?: string;
+  format?: string;
+  duration_seconds?: number;
+};
+
+export type VexaRecordingSummary = {
+  id?: string | number;
+  status?: string;
+  media_files?: VexaRecordingMediaFile[];
+};
+
 export type VexaTranscriptResponse = {
   segments?: VexaTranscriptSegment[];
-  recordings?: { id: string; media_files?: { id: string }[] }[];
+  recordings?: VexaRecordingSummary[];
   status?: string;
 };
 
@@ -160,6 +173,22 @@ export async function setBotScreen(
   if (!res.ok) {
     throw new Error(`Vexa setBotScreen falhou: ${res.status} ${await res.text()}`);
   }
+}
+
+/** Stream autenticado de mídia (suporta Range para seek no player). */
+export async function fetchRecordingMediaRaw(
+  recordingId: string,
+  mediaFileId: string,
+  requestHeaders?: HeadersInit
+): Promise<Response> {
+  const { base, apiKey } = getConfig();
+  const headers = new Headers(requestHeaders);
+  headers.set("X-API-Key", apiKey);
+
+  return fetch(`${base}/recordings/${encodeURIComponent(recordingId)}/media/${encodeURIComponent(mediaFileId)}/raw`, {
+    headers,
+    cache: "no-store",
+  });
 }
 
 export async function setUserWebhook(webhookUrl: string, webhookSecret?: string): Promise<void> {
