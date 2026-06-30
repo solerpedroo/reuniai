@@ -58,6 +58,16 @@ export async function applyMeetingStatus(
 
   const patch: MeetingUpdate = { status: nextStatus };
 
+  // Não regride de "gravando" para "entrando" por ruído de poll/webhook.
+  if (meeting.status === "recording" && nextStatus === "bot_joining") {
+    return { updated: false };
+  }
+
+  // Não regride de "processando" para estados anteriores.
+  if (meeting.status === "processing" && (nextStatus === "bot_joining" || nextStatus === "recording")) {
+    return { updated: false };
+  }
+
   if (nextStatus === "completed") {
     const endIso = input.endTime ?? new Date().toISOString();
     patch.ended_at = endIso;
