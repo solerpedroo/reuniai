@@ -333,7 +333,7 @@ Layout SystemShadcn (4 KPI cards + grid):
 - [x] `components/dashboard/kpi-cards.tsx`
 - [x] `components/dashboard/recent-meetings-table.tsx` — colunas: título, data, plataforma, status, duração
 - [x] `components/dashboard/attention-card.tsx` — action items vencidos/próximos
-- [ ] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, opcional MVP — adiado)
+- [x] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, integrado no dashboard via `getMeetingsWeeklyChart()`)
 
 #### 4.2 Lista de reuniões (`app/(app)/reunioes/page.tsx`)
 
