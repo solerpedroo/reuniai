@@ -202,7 +202,7 @@ export function SignupForm() {
               <Input
                 id="displayName"
                 autoComplete="name"
-                placeholder="Pedro Soler"
+                placeholder="João da Silva"
                 required
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -210,12 +210,12 @@ export function SignupForm() {
               />
             </AuthField>
 
-            <AuthField id="signup-email" label="E-mail profissional" icon={EnvelopeSimple}>
+            <AuthField id="signup-email" label="E-mail" icon={EnvelopeSimple}>
               <Input
                 id="signup-email"
                 type="email"
                 autoComplete="email"
-                placeholder="voce@empresa.com"
+                placeholder="seu@email.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -223,10 +223,21 @@ export function SignupForm() {
               />
             </AuthField>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <AuthField id="timezone" label="Fuso horário" icon={GlobeHemisphereWest}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="min-w-0 space-y-2">
+                <Label
+                  htmlFor="timezone"
+                  className="flex items-center gap-2 text-[13px] font-medium text-foreground"
+                >
+                  <GlobeHemisphereWest
+                    size={16}
+                    className="shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  Fuso horário
+                </Label>
                 <Select value={timezone} onValueChange={setTimezone}>
-                  <SelectTrigger id="timezone" className="auth-input">
+                  <SelectTrigger id="timezone" className="auth-input w-full">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,11 +251,18 @@ export function SignupForm() {
                     )}
                   </SelectContent>
                 </Select>
-              </AuthField>
+              </div>
 
-              <AuthField id="locale" label="Idioma" icon={Briefcase}>
+              <div className="min-w-0 space-y-2">
+                <Label
+                  htmlFor="locale"
+                  className="flex items-center gap-2 text-[13px] font-medium text-foreground"
+                >
+                  <Briefcase size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+                  Idioma
+                </Label>
                 <Select value={locale} onValueChange={setLocale}>
-                  <SelectTrigger id="locale" className="auth-input">
+                  <SelectTrigger id="locale" className="auth-input w-full">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -255,7 +273,7 @@ export function SignupForm() {
                     ))}
                   </SelectContent>
                 </Select>
-              </AuthField>
+              </div>
             </div>
 
             {error && (
