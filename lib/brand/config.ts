@@ -8,8 +8,8 @@ export const PRODUCT_CONTEXT = "Transcrição · Resumo · Action items" as cons
 export const BRAND_HEX = "#0064F5" as const;
 export const BRAND_HEX_DARK = "#0047B8" as const;
 
-export const BOT_DISPLAY_NAME =
-  process.env.NEXT_PUBLIC_BOT_NAME ?? `${PRODUCT_NAME} Bot`;
+/** Fallback genérico quando não há contexto de usuário (páginas públicas). */
+export const BOT_DISPLAY_NAME_FALLBACK = `${PRODUCT_NAME} Bot`;
 
 export function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "https://reuniai.vercel.app";

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { BOT_DISPLAY_NAME } from "@/lib/brand/config";
+import { formatBotDisplayName } from "@/lib/brand/bot-name";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 
 function getConfig() {
@@ -61,7 +61,7 @@ export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
     body: JSON.stringify({
       platform: input.platform,
       native_meeting_id: input.nativeMeetingId,
-      bot_name: input.botName ?? BOT_DISPLAY_NAME,
+      bot_name: input.botName ?? formatBotDisplayName(null),
       language: input.language ?? "pt",
       passcode: input.passcode,
       recording_enabled: true,

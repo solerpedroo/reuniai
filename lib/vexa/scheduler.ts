@@ -4,6 +4,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Meeting } from "@/lib/supabase/types";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { localeToVexaLanguage, parseUserLocale } from "@/lib/profile/locale";
+import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { applyBotBranding } from "@/lib/vexa/branding";
 import { createBot } from "@/lib/vexa/client";
 
@@ -54,13 +55,20 @@ export async function startBotForMeeting(
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("locale")
+    .select("locale, display_name")
     .eq("id", meeting.user_id)
     .maybeSingle();
 
-  const language = localeToVexaLanguage(
-    parseUserLocale((profile as { locale?: string } | null)?.locale)
-  );
+  const typedProfile = profile as { locale?: string; display_name?: string | null } | null;
+  const language = localeToVexaLanguage(parseUserLocale(typedProfile?.locale));
+
+  const { data: authUser } = await admin.auth.admin.getUserById(meeting.user_id);
+  const metadata = authUser.user?.user_metadata as { full_name?: string; name?: string } | undefined;
+  const botName = buildBotDisplayName({
+    displayName: typedProfile?.display_name,
+    email: authUser.user?.email,
+    metadataFullName: metadata?.full_name ?? metadata?.name,
+  });
 
   try {
     await createBot({
@@ -68,6 +76,7 @@ export async function startBotForMeeting(
       nativeMeetingId: parsed.nativeMeetingId,
       passcode: parsed.passcode,
       language,
+      botName,
       voiceAgentEnabled: true,
     });
   } catch (err) {

@@ -124,7 +124,7 @@ export default async function ReunioesPage({
     <div>
       <PageHeader
         title="Reuniões"
-        description="Todas as reuniões gravadas pelo ReuniAI Bot — da agenda ou via link manual."
+        description="Todas as reuniões gravadas pelo ReuniAI — da agenda ou via link manual."
         meta="Biblioteca"
         actions={<JoinMeetingDialog defaultOpen={params.join === "1"} />}
       />

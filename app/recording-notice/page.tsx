@@ -1,5 +1,5 @@
 import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
-import { BOT_DISPLAY_NAME, PRODUCT_NAME } from "@/lib/brand/config";
+import { PRODUCT_NAME } from "@/lib/brand/config";
 import { Record, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = {
@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default function RecordingNoticePage() {
-  const botName = BOT_DISPLAY_NAME;
+  const botNameExample = `${PRODUCT_NAME} - Nome do anfitrião`;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
@@ -23,7 +23,7 @@ export default function RecordingNoticePage() {
       </div>
 
       <p className="mt-5 text-muted-foreground">
-        O participante <strong className="text-foreground">{botName}</strong> é um assistente
+        O participante <strong className="text-foreground">{botNameExample}</strong> é um assistente
         automatizado que entrou nesta chamada para gravar o áudio, gerar a transcrição e produzir
         um resumo com itens de ação para o anfitrião.
       </p>

@@ -24,7 +24,7 @@ const STEPS = [
   {
     title: "Auto-join do bot",
     description:
-      "Quando ativado, o ReuniAI Bot entra automaticamente nas reuniões do seu calendário com link de vídeo.",
+      "Quando ativado, o bot entra automaticamente nas reuniões do seu calendário com link de vídeo, identificado como ReuniAI - seu nome.",
   },
   {
     title: "Calendário",

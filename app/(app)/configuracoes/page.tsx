@@ -9,6 +9,7 @@ import { LocaleAndTemplateSettings } from "@/components/settings/locale-template
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
@@ -36,6 +37,7 @@ export default async function ConfiguracoesPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  let displayName: string | null = null;
   let autoJoin = true;
   let retentionDays = 365;
   let notificationPrefs: NotificationPrefs = {
@@ -51,16 +53,17 @@ export default async function ConfiguracoesPage({
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("auto_join_enabled, retention_days, notification_prefs, locale, default_analysis_template")
+      .select("auto_join_enabled, retention_days, notification_prefs, locale, default_analysis_template, display_name")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile) {
-      const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days"> & {
+      const typed = profile as Pick<Profile, "auto_join_enabled" | "retention_days" | "display_name"> & {
         notification_prefs?: NotificationPrefs;
         locale?: string;
         default_analysis_template?: string;
       };
+      displayName = typed.display_name;
       autoJoin = typed.auto_join_enabled;
       retentionDays = typed.retention_days;
       if (typed.notification_prefs) notificationPrefs = typed.notification_prefs;
@@ -72,6 +75,12 @@ export default async function ConfiguracoesPage({
   const googleConnection = await getCalendarConnection(supabase, "google");
   const outlookConnection = await getCalendarConnection(supabase, "outlook");
   const email = user?.email ?? "—";
+  const metadata = user?.user_metadata as { full_name?: string; name?: string } | undefined;
+  const botDisplayName = buildBotDisplayName({
+    displayName,
+    email: user?.email,
+    metadataFullName: metadata?.full_name ?? metadata?.name,
+  });
 
   let banner = calendar ? CALENDAR_MESSAGES[calendar] : undefined;
   if (banner && provider === "outlook" && calendar === "connected") {
@@ -143,7 +152,7 @@ export default async function ConfiguracoesPage({
           </CardHeader>
           <CardContent className="space-y-6">
             <AutoJoinToggle initialEnabled={autoJoin} />
-            <BotBrandingPreview />
+            <BotBrandingPreview botDisplayName={botDisplayName} />
           </CardContent>
         </Card>
 
