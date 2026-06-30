@@ -16,6 +16,7 @@ import {
   VideoCamera,
 } from "@phosphor-icons/react";
 import { completeOnboardingAction } from "@/app/(onboarding)/onboarding/actions";
+import { ConsentText } from "@/components/legal/consent-text";
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { OnboardingShowcase } from "@/components/onboarding/onboarding-showcase";
 import { Button } from "@/components/ui/button";
@@ -228,8 +229,7 @@ export function OnboardingFlow() {
                       onCheckedChange={(value) => setConsent(value === true)}
                     />
                     <span>
-                      Li e aceito que o ReuniAI grava e processa áudio de reuniões para transcrição
-                      e análise por IA, conforme a LGPD e os termos de uso.
+                      <ConsentText />
                     </span>
                   </Label>
                 </div>
