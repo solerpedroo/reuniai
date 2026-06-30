@@ -16,6 +16,7 @@ const DeleteSchema = z.object({
 });
 
 const PatchSchema = z.object({
+  display_name: z.string().trim().min(2).max(80).optional(),
   notification_prefs: z
     .object({
       email: z.boolean().optional(),
@@ -55,6 +56,10 @@ export async function PATCH(request: NextRequest) {
   }
 
   const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
+  if (parsed.data.display_name) {
+    updates.display_name = parsed.data.display_name;
+  }
+
   if (parsed.data.notification_prefs) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -95,6 +100,25 @@ export async function PATCH(request: NextRequest) {
     .eq("id", user.id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const authMetadata: Record<string, string> = {};
+  if (parsed.data.display_name) {
+    authMetadata.full_name = parsed.data.display_name;
+    authMetadata.display_name = parsed.data.display_name;
+  }
+  if (parsed.data.timezone) {
+    authMetadata.timezone = parsed.data.timezone;
+  }
+  if (parsed.data.locale) {
+    authMetadata.locale = parsed.data.locale;
+  }
+
+  if (Object.keys(authMetadata).length > 0) {
+    const { error: metaError } = await supabase.auth.updateUser({ data: authMetadata });
+    if (metaError) {
+      return NextResponse.json({ error: metaError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ ok: true });
