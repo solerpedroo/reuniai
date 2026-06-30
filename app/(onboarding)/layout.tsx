@@ -1,7 +1,8 @@
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-lg">{children}</div>
+    <div className="auth-canvas min-h-screen">
+      <div className="auth-grid pointer-events-none fixed inset-0 opacity-[0.18] lg:hidden" />
+      {children}
     </div>
   );
 }
