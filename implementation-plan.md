@@ -37,7 +37,7 @@
 6. [Onda 3 — Autenticação e onboarding](#onda-3--autenticação-e-onboarding)
 7. [Onda 4 — Dashboard e lista de reuniões](#onda-4--dashboard-e-lista-de-reuniões)
 8. [Onda 5 — Google Calendar e sync](#onda-5--google-calendar-e-sync)
-9. [Onda 6 — Recall.ai: bot nas reuniões](#onda-6--recallai-bot-nas-reuniões)
+9. [Onda 6 — Vexa: bot nas reuniões](#onda-6--vexa-bot-nas-reuniões)
 10. [Onda 7 — Pipeline de transcrição](#onda-7--pipeline-de-transcrição)
 11. [Onda 8 — IA post-call: resumo e atribuições](#onda-8--ia-post-call-resumo-e-atribuições)
 12. [Onda 9 — Detalhe da reunião (UI completa)](#onda-9--detalhe-da-reunião-ui-completa)
@@ -66,7 +66,7 @@ flowchart TD
     O2 --> O3[Onda 3: Auth]
     O3 --> O4[Onda 4: Dashboard]
     O4 --> O5[Onda 5: Calendar]
-    O5 --> O6[Onda 6: Recall Bot]
+    O5 --> O6[Onda 6: Vexa Bot]
     O6 --> O7[Onda 7: Transcrição]
     O7 --> O8[Onda 8: IA Resumo]
     O8 --> O9[Onda 9: Detalhe UI]
@@ -102,9 +102,9 @@ flowchart TD
 | [Supabase](https://supabase.com) | Auth, DB, Storage | Onda 2 |
 | [Vercel](https://vercel.com) | Deploy | Onda 0 |
 | [Google Cloud Console](https://console.cloud.google.com) | OAuth + Calendar API | Onda 5 |
-| [Recall.ai](https://recall.ai) | Meeting bots | Onda 6 |
-| [Deepgram](https://deepgram.com) | ASR + diarização | Onda 7 |
-| Anthropic ou OpenAI | Resumo + chat | Onda 8 |
+| [Vexa](https://github.com/Vexa-ai/vexa) | Meeting bots + transcrição Whisper | Onda 6 |
+| Anthropic, OpenAI ou Groq | Resumo + chat | Onda 8 |
+| OpenAI (embeddings) | RAG vetorial (opcional) | Onda 8 |
 
 ### Referências locais
 
@@ -333,7 +333,7 @@ Layout SystemShadcn (4 KPI cards + grid):
 - [x] `components/dashboard/kpi-cards.tsx`
 - [x] `components/dashboard/recent-meetings-table.tsx` — colunas: título, data, plataforma, status, duração
 - [x] `components/dashboard/attention-card.tsx` — action items vencidos/próximos
-- [ ] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, opcional MVP — adiado)
+- [x] `components/dashboard/meetings-chart.tsx` — reuniões por semana (recharts, integrado no dashboard via `getMeetingsWeeklyChart()`)
 
 #### 4.2 Lista de reuniões (`app/(app)/reunioes/page.tsx`)
 
@@ -470,6 +470,7 @@ Mapeamento `meeting.status_change`:
 #### 6.5 Fallback de status + UI ✅
 
 - [x] Cron `/api/cron/poll-bots` — fallback sem webhook público (localhost): consulta `getRunningBots()` e fecha reuniões encerradas
+- [x] Cron `/api/cron/poll-native-transcripts` — fallback para transcrições nativas (Teams/Meet) quando o webhook não dispara; agendado em `.github/workflows/cron.yml`
 - [x] Rotas manuais `/api/bots/start` e `/api/bots/stop` (autenticadas)
 - [x] UI: `components/meetings/bot-actions.tsx` na tabela (Enviar bot / Parar bot)
 
@@ -543,7 +544,7 @@ Mapeamento `meeting.status_change`:
 - [x] `app/(app)/reunioes/[id]/page.tsx` — página de detalhe (header, status, plataforma, transcrição)
 - [x] `components/meetings/transcript-sync-button.tsx` — botão "Buscar transcrição"
 
-> **Diferido para Onda 9:** player de gravação com seek (Vexa serve a mídia autenticada via `/recordings/...`; exige rota proxy) e highlight do segment ativo via `onSeek(ms)`.
+> **Entregue na Onda 9:** player de gravação com seek (`components/meetings/recording-player.tsx`), proxy autenticado (`/api/meetings/[id]/recording`) e highlight do segment ativo na transcrição.
 
 ### Critérios de aceite
 
@@ -623,10 +624,11 @@ Mapeamento `meeting.status_change`:
 
 - [x] `components/meetings/summary-view.tsx` (Onda 8) — resumo executivo em card, tópicos e decisões
 
-#### 9.3 Aba Transcrição ✅ (parcial)
+#### 9.3 Aba Transcrição ✅
 
 - [x] `components/meetings/transcript-view.tsx` — segments com timestamp e speaker
-- [ ] **Diferido:** player de áudio com highlight do segment ativo (exige rota proxy para a mídia autenticada do Vexa — `GET /recordings/...`). Pendente de validar os endpoints de gravação do Vexa.
+- [x] `components/meetings/recording-player.tsx` — player responsivo com seek, velocidade e highlight do segment ativo via `highlightMs`
+- [x] Proxy de gravação: `app/api/meetings/[id]/recording/route.ts` e `.../stream/route.ts`
 
 #### 9.4 Aba Atribuições (`components/meetings/action-items-tab.tsx`) ✅
 
@@ -654,7 +656,7 @@ Mapeamento `meeting.status_change`:
 - [x] Abas funcionam com dados reais
 - [x] Edição/criação/remoção de action item persiste (refletirá no "attention card" do dashboard)
 - [x] Tabs com `flex-wrap` (responsivo)
-- [ ] Player responsivo — diferido junto com 9.3
+- [x] Player responsivo com seek sincronizado à transcrição e citações do chat
 
 ---
 
@@ -725,7 +727,7 @@ Mapeamento `meeting.status_change`:
 #### 11.3 Busca
 
 - [x] Busca full-text em título + transcript (`ILIKE` ou `tsvector` — simples primeiro)
-- [x] Input no header ou `/reunioes?q=`
+- [x] Input no header (`components/shell/meeting-search.tsx` → `/reunioes?q=`) e busca semântica via command palette (`/busca`)
 
 #### 11.4 Export
 
@@ -734,8 +736,9 @@ Mapeamento `meeting.status_change`:
 
 #### 11.5 Email digest (opcional MVP)
 
-- [ ] Resend ou Supabase Edge + template HTML
-- [ ] Após `status = completed`, email com resumo + link
+- [x] Resend + templates HTML (`lib/email/meeting-completed.ts`, `lib/email/weekly-digest.ts`)
+- [x] Após `status = completed`, email com resumo + link (quando `notification_prefs.email` ativo)
+- [x] Cron semanal `/api/cron/weekly-digest` (domingo 9h UTC via `vercel.json`)
 
 #### 11.6 Dark mode
 
@@ -751,12 +754,12 @@ Mapeamento `meeting.status_change`:
 #### 11.8 Error monitoring
 
 - [x] Structured logging em webhooks
-- [ ] Sentry ou Vercel Analytics (opcional)
+- [x] Vercel Analytics + Speed Insights em `app/layout.tsx` (Sentry permanece opcional)
 
 #### 11.9 Performance
 
 - [x] Índices: `meetings(user_id, started_at)`, `transcript_segments(meeting_id, sequence)`
-- [x] Paginação cursor-based na lista de reuniões
+- [x] Paginação cursor-based na lista de reuniões (default, busca `?q=` e filtros avançados)
 
 ### Critérios de aceite
 
@@ -1207,22 +1210,33 @@ ENCRYPTION_KEY=                          # 32 bytes hex
 GOOGLE_CALENDAR_CLIENT_ID=
 GOOGLE_CALENDAR_CLIENT_SECRET=
 
-# Recall.ai
-RECALL_API_KEY=
-RECALL_WEBHOOK_SECRET=
+# Vexa (bot + transcrição Whisper)
+VEXA_API_BASE=https://api.cloud.vexa.ai
+VEXA_API_KEY=
+VEXA_WEBHOOK_SECRET=
 
-# Deepgram
-DEEPGRAM_API_KEY=
+# Recall.ai / Deepgram (legado — não usados)
 
-# LLM (um dos dois)
+# LLM — um provedor com chave (ordem padrão: groq > openai > anthropic)
+LLM_PROVIDER=groq
+GROQ_API_KEY=
+# GROQ_MODEL=llama-3.3-70b-versatile
 ANTHROPIC_API_KEY=
+# ANTHROPIC_MODEL=claude-3-5-sonnet-latest
 OPENAI_API_KEY=
+# OPENAI_MODEL=gpt-4o-mini
+
+# Embeddings para RAG (opcional — API OpenAI-compatible; sem chave usa transcrição completa)
+EMBEDDINGS_API_KEY=
+# EMBEDDINGS_MODEL=text-embedding-3-small
+# EMBEDDINGS_API_BASE=https://api.openai.com/v1
 
 # Cron protection
 CRON_SECRET=
 
 # Email (opcional)
 RESEND_API_KEY=
+RESEND_FROM=ReuniAI <onboarding@resend.dev>
 ```
 
 ---
@@ -1263,10 +1277,9 @@ flowchart TB
     Next --> SupaDB[Supabase Postgres]
     Next --> SupaStorage[Supabase Storage]
     Next --> GoogleCal[Google Calendar API]
-    Next --> Recall[Recall.ai API]
-    Recall -->|webhook| Next
-    Next --> Deepgram[Deepgram API]
-    Next --> LLM[Claude/GPT API]
+    Next --> Vexa[Vexa API]
+    Vexa -->|webhook| Next
+    Next --> LLM[Groq/OpenAI/Anthropic]
 ```
 
 ---

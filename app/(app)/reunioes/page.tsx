@@ -7,9 +7,10 @@ import { MeetingsFilterBar } from "@/components/meetings/meetings-filter-bar";
 import { Button } from "@/components/ui/button";
 import {
   attachTagsToMeetings,
-  getFilteredMeetings,
+  getFilteredMeetingsPaginated,
   getSavedViews,
   type MeetingListFilters,
+  type MeetingWithTags,
 } from "@/lib/meetings/filter-queries";
 import {
   getMeetingsForUserPaginated,
@@ -31,6 +32,39 @@ function parseCursor(value: string | undefined): MeetingsCursor | undefined {
 
 function encodeCursor(cursor: MeetingsCursor): string {
   return `${cursor.startedAt}|${cursor.id}`;
+}
+
+function buildListHref(
+  params: Record<string, string | undefined>,
+  cursor?: MeetingsCursor
+): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value?.trim()) search.set(key, value.trim());
+  }
+  if (cursor) search.set("cursor", encodeCursor(cursor));
+  const query = search.toString();
+  return query ? `/reunioes?${query}` : "/reunioes";
+}
+
+function filterParamsFromSearch(params: {
+  status?: string;
+  platform?: string;
+  tag?: string;
+  participant?: string;
+  minDuration?: string;
+  maxDuration?: string;
+  openActions?: string;
+}): Record<string, string | undefined> {
+  return {
+    status: params.status,
+    platform: params.platform,
+    tag: params.tag,
+    participant: params.participant,
+    minDuration: params.minDuration,
+    maxDuration: params.maxDuration,
+    openActions: params.openActions,
+  };
 }
 
 function parseFilters(params: {
@@ -92,7 +126,7 @@ export default async function ReunioesPage({
     getSavedViews(supabase),
   ]);
 
-  let meetings;
+  let meetings: MeetingWithTags[];
   let nextCursor: MeetingsCursor | null = null;
 
   if (params.q?.trim()) {
@@ -103,7 +137,12 @@ export default async function ReunioesPage({
     meetings = await attachTagsToMeetings(supabase, page.meetings);
     nextCursor = page.nextCursor;
   } else if (advanced) {
-    meetings = await getFilteredMeetings(supabase, filters, PAGE_SIZE);
+    const page = await getFilteredMeetingsPaginated(supabase, filters, {
+      limit: PAGE_SIZE,
+      cursor,
+    });
+    meetings = page.meetings;
+    nextCursor = page.nextCursor;
   } else {
     const page = await getMeetingsForUserPaginated(supabase, {
       limit: PAGE_SIZE,
@@ -113,12 +152,15 @@ export default async function ReunioesPage({
     nextCursor = page.nextCursor;
   }
 
-  const nextHref =
-    nextCursor &&
-    `/reunioes?${new URLSearchParams({
-      ...(params.q?.trim() ? { q: params.q.trim() } : {}),
-      cursor: encodeCursor(nextCursor),
-    }).toString()}`;
+  const filterQuery = filterParamsFromSearch(params);
+
+  const nextHref = nextCursor
+    ? params.q?.trim()
+      ? buildListHref({ q: params.q.trim() }, nextCursor)
+      : advanced
+        ? buildListHref(filterQuery, nextCursor)
+        : buildListHref({}, nextCursor)
+    : null;
 
   return (
     <div>

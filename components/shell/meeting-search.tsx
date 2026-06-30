@@ -16,7 +16,7 @@ export function MeetingSearch({ initialQuery = "" }: { initialQuery?: string }) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative hidden w-full max-w-xs md:block">
+    <form onSubmit={handleSubmit} className="relative w-full min-w-0">
       <MagnifyingGlass
         size={16}
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
