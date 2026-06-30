@@ -1,6 +1,7 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { Meeting, MeetingPlatform, MeetingStatus } from "@/lib/supabase/types";
 import { getMeetingDurationMs } from "@/lib/meetings/types";
+import type { MeetingsCursor } from "@/lib/meetings/queries";
 import type { Tag } from "@/lib/workflow/types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
@@ -106,42 +107,108 @@ function applyDurationFilters(meetings: Meeting[], filters: MeetingListFilters):
   });
 }
 
+async function applyAsyncFilters(
+  supabase: Client,
+  meetings: Meeting[],
+  filters: MeetingListFilters
+): Promise<Meeting[]> {
+  let result = meetings;
+
+  if (filters.tagId) {
+    const allowed = await getMeetingIdsByTag(supabase, filters.tagId);
+    result = result.filter((m) => allowed.has(m.id));
+  }
+
+  if (filters.participant?.trim()) {
+    const allowed = await getMeetingIdsByParticipant(supabase, filters.participant);
+    result = result.filter((m) => allowed.has(m.id));
+  }
+
+  if (filters.openActionsOnly) {
+    const allowed = await getMeetingIdsWithOpenActions(supabase);
+    result = result.filter((m) => allowed.has(m.id));
+  }
+
+  return applyDurationFilters(result, filters);
+}
+
+export type FilteredMeetingsPage = {
+  meetings: MeetingWithTags[];
+  nextCursor: MeetingsCursor | null;
+};
+
+export async function getFilteredMeetingsPaginated(
+  supabase: Client,
+  filters: MeetingListFilters = {},
+  options: { limit?: number; cursor?: MeetingsCursor } = {}
+): Promise<FilteredMeetingsPage> {
+  const limit = options.limit ?? 50;
+  const batchSize = Math.max(limit * 3, 50);
+  const maxBatches = 8;
+
+  let dbCursor = options.cursor;
+  const matched: Meeting[] = [];
+  let batches = 0;
+
+  while (matched.length <= limit && batches < maxBatches) {
+    batches += 1;
+
+    let query = supabase
+      .from("meetings")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(batchSize);
+
+    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.platform) query = query.eq("platform", filters.platform);
+
+    if (dbCursor) {
+      const { startedAt, id } = dbCursor;
+      query = query.or(`started_at.lt.${startedAt},and(started_at.eq.${startedAt},id.lt.${id})`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const batch = (data ?? []) as Meeting[];
+    if (batch.length === 0) break;
+
+    const filtered = await applyAsyncFilters(supabase, batch, filters);
+    for (const meeting of filtered) {
+      if (!matched.some((m) => m.id === meeting.id)) {
+        matched.push(meeting);
+      }
+    }
+
+    const last = batch[batch.length - 1]!;
+    dbCursor = { startedAt: last.started_at, id: last.id };
+
+    if (batch.length < batchSize) break;
+  }
+
+  const hasMore = matched.length > limit;
+  const pageMeetings = hasMore ? matched.slice(0, limit) : matched;
+  const last = pageMeetings.at(-1);
+
+  const meetingsWithTags = await attachTags(supabase, pageMeetings);
+
+  return {
+    meetings: meetingsWithTags,
+    nextCursor:
+      hasMore && last
+        ? { startedAt: last.started_at, id: last.id }
+        : null,
+  };
+}
+
 export async function getFilteredMeetings(
   supabase: Client,
   filters: MeetingListFilters = {},
   limit = 50
 ): Promise<MeetingWithTags[]> {
-  let query = supabase
-    .from("meetings")
-    .select("*")
-    .order("started_at", { ascending: false })
-    .limit(limit * 3);
-
-  if (filters.status) query = query.eq("status", filters.status);
-  if (filters.platform) query = query.eq("platform", filters.platform);
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  let meetings = (data ?? []) as Meeting[];
-
-  if (filters.tagId) {
-    const allowed = await getMeetingIdsByTag(supabase, filters.tagId);
-    meetings = meetings.filter((m) => allowed.has(m.id));
-  }
-
-  if (filters.participant?.trim()) {
-    const allowed = await getMeetingIdsByParticipant(supabase, filters.participant);
-    meetings = meetings.filter((m) => allowed.has(m.id));
-  }
-
-  if (filters.openActionsOnly) {
-    const allowed = await getMeetingIdsWithOpenActions(supabase);
-    meetings = meetings.filter((m) => allowed.has(m.id));
-  }
-
-  meetings = applyDurationFilters(meetings, filters).slice(0, limit);
-  return attachTags(supabase, meetings);
+  const page = await getFilteredMeetingsPaginated(supabase, filters, { limit });
+  return page.meetings;
 }
 
 export async function attachTagsToMeetings(
