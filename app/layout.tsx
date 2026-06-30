@@ -6,6 +6,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import { ThemeScript } from "@/components/providers/theme-provider";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND_HEX, PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/brand/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,19 +21,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ReuniAI",
-    template: "%s · ReuniAI",
+    default: PRODUCT_NAME,
+    template: `%s · ${PRODUCT_NAME}`,
   },
-  description: "Inteligência de reuniões com transcrição, resumo e action items.",
+  description: `${PRODUCT_TAGLINE} com transcrição, resumo e action items.`,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "ReuniAI",
+    title: PRODUCT_NAME,
+  },
+  icons: {
+    icon: [{ url: "/brand/logo-mark.svg", type: "image/svg+xml" }],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#6366f1",
+  themeColor: BRAND_HEX,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { List, X } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
+import { PRODUCT } from "@/lib/brand/config";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
@@ -50,7 +51,7 @@ export function AppShell({
         </nav>
         <div className="border-t border-sidebar-border px-4 py-4">
           <p className="text-[11px] leading-relaxed text-muted-foreground">
-            ReuniAI · Gravação com consentimento dos participantes
+            {PRODUCT.name} · Gravação com consentimento dos participantes
           </p>
         </div>
       </aside>
@@ -147,7 +148,7 @@ export function AppShell({
         </PageTransition>
 
         <footer className="mt-auto border-t border-border/70 px-4 py-4 lg:px-8">
-          <p className="text-xs text-muted-foreground">ReuniAI · Inteligência de reuniões</p>
+          <p className="text-xs text-muted-foreground">{PRODUCT.name} · {PRODUCT.tagline}</p>
         </footer>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { BOT_DISPLAY_NAME } from "@/lib/brand/config";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 
 function getConfig() {
@@ -39,6 +40,19 @@ export type CreateBotInput = {
   botName?: string;
   language?: string;
   passcode?: string;
+  voiceAgentEnabled?: boolean;
+};
+
+export type SetBotAvatarInput = {
+  url?: string;
+  imageBase64?: string;
+};
+
+export type SetBotScreenInput = {
+  type: "image" | "url" | "video" | "html";
+  url?: string;
+  imageBase64?: string;
+  html?: string;
 };
 
 export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
@@ -47,12 +61,13 @@ export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
     body: JSON.stringify({
       platform: input.platform,
       native_meeting_id: input.nativeMeetingId,
-      bot_name: input.botName ?? process.env.NEXT_PUBLIC_BOT_NAME ?? "ReuniAI Bot",
+      bot_name: input.botName ?? BOT_DISPLAY_NAME,
       language: input.language ?? "pt",
       passcode: input.passcode,
       recording_enabled: true,
       transcribe_enabled: true,
       transcription_tier: "realtime",
+      voice_agent_enabled: input.voiceAgentEnabled ?? true,
     }),
   });
 
@@ -103,6 +118,48 @@ export async function getRunningBots(): Promise<VexaMeeting[]> {
   const data = (await res.json()) as { running_bots?: VexaMeeting[] } | VexaMeeting[];
   if (Array.isArray(data)) return data;
   return data.running_bots ?? [];
+}
+
+/** Câmera virtual do bot (experimental no Meet; mais confiável no Zoom). */
+export async function setBotAvatar(
+  platform: BotPlatform,
+  nativeMeetingId: string,
+  input: SetBotAvatarInput
+): Promise<void> {
+  const body: Record<string, string> = {};
+  if (input.url) body.url = input.url;
+  if (input.imageBase64) body.image_base64 = input.imageBase64;
+  if (!body.url && !body.image_base64) {
+    throw new Error("setBotAvatar requer url ou imageBase64.");
+  }
+
+  const res = await vexaFetch(`/bots/${platform}/${nativeMeetingId}/avatar`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Vexa setBotAvatar falhou: ${res.status} ${await res.text()}`);
+  }
+}
+
+/** Compartilhamento de tela com fundo personalizado (fallback quando avatar não suportado). */
+export async function setBotScreen(
+  platform: BotPlatform,
+  nativeMeetingId: string,
+  input: SetBotScreenInput
+): Promise<void> {
+  const body: Record<string, string> = { type: input.type };
+  if (input.url) body.url = input.url;
+  if (input.imageBase64) body.image_base64 = input.imageBase64;
+  if (input.html) body.html = input.html;
+
+  const res = await vexaFetch(`/bots/${platform}/${nativeMeetingId}/screen`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Vexa setBotScreen falhou: ${res.status} ${await res.text()}`);
+  }
 }
 
 export async function setUserWebhook(webhookUrl: string, webhookSecret?: string): Promise<void> {

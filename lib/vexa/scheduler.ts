@@ -4,6 +4,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Meeting } from "@/lib/supabase/types";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { localeToVexaLanguage, parseUserLocale } from "@/lib/profile/locale";
+import { applyBotBranding } from "@/lib/vexa/branding";
 import { createBot } from "@/lib/vexa/client";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -67,10 +68,16 @@ export async function startBotForMeeting(
       nativeMeetingId: parsed.nativeMeetingId,
       passcode: parsed.passcode,
       language,
+      voiceAgentEnabled: true,
     });
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : "Falha ao criar bot." };
   }
+
+  // Branding (câmera + fundo) em background — não bloqueia o join.
+  void applyBotBranding(parsed.platform, parsed.nativeMeetingId).catch(() => {
+    /* falha silenciosa; gravação segue sem branding visual */
+  });
 
   const { error } = await admin
     .from("meetings")

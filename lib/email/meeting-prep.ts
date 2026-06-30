@@ -2,6 +2,8 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
+import { emailButton, emailLink, wrapEmailHtml } from "@/lib/brand/email-layout";
+import { getAppUrl } from "@/lib/brand/config";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -37,7 +39,7 @@ export async function sendMeetingPrepEmail(
   const email = authUser.user?.email;
   if (!email) return;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://reuniai.vercel.app";
+  const appUrl = getAppUrl();
   const meetingUrl = `${appUrl}/reunioes/${meetingId}`;
   const seriesUrl = meeting.calendar_recurring_event_id
     ? `${appUrl}/series/${encodeURIComponent(meeting.calendar_recurring_event_id)}`
@@ -48,25 +50,19 @@ export async function sendMeetingPrepEmail(
     timeStyle: "short",
   });
 
-  const html = `
-    <div style="font-family: system-ui, sans-serif; max-width: 560px; color: #111;">
-      <h1 style="font-size: 20px;">Prep de reunião</h1>
+  const html = wrapEmailHtml({
+    title: "Prep de reunião",
+    bodyHtml: `
       <p><strong>${escapeHtml(meeting.title)}</strong> · ${escapeHtml(startsAt)}</p>
       <p style="margin-top: 16px; line-height: 1.5;">${escapeHtml(briefing)}</p>
       <p style="margin-top: 32px;">
-        <a href="${meetingUrl}" style="background: #6366f1; color: #fff; padding: 10px 16px; border-radius: 8px; text-decoration: none; margin-right: 8px;">
-          Ver reunião
-        </a>
-        <a href="${seriesUrl}" style="color: #6366f1; text-decoration: none;">
-          Histórico da série
-        </a>
+        ${emailButton(meetingUrl, "Ver reunião")}
+        <span style="margin-left: 12px;">${emailLink(seriesUrl, "Histórico da série")}</span>
       </p>
-      <p style="margin-top: 24px; font-size: 12px; color: #666;">
-        Você recebeu este email porque ativou notificações de prep.
-        Desative em Configurações → Notificações.
-      </p>
-    </div>
-  `;
+    `,
+    footerNote:
+      "Você recebeu este email porque ativou notificações de prep. Desative em Configurações → Notificações.",
+  });
 
   await sendEmail({
     to: email,

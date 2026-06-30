@@ -1,4 +1,5 @@
-import { VideoCamera } from "@phosphor-icons/react/dist/ssr";
+import { LogoMark } from "@/components/brand/logo-mark";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/brand/config";
 import { cn } from "@/lib/utils";
 
 type ReuniaiLogoProps = {
@@ -10,26 +11,23 @@ type ReuniaiLogoProps = {
 export function ReuniaiLogo({ className, compact = false, inverse = false }: ReuniaiLogoProps) {
   const titleClass = inverse ? "text-white" : "text-foreground";
   const subtitleClass = inverse ? "text-white/70" : "text-muted-foreground";
+  const markSize = compact ? 32 : 40;
 
   if (compact) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <div className="flex size-8 items-center justify-center rounded-lg bg-brand text-brand-foreground shadow-sm brand-glow">
-          <VideoCamera size={18} weight="duotone" aria-hidden />
-        </div>
-        <span className={cn("text-sm font-semibold tracking-tight", titleClass)}>ReuniAI</span>
+        <LogoMark size={markSize} className="rounded-lg shadow-sm brand-glow" />
+        <span className={cn("text-sm font-semibold tracking-tight", titleClass)}>{PRODUCT_NAME}</span>
       </div>
     );
   }
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex size-10 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-sm brand-glow">
-        <VideoCamera size={22} weight="duotone" aria-hidden />
-      </div>
+      <LogoMark size={markSize} className="rounded-xl shadow-sm brand-glow" />
       <div>
-        <p className={cn("text-[15px] font-semibold tracking-tight", titleClass)}>ReuniAI</p>
-        <p className={cn("text-xs", subtitleClass)}>Inteligência de reuniões</p>
+        <p className={cn("text-[15px] font-semibold tracking-tight", titleClass)}>{PRODUCT_NAME}</p>
+        <p className={cn("text-xs", subtitleClass)}>{PRODUCT_TAGLINE}</p>
       </div>
     </div>
   );

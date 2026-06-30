@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { BRAND_HEX } from "@/lib/brand/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     .insert({
       user_id: user.id,
       name,
-      color: body.color ?? "#6366f1",
+      color: body.color ?? BRAND_HEX,
     })
     .select("*")
     .single();

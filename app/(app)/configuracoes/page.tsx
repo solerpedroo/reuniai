@@ -1,5 +1,6 @@
 import type { Profile } from "@/lib/supabase/types";
 import { PageHeader } from "@/components/layout/page-header";
+import { BotBrandingPreview } from "@/components/settings/bot-branding-preview";
 import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnections } from "@/components/settings/calendar-connections";
@@ -140,8 +141,9 @@ export default async function ConfiguracoesPage({
               ReuniAI entra automaticamente nas calls (exceto Teams/Meet com transcript nativo)
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <AutoJoinToggle initialEnabled={autoJoin} />
+            <BotBrandingPreview />
           </CardContent>
         </Card>
 

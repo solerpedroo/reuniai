@@ -29,11 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export const PRODUCT = {
-  name: "ReuniAI",
-  tagline: "Inteligência de reuniões",
-  context: "Transcrição · Resumo · Action items",
-} as const;
+export { PRODUCT } from "@/lib/brand/config";
 
 export function getNavItem(pathname: string): NavItem {
   if (pathname === "/busca" || pathname.startsWith("/busca?")) {

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Tag } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
 
-const TAG_COLORS = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+const TAG_COLORS = ["#0064F5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export function MeetingTagsEditor({
   meetingId,

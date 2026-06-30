@@ -3,6 +3,8 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { parseDecisions } from "@/lib/meetings/insights";
 import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
+import { emailButton, wrapEmailHtml } from "@/lib/brand/email-layout";
+import { PRODUCT_NAME, getAppUrl } from "@/lib/brand/config";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { ActionItem, MeetingSummary } from "@/lib/supabase/types";
 
@@ -57,7 +59,7 @@ export async function sendMeetingCompletedEmail(
     "title" | "assignee" | "status"
   >[];
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://reuniai.vercel.app";
+  const appUrl = getAppUrl();
   const meetingUrl = `${appUrl}/reunioes/${meetingId}`;
   const title = escapeHtml(meeting.title);
   const executiveSummary = summary?.executive_summary
@@ -80,9 +82,9 @@ export async function sendMeetingCompletedEmail(
           .join("")}</ul>`
       : "<p><em>Nenhuma atribuição em aberto.</em></p>";
 
-  const html = `
-    <div style="font-family: system-ui, sans-serif; max-width: 560px; color: #111;">
-      <h1 style="font-size: 20px;">Reunião processada</h1>
+  const html = wrapEmailHtml({
+    title: "Reunião processada",
+    bodyHtml: `
       <p><strong>${title}</strong></p>
       <h2 style="font-size: 16px; margin-top: 24px;">Resumo executivo</h2>
       <p>${executiveSummary}</p>
@@ -90,17 +92,11 @@ export async function sendMeetingCompletedEmail(
       ${decisionsHtml}
       <h2 style="font-size: 16px; margin-top: 24px;">Atribuições em aberto</h2>
       ${itemsHtml}
-      <p style="margin-top: 32px;">
-        <a href="${meetingUrl}" style="background: #6366f1; color: #fff; padding: 10px 16px; border-radius: 8px; text-decoration: none;">
-          Ver reunião no ReuniAI
-        </a>
-      </p>
-      <p style="margin-top: 24px; font-size: 12px; color: #666;">
-        Você recebeu este email porque ativou notificações de reuniões concluídas.
-        Desative em Configurações → Notificações.
-      </p>
-    </div>
-  `;
+      <p style="margin-top: 32px;">${emailButton(meetingUrl, `Ver reunião no ${PRODUCT_NAME}`)}</p>
+    `,
+    footerNote:
+      "Você recebeu este email porque ativou notificações de reuniões concluídas. Desative em Configurações → Notificações.",
+  });
 
   await sendEmail({
     to: email,

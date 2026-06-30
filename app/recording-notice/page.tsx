@@ -1,14 +1,20 @@
+import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
+import { BOT_DISPLAY_NAME, PRODUCT_NAME } from "@/lib/brand/config";
 import { Record, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = {
-  title: "Aviso de gravação · ReuniAI",
+  title: `Aviso de gravação · ${PRODUCT_NAME}`,
 };
 
 export default function RecordingNoticePage() {
-  const botName = process.env.NEXT_PUBLIC_BOT_NAME ?? "ReuniAI Bot";
+  const botName = BOT_DISPLAY_NAME;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
+      <div className="mb-8">
+        <ReuniaiLogo />
+      </div>
+
       <div className="flex items-center gap-3">
         <span className="flex size-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
           <Record size={22} weight="fill" />
@@ -38,7 +44,7 @@ export default function RecordingNoticePage() {
       </div>
 
       <p className="mt-8 text-xs text-muted-foreground">
-        Gravação operada via ReuniAI. Os dados ficam acessíveis apenas ao anfitrião da reunião.
+        Gravação operada via {PRODUCT_NAME}. Os dados ficam acessíveis apenas ao anfitrião da reunião.
       </p>
     </main>
   );

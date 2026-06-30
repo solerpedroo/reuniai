@@ -10,7 +10,7 @@ const TagSuggestionSchema = z.object({
   tags: z.array(z.string().max(40)).max(3),
 });
 
-const TAG_COLORS = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#8b5cf6"];
+const TAG_COLORS = ["#0064F5", "#0ea5e9", "#10b981", "#f59e0b", "#8b5cf6"];
 
 export async function suggestAndApplyTags(
   admin: AdminClient,
