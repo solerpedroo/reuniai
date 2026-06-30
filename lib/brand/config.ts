@@ -29,19 +29,6 @@ export const BRAND_ASSETS = {
   botBackground: "/brand/bot-background.png",
 } as const;
 
-export function getBotAvatarUrl(): string {
-  const override = process.env.BOT_AVATAR_URL;
-  if (override) return override;
-  // Mesma imagem do wallpaper — exibida na câmera virtual (estilo Fireflies).
-  return `${getAppUrl()}${BRAND_ASSETS.botBackground}`;
-}
-
-export function getBotScreenUrl(): string {
-  const override = process.env.BOT_SCREEN_URL;
-  if (override) return override;
-  return `${getAppUrl()}${BRAND_ASSETS.botBackground}`;
-}
-
 export const PRODUCT = {
   name: PRODUCT_NAME,
   tagline: PRODUCT_TAGLINE,
