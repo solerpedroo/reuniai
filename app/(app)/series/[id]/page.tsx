@@ -96,6 +96,17 @@ export default async function SeriesPage({
 
       <SeriesTopicDiff diffs={diffs} />
 
+      {meetings.length >= 2 && (
+        <p className="mb-4 text-sm">
+          <Link
+            href={`/compare?a=${meetings[0]!.id}&b=${meetings[1]!.id}`}
+            className="text-brand underline-offset-4 hover:underline"
+          >
+            Comparar última vs anterior
+          </Link>
+        </p>
+      )}
+
       <div className="surface-card mb-6 divide-y divide-border/60 overflow-hidden">
         {meetings.map((meeting) => (
           <Link
