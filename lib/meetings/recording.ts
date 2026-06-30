@@ -1,16 +1,25 @@
 import type { Meeting } from "@/lib/supabase/types";
 import { recordingStoragePath } from "@/lib/supabase/types";
+import { isSupabaseRecordingPath, isVexaRecordingPath } from "@/lib/meetings/recording-source";
 
 export const RECORDINGS_BUCKET = "recordings";
 
 export function resolveRecordingPath(meeting: Pick<Meeting, "id" | "user_id" | "recording_path">) {
-  return meeting.recording_path ?? recordingStoragePath(meeting.user_id, meeting.id);
+  if (isSupabaseRecordingPath(meeting.recording_path)) {
+    return meeting.recording_path!;
+  }
+  return recordingStoragePath(meeting.user_id, meeting.id);
 }
 
-export function meetingHasRecording(meeting: Pick<Meeting, "status" | "recording_path">) {
+export function meetingHasRecording(
+  meeting: Pick<Meeting, "status" | "recording_path" | "recall_bot_id">
+) {
+  if (isVexaRecordingPath(meeting.recording_path)) return true;
+  if (isSupabaseRecordingPath(meeting.recording_path)) return true;
   return (
-    Boolean(meeting.recording_path) ||
-    meeting.status === "completed" ||
-    meeting.status === "partial"
+    Boolean(meeting.recall_bot_id) &&
+    (meeting.status === "completed" ||
+      meeting.status === "partial" ||
+      meeting.status === "recording")
   );
 }
