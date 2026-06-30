@@ -8,6 +8,9 @@ export const ONBOARDING_PATH = "/onboarding";
 /** Páginas públicas (acessíveis sem sessão). */
 export const PUBLIC_PATHS = ["/recording-notice"] as const;
 
+/** Prefixos de rotas públicas (ex.: links de compartilhamento `/s/[token]`). */
+export const PUBLIC_PATH_PREFIXES = ["/s"] as const;
+
 /** Prefixos de API que se autenticam por conta própria (segredo), sem sessão. */
 export const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/cron"] as const;
 
@@ -19,7 +22,10 @@ export function isAuthPath(pathname: string): boolean {
 }
 
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return (
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    PUBLIC_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  );
 }
 
 export function isPublicApiPath(pathname: string): boolean {
