@@ -7,6 +7,7 @@ import {
   persistMeetingSegments,
   type IngestResult,
 } from "@/lib/pipeline/ingest-segments";
+import { persistVexaRecordingRef } from "@/lib/pipeline/persist-recording-ref";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -33,10 +34,14 @@ export async function ingestMeetingTranscript(
   input: IngestInput
 ): Promise<IngestResult> {
   const transcript = await getTranscript(input.platform, input.nativeMeetingId);
-  return persistMeetingSegments(
+  const result = await persistMeetingSegments(
     admin,
     input.meetingId,
     vexaToNormalized(transcript.segments ?? []),
     "vexa"
   );
+  await persistVexaRecordingRef(admin, input.meetingId, transcript).catch((err) => {
+    console.warn("Falha ao persistir referência de gravação Vexa:", err);
+  });
+  return result;
 }

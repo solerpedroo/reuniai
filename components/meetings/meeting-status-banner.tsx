@@ -1,4 +1,5 @@
-import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import type { MeetingSessionResponse } from "@/lib/meetings/use-meeting-session";
 import type { Meeting } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -16,15 +17,24 @@ function getLiveStep(status: Meeting["status"]): number {
   return 3;
 }
 
-export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
+export function MeetingStatusBanner({
+  meeting,
+  session,
+}: {
+  meeting: Meeting;
+  session?: MeetingSessionResponse | null;
+}) {
   const { status, error_message } = meeting;
+  const liveSession = session?.session;
 
   if (status === "bot_joining" || status === "recording" || status === "processing") {
     const label =
       status === "processing"
         ? "Processando a reunião (transcrição e análise por IA)…"
         : status === "recording"
-          ? "O bot está gravando esta reunião…"
+          ? liveSession?.transcription.active
+            ? "O bot está gravando e transcrevendo esta reunião."
+            : "O bot entrou na reunião. Aguardando confirmação da transcrição…"
           : "O bot está entrando na reunião…";
 
     const step = getLiveStep(status);
@@ -37,6 +47,38 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
           </span>
           <div className="min-w-0 flex-1 space-y-3">
             <p className="text-sm text-foreground">{label}</p>
+
+            {liveSession && status !== "processing" && (
+              <div className="flex flex-wrap gap-2">
+                <SessionBadge
+                  ok={liveSession.connected}
+                  label={liveSession.connected ? "Bot na reunião" : "Conectando bot"}
+                />
+                <SessionBadge
+                  ok={liveSession.transcription.active}
+                  label={
+                    liveSession.transcription.active
+                      ? `Transcrição ativa (${liveSession.transcription.segmentCount} trechos)`
+                      : "Transcrição pendente"
+                  }
+                />
+                <SessionBadge
+                  ok={liveSession.recording.capturing || liveSession.recording.available}
+                  label={
+                    liveSession.recording.available
+                      ? "Gravação salva"
+                      : liveSession.recording.capturing
+                        ? "Gravando áudio"
+                        : "Gravação pendente"
+                  }
+                />
+              </div>
+            )}
+
+            {session?.message && !liveSession && status !== "processing" && (
+              <p className="text-xs text-muted-foreground">{session.message}</p>
+            )}
+
             <div className="flex flex-wrap items-center gap-2">
               {LIVE_STEPS.map((item, index) => (
                 <span key={item.key} className="inline-flex items-center gap-1.5 text-xs">
@@ -87,4 +129,20 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
   }
 
   return null;
+}
+
+function SessionBadge({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs",
+        ok
+          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+          : "bg-muted text-muted-foreground"
+      )}
+    >
+      {ok ? <CheckCircle size={12} weight="fill" /> : <span className="size-1.5 rounded-full bg-current opacity-50" />}
+      {label}
+    </span>
+  );
 }

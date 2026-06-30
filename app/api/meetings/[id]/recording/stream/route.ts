@@ -1,14 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { RECORDINGS_BUCKET, resolveRecordingPath } from "@/lib/meetings/recording";
 import { resolveMeetingRecording } from "@/lib/meetings/resolve-recording";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { fetchRecordingMediaRaw } from "@/lib/vexa/client";
 import type { Meeting } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
+const FORWARD_RESPONSE_HEADERS = [
+  "content-type",
+  "content-length",
+  "content-range",
+  "accept-ranges",
+] as const;
+
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -35,32 +42,30 @@ export async function GET(
   const admin = createAdminClient();
   const resolved = await resolveMeetingRecording(admin, meeting);
 
-  if (!resolved) {
+  if (!resolved || resolved.source !== "proxy" || !resolved.vexaRef) {
     return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
   }
 
-  if (resolved.source === "proxy") {
-    return NextResponse.json({
-      source: "proxy",
-      url: `/api/meetings/${id}/recording/stream`,
-      contentType: resolved.contentType ?? "audio/wav",
-      durationSeconds: resolved.durationSeconds ?? null,
-    });
+  const range = request.headers.get("range");
+  const vexaResponse = await fetchRecordingMediaRaw(
+    resolved.vexaRef.recordingId,
+    resolved.vexaRef.mediaFileId,
+    range ? { Range: range } : undefined
+  );
+
+  if (!vexaResponse.ok && vexaResponse.status !== 206) {
+    return NextResponse.json({ error: "Gravação não disponível" }, { status: vexaResponse.status === 401 ? 502 : 404 });
   }
 
-  const path = resolved.storagePath ?? resolveRecordingPath(meeting);
-  const { data, error } = await supabase.storage
-    .from(RECORDINGS_BUCKET)
-    .createSignedUrl(path, 60 * 60);
-
-  if (error || !data?.signedUrl) {
-    return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
+  const headers = new Headers();
+  for (const name of FORWARD_RESPONSE_HEADERS) {
+    const value = vexaResponse.headers.get(name);
+    if (value) headers.set(name, value);
   }
+  headers.set("Cache-Control", "private, no-store");
 
-  return NextResponse.json({
-    source: "supabase",
-    url: data.signedUrl,
-    contentType: "audio/mp4",
-    durationSeconds: null,
+  return new Response(vexaResponse.body, {
+    status: vexaResponse.status,
+    headers,
   });
 }
