@@ -1,12 +1,18 @@
 import { PRODUCT_NAME } from "@/lib/brand/config";
 
-/** Padrão exibido na call: `ReuniAI - Pedro Soler`. */
+/**
+ * Padrão exibido na call: `ReuniAI - Pedro Soler`.
+ *
+ * Prioridade: nome do anfitrião (personalizado) > NEXT_PUBLIC_BOT_NAME (fallback
+ * genérico para contextos sem usuário) > `ReuniAI Bot`. O env é apenas fallback —
+ * nunca sobrescreve o nome personalizado do usuário.
+ */
 export function formatBotDisplayName(hostName: string | null | undefined): string {
-  const envOverride = process.env.NEXT_PUBLIC_BOT_NAME?.trim();
-  if (envOverride) return envOverride;
-
   const trimmed = hostName?.trim();
   if (trimmed) return `${PRODUCT_NAME} - ${trimmed}`;
+
+  const envFallback = process.env.NEXT_PUBLIC_BOT_NAME?.trim();
+  if (envFallback) return envFallback;
 
   return `${PRODUCT_NAME} Bot`;
 }
