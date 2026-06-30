@@ -5,6 +5,7 @@ import type { Meeting } from "@/lib/supabase/types";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { localeToVexaLanguage, parseUserLocale } from "@/lib/profile/locale";
 import { buildBotDisplayName } from "@/lib/brand/bot-name";
+import { after } from "next/server";
 import { applyBotBranding } from "@/lib/vexa/branding";
 import { createBot } from "@/lib/vexa/client";
 import { mapVexaStatus } from "@/lib/vexa/sync";
@@ -96,21 +97,15 @@ export async function startBotForMeeting(
 
   const initialStatus = mapVexaStatus(vexaMeeting.status) ?? "bot_joining";
 
-  // Branding (câmera + fundo) em background — não bloqueia o join.
-  void applyBotBranding(parsed.platform, parsed.nativeMeetingId)
-    .then((result) => {
-      if (result.errors.length > 0) {
-        console.warn(
-          `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId}: avatar=${result.avatar} screen=${result.screen} — ${result.errors.join(" | ")}`
-        );
-      }
-    })
-    .catch((err) => {
+  // Branding (câmera) via after() — Vercel mantém a função viva após a resposta HTTP.
+  after(async () => {
+    const result = await applyBotBranding(parsed.platform, parsed.nativeMeetingId);
+    if (result.errors.length > 0 || !result.avatar) {
       console.warn(
-        `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId} falhou:`,
-        err instanceof Error ? err.message : err
+        `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId}: avatar=${result.avatar} screen=${result.screen} — ${result.errors.join(" | ") || "câmera não aplicada"}`
       );
-    });
+    }
+  });
 
   const { error } = await admin
     .from("meetings")

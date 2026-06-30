@@ -32,7 +32,8 @@ export const BRAND_ASSETS = {
 export function getBotAvatarUrl(): string {
   const override = process.env.BOT_AVATAR_URL;
   if (override) return override;
-  return `${getAppUrl()}${BRAND_ASSETS.botCamera}`;
+  // Mesma imagem do wallpaper — exibida na câmera virtual (estilo Fireflies).
+  return `${getAppUrl()}${BRAND_ASSETS.botBackground}`;
 }
 
 export function getBotScreenUrl(): string {
