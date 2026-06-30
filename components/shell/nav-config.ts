@@ -1,4 +1,4 @@
-import { Gear, House, VideoCamera } from "@phosphor-icons/react/dist/ssr";
+import { Gear, House, UserCircle, VideoCamera } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
 export type NavItem = {
@@ -22,9 +22,15 @@ export const NAV_ITEMS: NavItem[] = [
     icon: VideoCamera,
   },
   {
+    href: "/perfil",
+    label: "Meu perfil",
+    description: "Nome, fuso horário e idioma da conta",
+    icon: UserCircle,
+  },
+  {
     href: "/configuracoes",
     label: "Configurações",
-    description: "Calendário, auto-join e conta",
+    description: "Calendário, auto-join e integrações",
     icon: Gear,
   },
 ];
