@@ -12,11 +12,11 @@ import {
 import type { SpeakerTalkTime } from "@/lib/meetings/talk-time";
 
 const COLORS = [
-  "var(--brand)",
-  "oklch(0.52 0.16 262)",
-  "oklch(0.68 0.14 230)",
-  "oklch(0.62 0.17 145)",
-  "oklch(0.58 0.15 45)",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 export function TalkTimeChart({ data }: { data: SpeakerTalkTime[] }) {
