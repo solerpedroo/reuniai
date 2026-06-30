@@ -11,11 +11,9 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
-import { MeetingSearch } from "@/components/shell/meeting-search";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
 import { UserMenu } from "@/components/shell/user-menu";
-import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { cn } from "@/lib/utils";
 
 type SessionUser = { name?: string | null; email?: string | null };
@@ -115,11 +113,8 @@ export function AppShell({
               <List size={20} />
             </Button>
 
-            <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex">
-              <MeetingSearch />
-              <div className="w-full max-w-xs shrink-0">
-                <CommandTrigger />
-              </div>
+            <div className="hidden min-w-0 flex-1 lg:flex">
+              <CommandTrigger className="max-w-md" />
             </div>
 
             <div className="min-w-0 flex-1 lg:hidden">
@@ -138,7 +133,6 @@ export function AppShell({
             <div className="ml-auto flex shrink-0 items-center gap-1.5">
               <ThemeToggleButton />
               <NotificationBell />
-              <JoinMeetingDialog triggerClassName="h-9 px-3.5 text-xs" />
               <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
               <UserMenu name={user?.name} email={user?.email} />
             </div>
