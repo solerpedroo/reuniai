@@ -20,6 +20,8 @@ export type Database = {
           notification_prefs: Json;
           saved_views: Json;
           last_weekly_digest_at: string | null;
+          locale: string;
+          default_analysis_template: string;
           created_at: string;
           updated_at: string;
         };
@@ -33,6 +35,8 @@ export type Database = {
           notification_prefs?: Json;
           saved_views?: Json;
           last_weekly_digest_at?: string | null;
+          locale?: string;
+          default_analysis_template?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +50,8 @@ export type Database = {
           notification_prefs?: Json;
           saved_views?: Json;
           last_weekly_digest_at?: string | null;
+          locale?: string;
+          default_analysis_template?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -106,6 +112,7 @@ export type Database = {
           transcript_source: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id: string | null;
           prefer_native_transcript: boolean;
+          analysis_template: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -127,6 +134,7 @@ export type Database = {
           transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id?: string | null;
           prefer_native_transcript?: boolean;
+          analysis_template?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -148,6 +156,7 @@ export type Database = {
           transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id?: string | null;
           prefer_native_transcript?: boolean;
+          analysis_template?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -402,6 +411,93 @@ export type Database = {
           meeting_id?: string;
           tag_id?: string;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_highlights: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          start_ms: number;
+          end_ms: number | null;
+          label: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          start_ms: number;
+          end_ms?: number | null;
+          label: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          start_ms?: number;
+          end_ms?: number | null;
+          label?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      speaker_mappings: {
+        Row: {
+          id: string;
+          user_id: string;
+          label_pattern: string;
+          participant_email: string | null;
+          display_name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          label_pattern: string;
+          participant_email?: string | null;
+          display_name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          label_pattern?: string;
+          participant_email?: string | null;
+          display_name?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      series_analysis_defaults: {
+        Row: {
+          user_id: string;
+          calendar_recurring_event_id: string;
+          analysis_template: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          calendar_recurring_event_id: string;
+          analysis_template: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          calendar_recurring_event_id?: string;
+          analysis_template?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

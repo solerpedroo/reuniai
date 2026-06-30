@@ -3,6 +3,7 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Meeting } from "@/lib/supabase/types";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
+import { localeToVexaLanguage, parseUserLocale } from "@/lib/profile/locale";
 import { createBot } from "@/lib/vexa/client";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -50,11 +51,22 @@ export async function startBotForMeeting(
     return { ok: false, reason: "Plataforma não suportada ou link inválido." };
   }
 
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("locale")
+    .eq("id", meeting.user_id)
+    .maybeSingle();
+
+  const language = localeToVexaLanguage(
+    parseUserLocale((profile as { locale?: string } | null)?.locale)
+  );
+
   try {
     await createBot({
       platform: parsed.platform,
       nativeMeetingId: parsed.nativeMeetingId,
       passcode: parsed.passcode,
+      language,
     });
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : "Falha ao criar bot." };
@@ -103,7 +115,6 @@ export async function scheduleBotsForUpcomingMeetings(
   >;
   if (rows.length === 0) return { candidates: 0, started: 0, skipped: 0 };
 
-  // Apenas usuários com auto-join habilitado.
   const userIds = [...new Set(rows.map((r) => r.user_id))];
   const { data: profiles } = await admin
     .from("profiles")

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
+import { applySpeakerMappingsToMeeting } from "@/lib/speakers/mappings";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type SegmentInsert = Database["public"]["Tables"]["transcript_segments"]["Insert"];
@@ -62,6 +63,22 @@ export async function persistMeetingSegments(
   if (rows.length > 0) {
     const { error } = await admin.from("transcript_segments").insert(rows);
     if (error) throw error;
+  }
+
+  if (rows.length > 0) {
+    const { data: meeting } = await admin
+      .from("meetings")
+      .select("user_id")
+      .eq("id", meetingId)
+      .maybeSingle<{ user_id: string }>();
+
+    if (meeting) {
+      try {
+        await applySpeakerMappingsToMeeting(admin, meetingId, meeting.user_id);
+      } catch (err) {
+        console.error("Falha ao aplicar speaker mappings (não bloqueante):", err);
+      }
+    }
   }
 
   const status: IngestResult["status"] = rows.length > 0 ? "completed" : "partial";

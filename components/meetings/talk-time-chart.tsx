@@ -26,6 +26,7 @@ export function TalkTimeChart({ data }: { data: SpeakerTalkTime[] }) {
     speaker: item.speaker,
     percentage: item.percentage,
     words: item.wordCount,
+    turns: item.turnCount,
   }));
 
   return (
@@ -56,7 +57,7 @@ export function TalkTimeChart({ data }: { data: SpeakerTalkTime[] }) {
                   fontSize: "12px",
                 }}
                 formatter={(value: number, _name, item) => [
-                  `${value}% · ${item.payload.words} palavras`,
+                  `${value}% · ${item.payload.words} palavras · ${item.payload.turns} turnos`,
                   "Participação",
                 ]}
               />

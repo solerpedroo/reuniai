@@ -2,8 +2,10 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
+import { analyzeWithTemplate } from "@/lib/analysis/templates";
+import { resolveAnalysisTemplate } from "@/lib/analysis/resolve-template";
+import { parseUserLocale } from "@/lib/profile/locale";
 import { isLlmConfigured } from "@/lib/llm/client";
-import { analyzeMeeting } from "@/lib/llm/meeting-analysis";
 import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
 import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
 import { createNotification } from "@/lib/notifications/create";
@@ -34,7 +36,7 @@ export async function analyzeMeetingById(
 
   const { data: meeting } = await admin
     .from("meetings")
-    .select("id, user_id, title")
+    .select("id, user_id, title, analysis_template, calendar_recurring_event_id")
     .eq("id", meetingId)
     .maybeSingle();
 
@@ -55,7 +57,19 @@ export async function analyzeMeetingById(
   await admin.from("meetings").update({ status: "processing" }).eq("id", meetingId);
 
   try {
-    const analysis = await analyzeMeeting(transcript, meeting.title);
+    const [templateId, profileRes] = await Promise.all([
+      resolveAnalysisTemplate(admin, meeting),
+      admin.from("profiles").select("locale").eq("id", meeting.user_id).maybeSingle(),
+    ]);
+
+    const locale = parseUserLocale(
+      (profileRes.data as { locale?: string } | null)?.locale
+    );
+
+    const analysis = await analyzeWithTemplate(templateId, transcript, {
+      meetingTitle: meeting.title,
+      locale,
+    });
 
     await admin.from("meeting_summaries").upsert(
       {
@@ -63,7 +77,10 @@ export async function analyzeMeetingById(
         executive_summary: analysis.executive_summary,
         topics: analysis.topics,
         decisions: analysis.decisions,
-        raw_json: analysis as unknown as Database["public"]["Tables"]["meeting_summaries"]["Insert"]["raw_json"],
+        raw_json: {
+          ...analysis,
+          template_id: analysis.template_id,
+        } as unknown as Database["public"]["Tables"]["meeting_summaries"]["Insert"]["raw_json"],
       },
       { onConflict: "meeting_id" }
     );
