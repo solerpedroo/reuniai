@@ -11,6 +11,7 @@ import {
   shouldAutoLeaveEmptyMeeting,
 } from "@/lib/vexa/meeting-state";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
+import { scheduleBotBranding } from "@/lib/vexa/branding";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -110,6 +111,11 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       startTime: vexaMeeting?.start_time ?? meeting.started_at,
     });
     if (result.updated) updated += 1;
+
+    // Reaplica câmera enquanto gravando — virtual camera no Meet é intermitente.
+    if (vexaStatus === "active" && meeting.status === "recording") {
+      scheduleBotBranding(parsed.platform, nativeId, { skipWait: true, quickRetry: true });
+    }
 
     const mappedStatus = mapVexaStatus(vexaStatus);
     if (mappedStatus === "completed" || mappedStatus === "failed") {
