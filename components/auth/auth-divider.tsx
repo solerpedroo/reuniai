@@ -5,7 +5,7 @@ export function AuthDivider({ label = "ou continue com e-mail" }: { label?: stri
         <span className="w-full border-t border-border/70" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-card px-3 text-xs text-muted-foreground">{label}</span>
+        <span className="bg-background px-3 text-xs text-muted-foreground">{label}</span>
       </div>
     </div>
   );
