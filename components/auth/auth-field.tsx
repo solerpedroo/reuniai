@@ -11,10 +11,20 @@ type AuthFieldProps = {
   icon?: Icon;
   error?: string;
   children: React.ReactNode;
+  below?: React.ReactNode;
   className?: string;
 };
 
-export function AuthField({ id, label, hint, icon: Icon, error, children, className }: AuthFieldProps) {
+export function AuthField({
+  id,
+  label,
+  hint,
+  icon: Icon,
+  error,
+  children,
+  below,
+  className,
+}: AuthFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between gap-2">
@@ -33,6 +43,7 @@ export function AuthField({ id, label, hint, icon: Icon, error, children, classN
         )}
         <div className={cn(Icon && "[&_input]:pl-10 [&_[role=combobox]]:pl-10")}>{children}</div>
       </div>
+      {below}
       {error && (
         <p className="text-xs text-destructive" role="alert">
           {error}
