@@ -28,7 +28,7 @@ const PasswordInput = React.forwardRef<
         aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
         aria-pressed={visible}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-md text-muted-foreground transition-colors",
+          "absolute inset-y-0 right-0 z-10 flex w-9 items-center justify-center rounded-r-md text-muted-foreground transition-colors",
           "hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
           "active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
         )}
