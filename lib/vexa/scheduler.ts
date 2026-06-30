@@ -84,9 +84,20 @@ export async function startBotForMeeting(
   }
 
   // Branding (câmera + fundo) em background — não bloqueia o join.
-  void applyBotBranding(parsed.platform, parsed.nativeMeetingId).catch(() => {
-    /* falha silenciosa; gravação segue sem branding visual */
-  });
+  void applyBotBranding(parsed.platform, parsed.nativeMeetingId)
+    .then((result) => {
+      if (result.errors.length > 0) {
+        console.warn(
+          `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId}: avatar=${result.avatar} screen=${result.screen} — ${result.errors.join(" | ")}`
+        );
+      }
+    })
+    .catch((err) => {
+      console.warn(
+        `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId} falhou:`,
+        err instanceof Error ? err.message : err
+      );
+    });
 
   const { error } = await admin
     .from("meetings")
