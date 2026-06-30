@@ -3,9 +3,11 @@ import { logStructured } from "@/lib/logging/structured";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
+import { scheduleBotBranding } from "@/lib/vexa/branding";
 import { applyMeetingStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const BOT_PLATFORMS: BotPlatform[] = ["google_meet", "teams", "zoom"];
 
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest) {
   }
 
   const vexaStatus = payload.status_change?.to ?? payload.meeting?.status;
+  const platform = resolvePlatform(payload.meeting?.platform);
 
   if (payload.event_type === "meeting.status_change" && vexaStatus) {
     await applyMeetingStatus(admin, {
@@ -86,6 +89,11 @@ export async function POST(request: NextRequest) {
       endTime: payload.meeting?.end_time,
       reason: payload.status_change?.reason,
     });
+
+    // Bot admitido na call → aplica câmera com imagem de marca imediatamente.
+    if (vexaStatus === "active" && platform) {
+      scheduleBotBranding(platform, nativeMeetingId, { skipWait: true });
+    }
   }
 
   // Reunião finalizada ou gravação pronta → ingerir transcrição (Onda 7).
@@ -93,7 +101,6 @@ export async function POST(request: NextRequest) {
     payload.event_type === "recording.completed" || vexaStatus === "completed";
 
   if (shouldIngest) {
-    const platform = resolvePlatform(payload.meeting?.platform);
     if (platform) {
       try {
         await processMeetingByNativeId(admin, platform, nativeMeetingId);
