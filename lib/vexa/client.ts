@@ -34,6 +34,35 @@ export type VexaMeeting = {
   data?: Record<string, unknown> | null;
 };
 
+/** Entrada de `/bots/status` — status do container Docker, não do ciclo de vida da reunião. */
+export type VexaRunningBot = {
+  container_id?: string;
+  container_name?: string;
+  platform: BotPlatform;
+  native_meeting_id: string;
+  /** Uptime do container, ex.: "Up 4 seconds" — não confundir com `active`/`joining`. */
+  status: string;
+  normalized_status?: string;
+  created_at?: string;
+  meeting_id_from_name?: string;
+};
+
+export type VexaMeetingParticipant = {
+  name: string;
+  segment_count?: number;
+  first_seen?: string;
+  last_seen?: string;
+  speaking_time_seconds?: number;
+};
+
+export type VexaMeetingParticipantsResponse = {
+  id?: number;
+  platform?: BotPlatform;
+  native_meeting_id?: string;
+  participant_count: number;
+  participants?: VexaMeetingParticipant[];
+};
+
 export type CreateBotInput = {
   platform: BotPlatform;
   nativeMeetingId: string;
@@ -91,6 +120,8 @@ export type VexaTranscriptSegment = {
   speaker?: string;
   text: string;
   language?: string;
+  absolute_start_time?: string;
+  absolute_end_time?: string;
 };
 
 export type VexaTranscriptResponse = {
@@ -110,14 +141,37 @@ export async function getTranscript(
   return res.json();
 }
 
-export async function getRunningBots(): Promise<VexaMeeting[]> {
+export async function getRunningBots(): Promise<VexaRunningBot[]> {
   const res = await vexaFetch("/bots/status");
   if (!res.ok) {
     throw new Error(`Vexa getRunningBots falhou: ${res.status} ${await res.text()}`);
   }
-  const data = (await res.json()) as { running_bots?: VexaMeeting[] } | VexaMeeting[];
+  const data = (await res.json()) as { running_bots?: VexaRunningBot[] } | VexaRunningBot[];
   if (Array.isArray(data)) return data;
   return data.running_bots ?? [];
+}
+
+/** Lista reuniões do Vexa com status de ciclo de vida (`active`, `joining`, `completed`, …). */
+export async function listVexaMeetings(limit = 100): Promise<VexaMeeting[]> {
+  const res = await vexaFetch(`/meetings?limit=${limit}`);
+  if (!res.ok) {
+    throw new Error(`Vexa listVexaMeetings falhou: ${res.status} ${await res.text()}`);
+  }
+  const data = (await res.json()) as { meetings?: VexaMeeting[] } | VexaMeeting[];
+  if (Array.isArray(data)) return data;
+  return data.meetings ?? [];
+}
+
+/** Participantes detectados na reunião (via transcrição em tempo real). */
+export async function getMeetingParticipants(
+  platform: BotPlatform,
+  nativeMeetingId: string
+): Promise<VexaMeetingParticipantsResponse> {
+  const res = await vexaFetch(`/bots/${platform}/${nativeMeetingId}/participants`);
+  if (!res.ok) {
+    throw new Error(`Vexa getMeetingParticipants falhou: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
 }
 
 /** Câmera virtual do bot (experimental no Meet; mais confiável no Zoom). */

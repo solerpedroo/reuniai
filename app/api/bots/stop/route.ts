@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { stopBot } from "@/lib/vexa/client";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
+import { stopBot } from "@/lib/vexa/client";
+import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +31,14 @@ export async function POST(request: NextRequest) {
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, meeting_url, recall_bot_id")
+    .select("id, user_id, meeting_url, recall_bot_id, started_at")
     .eq("id", meetingId)
     .maybeSingle<{
       id: string;
       user_id: string;
       meeting_url: string | null;
       recall_bot_id: string | null;
+      started_at: string;
     }>();
 
   if (!meeting || meeting.user_id !== user.id) {
@@ -56,7 +58,10 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  await admin.from("meetings").update({ status: "processing" }).eq("id", meeting.id);
+  await finalizeStoppedMeeting(admin, parsed.platform, meeting.recall_bot_id, {
+    endTime: new Date().toISOString(),
+    startTime: meeting.started_at,
+  });
 
   return NextResponse.json({ ok: true });
 }

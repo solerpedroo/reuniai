@@ -14,7 +14,7 @@ export function useMeetingStatus(meetingId: string, initialStatus: MeetingStatus
 
     const interval = window.setInterval(() => {
       router.refresh();
-    }, 8000);
+    }, 5000);
 
     return () => window.clearInterval(interval);
   }, [meetingId, initialStatus, router]);

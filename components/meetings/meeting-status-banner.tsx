@@ -2,17 +2,18 @@ import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Meeting } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
-const PROCESSING_STEPS = [
+const LIVE_STEPS = [
+  { key: "joining", label: "Entrando" },
   { key: "recording", label: "Gravando" },
   { key: "processing", label: "Transcrevendo" },
   { key: "done", label: "Analisando" },
 ] as const;
 
-function getProcessingStep(status: Meeting["status"]): number {
+function getLiveStep(status: Meeting["status"]): number {
   if (status === "bot_joining") return 0;
-  if (status === "recording") return 0;
-  if (status === "processing") return 1;
-  return 2;
+  if (status === "recording") return 1;
+  if (status === "processing") return 2;
+  return 3;
 }
 
 export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
@@ -26,7 +27,7 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
           ? "O bot está gravando esta reunião…"
           : "O bot está entrando na reunião…";
 
-    const step = getProcessingStep(status);
+    const step = getLiveStep(status);
 
     return (
       <div className="surface-toolbar mb-6 px-4 py-3">
@@ -37,7 +38,7 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
           <div className="min-w-0 flex-1 space-y-3">
             <p className="text-sm text-foreground">{label}</p>
             <div className="flex flex-wrap items-center gap-2">
-              {PROCESSING_STEPS.map((item, index) => (
+              {LIVE_STEPS.map((item, index) => (
                 <span key={item.key} className="inline-flex items-center gap-1.5 text-xs">
                   <span
                     className={cn(
@@ -52,7 +53,7 @@ export function MeetingStatusBanner({ meeting }: { meeting: Meeting }) {
                   >
                     {item.label}
                   </span>
-                  {index < PROCESSING_STEPS.length - 1 && (
+                  {index < LIVE_STEPS.length - 1 && (
                     <span className="text-muted-foreground/40">→</span>
                   )}
                 </span>
