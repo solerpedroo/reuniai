@@ -42,18 +42,6 @@ async function isAssetReachable(url: string): Promise<boolean> {
   }
 }
 
-/** Baixa a imagem e envia em base64 — mais confiável que a Vexa buscar a URL. */
-async function fetchImageAsBase64(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, { method: "GET", cache: "no-store" });
-    if (!res.ok) return null;
-    const buffer = await res.arrayBuffer();
-    return Buffer.from(buffer).toString("base64");
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Aguarda o bot ficar `active`. Comandos de tela/avatar são descartados enquanto
  * o bot está entrando ou na sala de espera.
@@ -123,14 +111,11 @@ async function applyAvatarBranding(
   }
 
   const avatarUrl = resolved.url;
-  const imageBase64 = await fetchImageAsBase64(avatarUrl);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      await setBotAvatar(platform, nativeMeetingId, {
-        url: imageBase64 ? undefined : avatarUrl,
-        imageBase64: imageBase64 ?? undefined,
-      });
+      // URL direta — com camera_enabled=true o bot já publica track de vídeo.
+      await setBotAvatar(platform, nativeMeetingId, { url: avatarUrl });
       return { ok: true, errors };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao definir câmera virtual.";
@@ -200,6 +185,9 @@ export async function applyBotBranding(
       );
       return { avatar, screen, errors };
     }
+  } else if (!options.quickRetry) {
+    // WebRTC da câmera virtual precisa de alguns segundos após `active`.
+    await sleep(3_000);
   }
 
   if (platform === "teams") {
@@ -219,6 +207,13 @@ export async function applyBotBranding(
   );
   avatar = avatarResult.ok;
   errors.push(...avatarResult.errors);
+
+  // Fallback: screen share se câmera virtual falhar (Vexa recomenda para Meet).
+  if (!avatar) {
+    const screenResult = await applyScreenBranding(platform, nativeMeetingId, screenCandidates);
+    screen = screenResult.ok;
+    errors.push(...screenResult.errors);
+  }
 
   return { avatar, screen, errors };
 }

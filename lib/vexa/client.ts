@@ -70,6 +70,8 @@ export type CreateBotInput = {
   language?: string;
   passcode?: string;
   voiceAgentEnabled?: boolean;
+  /** Liga a câmera virtual do bot (obrigatório para avatar no Meet — não vem com voice_agent). */
+  cameraEnabled?: boolean;
 };
 
 export type SetBotAvatarInput = {
@@ -85,6 +87,11 @@ export type SetBotScreenInput = {
 };
 
 export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
+  const voiceAgent = input.voiceAgentEnabled ?? true;
+  const wantsCamera =
+    input.cameraEnabled ??
+    (input.platform === "google_meet" || input.platform === "zoom");
+
   const res = await vexaFetch("/bots", {
     method: "POST",
     body: JSON.stringify({
@@ -96,7 +103,8 @@ export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
       recording_enabled: true,
       transcribe_enabled: true,
       transcription_tier: "realtime",
-      voice_agent_enabled: input.voiceAgentEnabled ?? true,
+      voice_agent_enabled: voiceAgent,
+      camera_enabled: wantsCamera,
     }),
   });
 

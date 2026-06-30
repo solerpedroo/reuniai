@@ -3,7 +3,7 @@ import { logStructured } from "@/lib/logging/structured";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
-import { scheduleBotBranding } from "@/lib/vexa/branding";
+import { applyBotBranding } from "@/lib/vexa/branding";
 import { applyMeetingStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
@@ -90,9 +90,18 @@ export async function POST(request: NextRequest) {
       reason: payload.status_change?.reason,
     });
 
-    // Bot admitido na call → aplica câmera com imagem de marca imediatamente.
+    // Bot admitido → aplica câmera (aguarda concluir; maxDuration=60).
     if (vexaStatus === "active" && platform) {
-      scheduleBotBranding(platform, nativeMeetingId, { skipWait: true });
+      const branding = await applyBotBranding(platform, nativeMeetingId, { skipWait: true });
+      if (!branding.avatar) {
+        logStructured("warn", "bot.branding.failed", {
+          platform,
+          nativeMeetingId,
+          avatar: branding.avatar,
+          screen: branding.screen,
+          errors: branding.errors.join(" | "),
+        });
+      }
     }
   }
 

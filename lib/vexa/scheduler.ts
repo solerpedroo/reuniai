@@ -90,6 +90,7 @@ export async function startBotForMeeting(
       language,
       botName,
       voiceAgentEnabled: true,
+      cameraEnabled: parsed.platform === "google_meet" || parsed.platform === "zoom",
     });
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : "Falha ao criar bot." };
