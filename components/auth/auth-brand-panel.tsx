@@ -2,7 +2,7 @@ import { AuthShowcase } from "@/components/auth/auth-showcase";
 
 export function AuthBrandPanel() {
   return (
-    <div className="brand-gradient relative hidden lg:block">
+    <div className="auth-panel relative hidden overflow-hidden lg:block">
       <AuthShowcase />
     </div>
   );
