@@ -5,7 +5,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { SeriesChat } from "@/components/series/series-chat";
+import { SeriesTemplateSelect } from "@/components/series/series-template-select";
 import { SeriesTopicDiff } from "@/components/series/series-topic-diff";
+import { parseTemplateId } from "@/lib/analysis/template-types";
+import { isLlmConfigured } from "@/lib/llm/client";
 import { getMeetingSummary } from "@/lib/meetings/insights";
 import { computeTopicDiff } from "@/lib/series/topic-diff";
 import { getMeetingsInSeries } from "@/lib/series/queries";
@@ -15,6 +18,7 @@ import {
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function SeriesPage({
   params,
@@ -47,6 +51,24 @@ export default async function SeriesPage({
     }
   }
 
+  const admin = createAdminClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let seriesTemplate: ReturnType<typeof parseTemplateId> | null = null;
+  if (user) {
+    const { data: seriesDefault } = await admin
+      .from("series_analysis_defaults")
+      .select("analysis_template")
+      .eq("user_id", user.id)
+      .eq("calendar_recurring_event_id", recurringEventId)
+      .maybeSingle();
+    if (seriesDefault?.analysis_template) {
+      seriesTemplate = parseTemplateId(seriesDefault.analysis_template);
+    }
+  }
+
   return (
     <div>
       <Link
@@ -62,6 +84,15 @@ export default async function SeriesPage({
         description={`${meetings.length} ocorrências nesta série recorrente`}
         meta="Série"
       />
+
+      {isLlmConfigured() && (
+        <div className="mb-4">
+          <SeriesTemplateSelect
+            recurringEventId={recurringEventId}
+            initialTemplate={seriesTemplate}
+          />
+        </div>
+      )}
 
       <SeriesTopicDiff diffs={diffs} />
 
