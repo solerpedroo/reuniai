@@ -44,6 +44,17 @@ export async function POST(
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
+  const { data: meeting } = await supabase
+    .from("meetings")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!meeting) {
+    return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     scope?: ShareScope;
     days?: number;
@@ -101,12 +112,24 @@ export async function DELETE(
     return NextResponse.json({ error: "tokenId obrigatório" }, { status: 400 });
   }
 
+  const { data: meeting } = await supabase
+    .from("meetings")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!meeting) {
+    return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
+  }
+
   const admin = createAdminClient();
   const { error } = await admin
     .from("share_tokens")
     .update({ revoked_at: new Date().toISOString() })
     .eq("id", tokenId)
-    .eq("meeting_id", id);
+    .eq("meeting_id", id)
+    .eq("user_id", user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
