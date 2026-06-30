@@ -727,7 +727,7 @@ Mapeamento `meeting.status_change`:
 #### 11.3 Busca
 
 - [x] Busca full-text em título + transcript (`ILIKE` ou `tsvector` — simples primeiro)
-- [x] Input no header ou `/reunioes?q=`
+- [x] Input no header (`components/shell/meeting-search.tsx` → `/reunioes?q=`) e busca semântica via command palette (`/busca`)
 
 #### 11.4 Export
 
@@ -736,8 +736,9 @@ Mapeamento `meeting.status_change`:
 
 #### 11.5 Email digest (opcional MVP)
 
-- [ ] Resend ou Supabase Edge + template HTML
-- [ ] Após `status = completed`, email com resumo + link
+- [x] Resend + templates HTML (`lib/email/meeting-completed.ts`, `lib/email/weekly-digest.ts`)
+- [x] Após `status = completed`, email com resumo + link (quando `notification_prefs.email` ativo)
+- [x] Cron semanal `/api/cron/weekly-digest` (domingo 9h UTC via `vercel.json`)
 
 #### 11.6 Dark mode
 
@@ -753,12 +754,12 @@ Mapeamento `meeting.status_change`:
 #### 11.8 Error monitoring
 
 - [x] Structured logging em webhooks
-- [ ] Sentry ou Vercel Analytics (opcional)
+- [x] Vercel Analytics + Speed Insights em `app/layout.tsx` (Sentry permanece opcional)
 
 #### 11.9 Performance
 
 - [x] Índices: `meetings(user_id, started_at)`, `transcript_segments(meeting_id, sequence)`
-- [x] Paginação cursor-based na lista de reuniões
+- [x] Paginação cursor-based na lista de reuniões (default, busca `?q=` e filtros avançados)
 
 ### Critérios de aceite
 
