@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LinkBreak, Plugs, SlackLogo, Plus, Trash } from "@phosphor-icons/react";
+import { LinkBreak, Plugs, Plus, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { NotionIcon } from "@/components/brand/provider-icons";
+import { NotionIcon, SlackIcon } from "@/components/brand/provider-icons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,7 +146,7 @@ export function IntegrationSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <SlackLogo size={18} />
+            <SlackIcon size={18} />
             Slack
           </CardTitle>
           <CardDescription>Digest pós-reunião no canal escolhido</CardDescription>
@@ -154,7 +154,10 @@ export function IntegrationSettings() {
         <CardContent className="space-y-3">
           {!slack?.connected ? (
             <Button asChild size="sm">
-              <a href="/api/integrations/slack/connect">Conectar Slack</a>
+              <a href="/api/integrations/slack/connect">
+                <SlackIcon size={16} />
+                Conectar Slack
+              </a>
             </Button>
           ) : (
             <>
@@ -206,7 +209,10 @@ export function IntegrationSettings() {
         <CardContent className="space-y-3">
           {!notion?.connected ? (
             <Button asChild size="sm">
-              <a href="/api/integrations/notion/connect">Conectar Notion</a>
+              <a href="/api/integrations/notion/connect">
+                <NotionIcon size={16} />
+                Conectar Notion
+              </a>
             </Button>
           ) : (
             <>
