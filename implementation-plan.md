@@ -544,7 +544,7 @@ Mapeamento `meeting.status_change`:
 - [x] `app/(app)/reunioes/[id]/page.tsx` — página de detalhe (header, status, plataforma, transcrição)
 - [x] `components/meetings/transcript-sync-button.tsx` — botão "Buscar transcrição"
 
-> **Diferido para Onda 9:** player de gravação com seek (Vexa serve a mídia autenticada via `/recordings/...`; exige rota proxy) e highlight do segment ativo via `onSeek(ms)`.
+> **Entregue na Onda 9:** player de gravação com seek (`components/meetings/recording-player.tsx`), proxy autenticado (`/api/meetings/[id]/recording`) e highlight do segment ativo na transcrição.
 
 ### Critérios de aceite
 
@@ -624,10 +624,11 @@ Mapeamento `meeting.status_change`:
 
 - [x] `components/meetings/summary-view.tsx` (Onda 8) — resumo executivo em card, tópicos e decisões
 
-#### 9.3 Aba Transcrição ✅ (parcial)
+#### 9.3 Aba Transcrição ✅
 
 - [x] `components/meetings/transcript-view.tsx` — segments com timestamp e speaker
-- [ ] **Diferido:** player de áudio com highlight do segment ativo (exige rota proxy para a mídia autenticada do Vexa — `GET /recordings/...`). Pendente de validar os endpoints de gravação do Vexa.
+- [x] `components/meetings/recording-player.tsx` — player responsivo com seek, velocidade e highlight do segment ativo via `highlightMs`
+- [x] Proxy de gravação: `app/api/meetings/[id]/recording/route.ts` e `.../stream/route.ts`
 
 #### 9.4 Aba Atribuições (`components/meetings/action-items-tab.tsx`) ✅
 
@@ -655,7 +656,7 @@ Mapeamento `meeting.status_change`:
 - [x] Abas funcionam com dados reais
 - [x] Edição/criação/remoção de action item persiste (refletirá no "attention card" do dashboard)
 - [x] Tabs com `flex-wrap` (responsivo)
-- [ ] Player responsivo — diferido junto com 9.3
+- [x] Player responsivo com seek sincronizado à transcrição e citações do chat
 
 ---
 
