@@ -2,28 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/calendar-sync",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/schedule-bots",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/poll-bots",
-      "schedule": "*/5 * * * *"
-    },
-    {
       "path": "/api/cron/retention",
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/cron/meeting-prep",
-      "schedule": "*/5 * * * *"
-    },
-    {
       "path": "/api/cron/weekly-digest",
-      "schedule": "0 * * * 0"
+      "schedule": "0 9 * * 0"
     }
   ]
 }
