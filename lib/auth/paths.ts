@@ -6,7 +6,7 @@ export const AUTH_PREFIX = "/auth";
 export const ONBOARDING_PATH = "/onboarding";
 
 /** Páginas públicas (acessíveis sem sessão). */
-export const PUBLIC_PATHS = ["/recording-notice"] as const;
+export const PUBLIC_PATHS = ["/recording-notice", "/privacidade", "/termos"] as const;
 
 /** Prefixos de rotas públicas (ex.: links de compartilhamento `/s/[token]`). */
 export const PUBLIC_PATH_PREFIXES = ["/s"] as const;
