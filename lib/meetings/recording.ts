@@ -18,8 +18,6 @@ export function meetingHasRecording(
   if (isSupabaseRecordingPath(meeting.recording_path)) return true;
   return (
     Boolean(meeting.recall_bot_id) &&
-    (meeting.status === "completed" ||
-      meeting.status === "partial" ||
-      meeting.status === "recording")
+    (meeting.status === "completed" || meeting.status === "partial")
   );
 }
