@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { recordingStoragePath } from "@/lib/supabase/types";
+import { isSupabaseRecordingPath } from "@/lib/meetings/recording-source";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -19,7 +20,7 @@ async function removeRecordingFiles(
 ): Promise<void> {
   const paths = new Set<string>();
 
-  if (meeting.recording_path) {
+  if (meeting.recording_path && isSupabaseRecordingPath(meeting.recording_path)) {
     paths.add(meeting.recording_path);
   }
 
