@@ -39,8 +39,8 @@ import { USER_LOCALES } from "@/lib/profile/locale";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { id: "profile", title: "Sobre você", description: "Usamos esses dados para personalizar o bot e as notificações." },
-  { id: "security", title: "Sua conta", description: "Defina uma senha forte e aceite os termos de uso." },
+  { id: "profile", title: "Criar conta", description: "Informações básicas para personalizar sua experiência." },
+  { id: "security", title: "Definir senha", description: "Escolha uma senha segura e aceite os termos de uso." },
 ] as const;
 
 export function SignupForm() {
@@ -159,7 +159,7 @@ export function SignupForm() {
 
   return (
     <AuthFormShell
-      badge={`Passo ${step + 1} de ${STEPS.length}`}
+      badge={`Etapa ${step + 1} de ${STEPS.length}`}
       title={currentStep.title}
       description={currentStep.description}
       footer={
@@ -187,7 +187,8 @@ export function SignupForm() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Na call, seu bot aparecerá como <strong className="text-foreground">{botPreviewName}</strong>
+          Na call, seu bot aparecerá como{" "}
+          <span className="font-medium text-foreground">{botPreviewName}</span>
         </p>
       </div>
 
@@ -267,7 +268,7 @@ export function SignupForm() {
               type="button"
               variant="brand"
               size="lg"
-              className="h-11 w-full rounded-xl font-semibold brand-glow"
+              className="h-11 w-full rounded-lg font-medium"
               onClick={handleNextStep}
             >
               Continuar
@@ -320,7 +321,7 @@ export function SignupForm() {
 
             <Label
               htmlFor="consent"
-              className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/80 bg-muted/20 p-4 text-sm font-normal leading-relaxed transition-colors hover:bg-muted/35"
+              className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/80 bg-muted/15 p-4 text-sm font-normal leading-relaxed transition-colors hover:bg-muted/25"
             >
               <Checkbox
                 id="consent"
@@ -351,7 +352,7 @@ export function SignupForm() {
                 type="button"
                 variant="outline"
                 size="lg"
-                className="h-11 rounded-xl"
+                className="h-11 rounded-lg"
                 onClick={() => {
                   setError(null);
                   setStep(0);
@@ -365,7 +366,7 @@ export function SignupForm() {
                 type="submit"
                 variant="brand"
                 size="lg"
-                className="h-11 flex-1 rounded-xl font-semibold brand-glow"
+                className="h-11 flex-1 rounded-lg font-medium"
                 disabled={
                   loading ||
                   !consent ||
@@ -373,7 +374,7 @@ export function SignupForm() {
                   password !== confirmPassword
                 }
               >
-                {loading ? "Criando conta…" : "Criar minha conta"}
+                {loading ? "Criando conta…" : "Criar conta"}
               </Button>
             </div>
           </motion.form>

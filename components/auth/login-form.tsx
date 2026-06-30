@@ -64,9 +64,8 @@ export function LoginForm({ nextPath, authError }: LoginFormProps) {
 
   return (
     <AuthFormShell
-      badge="Acesso seguro"
-      title="Bem-vindo de volta"
-      description="Entre para revisar transcrições, resumos e action items das suas reuniões."
+      title="Entrar"
+      description="Acesse suas transcrições, resumos e action items."
       footer={
         <>
           Não tem conta?{" "}
@@ -130,10 +129,10 @@ export function LoginForm({ nextPath, authError }: LoginFormProps) {
           type="submit"
           variant="brand"
           size="lg"
-          className={cn("h-11 w-full rounded-xl text-sm font-semibold brand-glow")}
+          className={cn("h-11 w-full rounded-lg text-sm font-medium")}
           disabled={loading}
         >
-          {loading ? "Entrando…" : "Entrar na plataforma"}
+          {loading ? "Entrando…" : "Entrar"}
           {!loading && <ArrowRight size={18} weight="bold" />}
         </Button>
       </form>
