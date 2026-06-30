@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { AuthDivider } from "@/components/auth/auth-divider";
+import { ConsentText } from "@/components/legal/consent-text";
 import { AuthField } from "@/components/auth/auth-field";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { OAuthButton } from "@/components/auth/oauth-button";
@@ -359,8 +360,7 @@ export function SignupForm() {
                 disabled={loading}
               />
               <span>
-                Li e aceito que o ReuniAI grava e processa áudio de reuniões para transcrição e
-                análise por IA, conforme a LGPD e os termos de uso.
+                <ConsentText />
               </span>
             </Label>
 
