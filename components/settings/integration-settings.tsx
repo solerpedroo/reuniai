@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LinkBreak, Plugs, SlackLogo, NotionLogo, Plus, Trash } from "@phosphor-icons/react";
+import { LinkBreak, Plugs, SlackLogo, Plus, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { NotionIcon } from "@/components/brand/provider-icons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -197,7 +198,7 @@ export function IntegrationSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <NotionLogo size={18} />
+            <NotionIcon size={18} />
             Notion
           </CardTitle>
           <CardDescription>Exportar reuniões como páginas no workspace</CardDescription>
