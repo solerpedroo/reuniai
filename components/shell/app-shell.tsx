@@ -11,6 +11,7 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { getNavItem, NAV_ITEMS } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
+import { MeetingSearch } from "@/components/shell/meeting-search";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -114,8 +115,11 @@ export function AppShell({
               <List size={20} />
             </Button>
 
-            <div className="hidden w-full max-w-sm lg:block">
-              <CommandTrigger />
+            <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex">
+              <MeetingSearch />
+              <div className="w-full max-w-xs shrink-0">
+                <CommandTrigger />
+              </div>
             </div>
 
             <div className="min-w-0 flex-1 lg:hidden">
