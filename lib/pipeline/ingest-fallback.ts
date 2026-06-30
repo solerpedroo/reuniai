@@ -18,6 +18,7 @@ import {
 } from "@/lib/microsoft/teams-transcripts";
 import { getTranscript } from "@/lib/vexa/client";
 import { persistMeetingSegments, type IngestResult } from "@/lib/pipeline/ingest-segments";
+import { persistVexaRecordingRef } from "@/lib/pipeline/persist-recording-ref";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -60,6 +61,9 @@ async function ingestFromVexa(
   }));
 
   const result = await persistMeetingSegments(admin, meeting.id, segments, "vexa");
+  await persistVexaRecordingRef(admin, meeting.id, transcript).catch((err) => {
+    console.warn("Falha ao persistir referência de gravação Vexa:", err);
+  });
   return { ...result, meetingId: meeting.id, source: "vexa" };
 }
 
@@ -208,6 +212,9 @@ export async function ingestByNativeId(
       endMs: Math.max(0, Math.round((s.end ?? 0) * 1000)),
     }));
     const persisted = await persistMeetingSegments(admin, meeting.id, segments, "vexa");
+    await persistVexaRecordingRef(admin, meeting.id, transcript).catch((err) => {
+      console.warn("Falha ao persistir referência de gravação Vexa:", err);
+    });
     return { ...persisted, meetingId: meeting.id };
   }
 }
