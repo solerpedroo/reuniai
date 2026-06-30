@@ -76,8 +76,11 @@ export function JoinMeetingDialog({
         if (startBot) {
           if (data.botStarted) {
             toast.success("Bot enviado — entrando na call.");
-          } else if (data.botError) {
-            toast.error(data.botError);
+          } else {
+            toast.error(
+              data.botError ??
+                "Não foi possível enviar o bot agora. Tente novamente em instantes."
+            );
           }
         }
 
