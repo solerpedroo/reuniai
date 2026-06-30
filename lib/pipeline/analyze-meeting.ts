@@ -8,6 +8,7 @@ import { parseUserLocale } from "@/lib/profile/locale";
 import { isLlmConfigured } from "@/lib/llm/client";
 import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
 import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
+import { dispatchMeetingCompleted } from "@/lib/integrations/dispatch";
 import { createNotification } from "@/lib/notifications/create";
 import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
@@ -135,6 +136,7 @@ export async function analyzeMeetingById(
       });
       await sendMeetingCompletedEmail(admin, meetingId);
       await suggestAndApplyTags(admin, meetingId);
+      await dispatchMeetingCompleted(admin, meetingId);
     } catch (err) {
       console.error("Falha pós-análise (não bloqueante):", err);
     }

@@ -4,6 +4,7 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnection } from "@/components/settings/calendar-connection";
 import { RetentionSettings } from "@/components/settings/retention-settings";
+import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
@@ -14,6 +15,15 @@ import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+
+const STATUS_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
+  connected: { tone: "ok", text: "Conectado com sucesso." },
+  error: { tone: "error", text: "Não foi possível conectar. Tente novamente." },
+  no_refresh: {
+    tone: "error",
+    text: "O provedor não retornou um token de atualização. Remova o acesso e tente novamente.",
+  },
+};
 
 const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
   connected: { tone: "ok", text: "Google Calendar conectado e sincronizado." },
@@ -27,9 +37,9 @@ const CALENDAR_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> 
 export default async function ConfiguracoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ calendar?: string }>;
+  searchParams: Promise<{ calendar?: string; slack?: string; notion?: string }>;
 }) {
-  const { calendar } = await searchParams;
+  const { calendar, slack, notion } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -70,7 +80,11 @@ export default async function ConfiguracoesPage({
 
   const connection = await getCalendarConnection(supabase);
   const email = user?.email ?? "—";
-  const banner = calendar ? CALENDAR_MESSAGES[calendar] : undefined;
+  const banner =
+    (calendar && CALENDAR_MESSAGES[calendar]) ||
+    (slack && { ...STATUS_MESSAGES[slack], text: slack === "connected" ? "Slack conectado." : STATUS_MESSAGES[slack].text }) ||
+    (notion && { ...STATUS_MESSAGES[notion], text: notion === "connected" ? "Notion conectado." : STATUS_MESSAGES[notion].text }) ||
+    undefined;
 
   return (
     <div>
@@ -146,6 +160,8 @@ export default async function ConfiguracoesPage({
           initialLocale={locale}
           initialDefaultTemplate={defaultTemplate}
         />
+
+        <IntegrationSettings />
       </div>
     </div>
   );

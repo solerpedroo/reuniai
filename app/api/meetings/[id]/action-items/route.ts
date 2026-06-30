@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { dispatchActionItemCreated } from "@/lib/integrations/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ActionItem } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +64,12 @@ export async function POST(
 
   if (error) {
     return NextResponse.json({ error: "Falha ao criar item" }, { status: 500 });
+  }
+
+  try {
+    await dispatchActionItemCreated(admin, meetingId, data as ActionItem);
+  } catch (err) {
+    console.error("Falha ao disparar webhook (não bloqueante):", err);
   }
 
   return NextResponse.json({ ok: true, item: data });
