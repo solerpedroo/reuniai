@@ -97,7 +97,7 @@ export function LoginForm({ nextPath, authError }: LoginFormProps) {
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="voce@empresa.com"
+            placeholder="seu@email.com"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
