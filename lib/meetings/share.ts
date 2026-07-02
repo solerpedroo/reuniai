@@ -2,7 +2,13 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { parseDecisions, parseTopics } from "@/lib/meetings/insights";
+import {
+  parseSharePermissions,
+  permissionsFromScope,
+  type SharePermissions,
+} from "@/lib/meetings/share-permissions";
 import { formatTimestamp } from "@/lib/meetings/transcript";
+import { computeTalkTime, type SpeakerTalkTime } from "@/lib/meetings/talk-time";
 import {
   formatDuration,
   formatMeetingDate,
@@ -27,12 +33,35 @@ export type ShareParticipant = {
 
 export type ResolvedShare = {
   token: ShareToken;
+  permissions: SharePermissions;
   meeting: Meeting;
   summary: MeetingSummary | null;
   actionItems: ActionItem[];
   segments: TranscriptSegment[];
+  talkTime: SpeakerTalkTime[];
   participants: ShareParticipant[];
 };
+
+function resolvePermissions(row: ShareToken): SharePermissions {
+  if (row.permissions) {
+    return parseSharePermissions(row.permissions);
+  }
+  return permissionsFromScope(row.scope);
+}
+
+function filterSummaryByPermissions(
+  summary: MeetingSummary | null,
+  permissions: SharePermissions
+): MeetingSummary | null {
+  if (!summary) return null;
+
+  return {
+    ...summary,
+    executive_summary: permissions.executive_summary ? summary.executive_summary : null,
+    topics: permissions.topics ? summary.topics : [],
+    decisions: permissions.decisions ? summary.decisions : [],
+  };
+}
 
 export async function resolveShareToken(
   admin: AdminClient,
@@ -50,6 +79,11 @@ export async function resolveShareToken(
   if (row.revoked_at) return null;
   if (new Date(row.expires_at).getTime() < Date.now()) return null;
 
+  const permissions = resolvePermissions(row);
+  const needsSegments = permissions.transcript || permissions.talk_time;
+  const needsSummary =
+    permissions.executive_summary || permissions.topics || permissions.decisions;
+
   const { data: meeting } = await admin
     .from("meetings")
     .select("*")
@@ -59,29 +93,35 @@ export async function resolveShareToken(
   if (!meeting) return null;
 
   const [summaryRes, actionItemsRes, segmentsRes, participantsRes] = await Promise.all([
-    admin
-      .from("meeting_summaries")
-      .select("*")
-      .eq("meeting_id", meeting.id)
-      .maybeSingle<MeetingSummary>(),
-    admin
-      .from("action_items")
-      .select("*")
-      .eq("meeting_id", meeting.id)
-      .neq("status", "suggested")
-      .order("created_at", { ascending: true }),
-    row.scope === "full_transcript"
+    needsSummary
+      ? admin
+          .from("meeting_summaries")
+          .select("*")
+          .eq("meeting_id", meeting.id)
+          .maybeSingle<MeetingSummary>()
+      : Promise.resolve({ data: null, error: null }),
+    permissions.action_items
+      ? admin
+          .from("action_items")
+          .select("*")
+          .eq("meeting_id", meeting.id)
+          .neq("status", "suggested")
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    needsSegments
       ? admin
           .from("transcript_segments")
           .select("*")
           .eq("meeting_id", meeting.id)
           .order("sequence", { ascending: true })
       : Promise.resolve({ data: [], error: null }),
-    admin
-      .from("participants")
-      .select("name, email")
-      .eq("meeting_id", meeting.id)
-      .order("created_at", { ascending: true }),
+    permissions.participants
+      ? admin
+          .from("participants")
+          .select("name, email")
+          .eq("meeting_id", meeting.id)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (actionItemsRes.error) throw actionItemsRes.error;
@@ -95,68 +135,117 @@ export async function resolveShareToken(
 
   if (row.redact_pii !== false) {
     const texts: string[] = [];
-    if (summary?.executive_summary) texts.push(summary.executive_summary);
 
-    const topics = parseTopics(summary?.topics ?? []);
+    if (summary && permissions.executive_summary && summary.executive_summary) {
+      texts.push(summary.executive_summary);
+    }
+
+    const topics = permissions.topics ? parseTopics(summary?.topics ?? []) : [];
     for (const topic of topics) texts.push(topic.title, topic.summary);
 
-    const decisions = parseDecisions(summary?.decisions ?? []);
+    const decisions = permissions.decisions ? parseDecisions(summary?.decisions ?? []) : [];
     texts.push(...decisions);
 
-    for (const item of actionItems) {
-      texts.push(item.title);
-      if (item.assignee) texts.push(item.assignee);
-    }
-    for (const segment of segments) {
-      texts.push(segment.text, segment.speaker_label);
-    }
-    for (const participant of participants) {
-      texts.push(participant.name);
-      if (participant.email) texts.push(participant.email);
+    if (permissions.action_items) {
+      for (const item of actionItems) {
+        texts.push(item.title);
+        if (item.assignee) texts.push(item.assignee);
+      }
     }
 
-    const { texts: redacted, audit } = await redactManyTexts(texts, { useLlm: true });
-    let index = 0;
-    const next = () => redacted[index++] ?? "";
-
-    if (summary) {
-      const redactedTopics = topics.map(() => ({ title: next(), summary: next() }));
-      const redactedDecisions = decisions.map(() => next());
-      summary = {
-        ...summary,
-        executive_summary: summary.executive_summary ? next() : summary.executive_summary,
-        topics: redactedTopics,
-        decisions: redactedDecisions,
-      };
+    if (permissions.transcript) {
+      for (const segment of segments) {
+        texts.push(segment.text, segment.speaker_label);
+      }
+    } else if (permissions.talk_time) {
+      for (const segment of segments) {
+        texts.push(segment.speaker_label);
+      }
     }
 
-    actionItems = actionItems.map((item) => ({
-      ...item,
-      title: next(),
-      assignee: item.assignee ? next() : item.assignee,
-    }));
+    if (permissions.participants) {
+      for (const participant of participants) {
+        texts.push(participant.name);
+        if (participant.email) texts.push(participant.email);
+      }
+    }
 
-    segments = segments.map((segment) => ({
-      ...segment,
-      text: next(),
-      speaker_label: next(),
-    }));
+    if (texts.length > 0) {
+      const { texts: redacted, audit } = await redactManyTexts(texts, { useLlm: true });
+      let index = 0;
+      const next = () => redacted[index++] ?? "";
 
-    participants = participants.map((participant) => ({
-      name: next(),
-      email: participant.email ? next() : participant.email,
-    }));
+      if (summary) {
+        const redactedTopics = topics.map(() => ({ title: next(), summary: next() }));
+        const redactedDecisions = decisions.map(() => next());
+        summary = {
+          ...summary,
+          executive_summary:
+            permissions.executive_summary && summary.executive_summary
+              ? next()
+              : summary.executive_summary,
+          topics: permissions.topics ? redactedTopics : summary.topics,
+          decisions: permissions.decisions ? redactedDecisions : summary.decisions,
+        };
+      }
 
-    await logExportAudit(admin, {
-      userId: row.user_id,
-      meetingId: meeting.id,
-      format: "share_view",
-      audit,
-      shareTokenId: row.id,
-    });
+      if (permissions.action_items) {
+        actionItems = actionItems.map((item) => ({
+          ...item,
+          title: next(),
+          assignee: item.assignee ? next() : item.assignee,
+        }));
+      }
+
+      if (permissions.transcript) {
+        segments = segments.map((segment) => ({
+          ...segment,
+          text: next(),
+          speaker_label: next(),
+        }));
+      } else if (permissions.talk_time) {
+        segments = segments.map((segment) => ({
+          ...segment,
+          speaker_label: next(),
+        }));
+      }
+
+      if (permissions.participants) {
+        participants = participants.map((participant) => ({
+          name: next(),
+          email: participant.email ? next() : participant.email,
+        }));
+      }
+
+      await logExportAudit(admin, {
+        userId: row.user_id,
+        meetingId: meeting.id,
+        format: "share_view",
+        audit,
+        shareTokenId: row.id,
+      });
+    }
   }
 
-  return { token: row, meeting, summary, actionItems, segments, participants };
+  summary = filterSummaryByPermissions(summary, permissions);
+
+  const talkTime =
+    permissions.talk_time && segments.length > 0 ? computeTalkTime(segments) : [];
+
+  if (!permissions.transcript) {
+    segments = [];
+  }
+
+  return {
+    token: row,
+    permissions,
+    meeting,
+    summary,
+    actionItems,
+    segments,
+    talkTime,
+    participants,
+  };
 }
 
 export function buildShareSummaryText(
