@@ -1,6 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { AgendaEntry, DailyTimeline } from "@/lib/agenda/types";
-import { needsPostCallReview } from "@/lib/meetings/post-call-review";
+import { needsPostCallReview, REVIEW_QUEUE_HREF } from "@/lib/meetings/post-call-review";
 import { getActivePrepCard } from "@/lib/meetings/prep";
 import { localDateIsoInTimezone, resolveTimezone } from "@/lib/timezone/local-date";
 import type { ActionItem, Meeting } from "@/lib/supabase/types";
@@ -89,7 +89,7 @@ export async function getDailyTimeline(
   const [meetingsRes, tasksRes, prepCard] = await Promise.all([
     supabase
       .from("meetings")
-      .select("id, title, started_at, status, meeting_reviewed_at, meeting_url")
+      .select("id, title, started_at, status, meeting_reviewed_at, review_snoozed_until, meeting_url")
       .gte("started_at", rangeStart.toISOString())
       .lt("started_at", rangeEnd.toISOString())
       .order("started_at", { ascending: true }),
@@ -130,7 +130,7 @@ export async function getDailyTimeline(
         sortAt: row.started_at,
         title: row.title,
         subtitle: "Revisão pós-call pendente",
-        href: `/reunioes/${row.id}?revisar=1`,
+        href: REVIEW_QUEUE_HREF,
         timeLabel: formatTime(row.started_at, timezone),
       });
     }
