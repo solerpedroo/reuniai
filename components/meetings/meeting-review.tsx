@@ -33,6 +33,7 @@ export function MeetingReview({
   highlights,
   speakerMappings,
   participantEmails = [],
+  personalNotes = "",
 }: {
   meeting: Meeting;
   hasRecording: boolean;
@@ -47,6 +48,7 @@ export function MeetingReview({
   highlights: MeetingHighlight[];
   speakerMappings: SpeakerMapping[];
   participantEmails?: string[];
+  personalNotes?: string;
 }) {
   const [currentTimeMs, setCurrentTimeMs] = useState(initialSeekMs ?? 0);
   const [highlightMs, setHighlightMs] = useState<number | null>(initialSeekMs ?? null);
@@ -123,6 +125,7 @@ export function MeetingReview({
         onCitationClick={handleCitation}
         followUp={followUp}
         participantEmails={participantEmails}
+        personalNotes={personalNotes}
       />
     </div>
   );
