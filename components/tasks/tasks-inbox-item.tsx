@@ -7,12 +7,21 @@ import {
   Check,
   CheckCircle,
   Circle,
+  ClockCountdown,
   PencilSimple,
   Sparkle,
   User,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { PRIORITY_LABELS, PRIORITY_SHORT } from "@/lib/action-items/priority";
 import type { InboxActionItem } from "@/lib/meetings/action-items-inbox";
 import { formatDueDate } from "@/lib/meetings/types";
 import { cn } from "@/lib/utils";
@@ -23,6 +32,12 @@ type TasksInboxItemProps = {
   onSave: (item: InboxActionItem, patch: { title?: string; assignee?: string | null; due_date?: string | null }) => Promise<boolean>;
   onAcceptSuggestion?: (item: InboxActionItem) => Promise<void>;
   onRejectSuggestion?: (item: InboxActionItem) => Promise<void>;
+  onSnooze?: (item: InboxActionItem, preset: "tomorrow" | "next_week") => Promise<void>;
+  onClearSnooze?: (item: InboxActionItem) => Promise<void>;
+  onPriorityChange?: (
+    item: InboxActionItem,
+    priority: InboxActionItem["priority"]
+  ) => Promise<void>;
   busy?: boolean;
 };
 
@@ -32,6 +47,9 @@ export function TasksInboxItem({
   onSave,
   onAcceptSuggestion,
   onRejectSuggestion,
+  onSnooze,
+  onClearSnooze,
+  onPriorityChange,
   busy = false,
 }: TasksInboxItemProps) {
   const [editing, setEditing] = useState(false);
@@ -158,6 +176,24 @@ export function TasksInboxItem({
                   {due.label}
                 </span>
               )}
+              {!isSuggested && item.priority !== "medium" && (
+                <span
+                  className={cn(
+                    "rounded-md px-1.5 py-0.5 font-medium",
+                    item.priority === "high"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {PRIORITY_SHORT[item.priority]}
+                </span>
+              )}
+              {item.snoozed_until && new Date(item.snoozed_until) > new Date() && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">
+                  <ClockCountdown size={12} aria-hidden />
+                  Adiada
+                </span>
+              )}
               {isSuggested && (
                 <span className="rounded-md bg-brand/10 px-1.5 py-0.5 font-medium text-brand">
                   Sugestão IA
@@ -184,12 +220,49 @@ export function TasksInboxItem({
             </Button>
           </>
         ) : (
-          <Button variant="ghost" size="sm" asChild>
+          <>
+            {!isSuggested && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" disabled={busy}>
+                    <ClockCountdown size={14} />
+                    Adiar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => void onSnooze?.(item, "tomorrow")}>
+                    Amanhã
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => void onSnooze?.(item, "next_week")}>
+                    Próxima semana
+                  </DropdownMenuItem>
+                  {item.snoozed_until && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => void onClearSnooze?.(item)}>
+                        Remover adiamento
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  {(["high", "medium", "low"] as const).map((priority) => (
+                    <DropdownMenuItem
+                      key={priority}
+                      onClick={() => void onPriorityChange?.(item, priority)}
+                    >
+                      Prioridade {PRIORITY_LABELS[priority]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button variant="ghost" size="sm" asChild>
             <Link href={`/reunioes/${item.meeting_id}`}>
               Abrir
               <ArrowRight size={14} />
             </Link>
           </Button>
+          </>
         )}
       </div>
     </li>
