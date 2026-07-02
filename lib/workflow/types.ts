@@ -42,6 +42,8 @@ export type MeetingFollowUp = {
   subject: string;
   body: string;
   follow_up_done_at: string | null;
+  sent_at: string | null;
+  sent_to: string[] | null;
   created_at: string;
   updated_at: string;
 };
