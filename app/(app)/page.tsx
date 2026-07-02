@@ -14,7 +14,9 @@ import { getActivePrepCard } from "@/lib/meetings/prep";
 import { getDashboardData, getMeetingsWeeklyChart } from "@/lib/meetings/queries";
 import { getMeetingSeriesList } from "@/lib/series/queries";
 import { ReviewQueueHomeCard } from "@/components/review/review-queue-home-card";
+import { WeeklyReviewHomeCard } from "@/components/review/weekly-review-home-card";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
+import { getWeeklyReview } from "@/lib/review/weekly-review";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,7 +27,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline, reviewCounts] =
+  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline, reviewCounts, weeklyReview] =
     await Promise.all([
       getDashboardData(supabase),
       getMeetingsWeeklyChart(supabase),
@@ -34,6 +36,7 @@ export default async function HomePage() {
       getInboxCounts(supabase),
       getDailyTimeline(supabase),
       getReviewQueueCounts(supabase),
+      getWeeklyReview(supabase),
     ]);
 
   const meetingTitleById = new Map(recentMeetings.map((m) => [m.id, m.title]));
@@ -50,6 +53,12 @@ export default async function HomePage() {
       <KpiCards stats={stats} inboxCounts={inboxCounts} />
 
       <ReviewQueueHomeCard pendingCount={reviewCounts.pending} />
+
+      <WeeklyReviewHomeCard
+        pendingCount={
+          weeklyReview.unreviewedMeetings.length + weeklyReview.overdueTasks.length
+        }
+      />
 
       <Link
         href="/agenda"
