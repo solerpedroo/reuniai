@@ -1,21 +1,36 @@
-/** Ex.: "Agora", "Há 2h", "Ontem", "12 mar" */
-export function formatNotificationRelativeTime(iso: string): string {
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/** Ex.: "12:47", "Ontem", "seg", "28 jun" — sem "há X dias". */
+export function formatNotificationTimestamp(iso: string): string {
   const date = new Date(iso);
-  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  const now = new Date();
 
-  if (diffSec < 60) return "Agora";
+  if (isSameDay(date, now)) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }
 
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `Há ${diffMin} min`;
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameDay(date, yesterday)) return "Ontem";
 
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `Há ${diffHr}h`;
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
+  if (diffDays < 7) {
+    return new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
+      .format(date)
+      .replace(".", "");
+  }
 
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay === 1) return "Ontem";
-  if (diffDay < 7) return `Há ${diffDay} dias`;
+  const options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short" };
+  if (date.getFullYear() !== now.getFullYear()) options.year = "numeric";
 
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" })
-    .format(date)
-    .replace(".", "");
+  return new Intl.DateTimeFormat("pt-BR", options).format(date).replace(".", "");
 }
