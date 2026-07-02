@@ -8,7 +8,7 @@ import {
 export { isEmailConfigured } from "@/lib/email/config";
 
 type SendEmailInput = {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -39,14 +39,27 @@ function formatResendError(status: number, responseBody: string): string {
 
 export async function sendEmail(input: SendEmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) return;
-
-  const delivery = checkEmailDelivery(input.to);
-  if (!delivery.allowed) {
-    console.warn(
-      `[email] Envio ignorado para ${input.to} (${input.subject}): ${delivery.reason}`
+  if (!apiKey) {
+    throw new ResendDeliveryError(
+      "RESEND_API_KEY não está configurada.",
+      503,
+      ""
     );
-    return;
+  }
+
+  const recipients = (Array.isArray(input.to) ? input.to : [input.to])
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (recipients.length === 0) {
+    throw new ResendDeliveryError("Nenhum destinatário informado.", 400, "");
+  }
+
+  for (const recipient of recipients) {
+    const delivery = checkEmailDelivery(recipient);
+    if (!delivery.allowed) {
+      throw new ResendDeliveryError(delivery.reason, 400, "");
+    }
   }
 
   const from = getResendFromAddress();
@@ -59,7 +72,7 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
     },
     body: JSON.stringify({
       from,
-      to: [input.to],
+      to: recipients,
       subject: input.subject,
       html: input.html,
       text: input.text,
@@ -70,7 +83,7 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
     const responseBody = await res.text();
     const message = formatResendError(res.status, responseBody);
     console.error(
-      `[email] Falha ao enviar para ${input.to} (${input.subject}): ${message}`
+      `[email] Falha ao enviar para ${recipients.join(", ")} (${input.subject}): ${message}`
     );
     throw new ResendDeliveryError(message, res.status, responseBody);
   }
