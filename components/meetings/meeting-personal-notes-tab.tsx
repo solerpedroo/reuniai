@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, CircleNotch, NotePencil } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -64,6 +65,14 @@ export function MeetingPersonalNotesTab({
             Anotações pessoais — separadas do resumo gerado por IA e não incluídas no chat por
             padrão.
           </p>
+          {initialNotes.trim() && (
+            <Link
+              href="/notas"
+              className="mt-1 inline-block text-xs text-muted-foreground hover:text-brand"
+            >
+              Ver todas as notas
+            </Link>
+          )}
         </div>
         <span
           className={cn(

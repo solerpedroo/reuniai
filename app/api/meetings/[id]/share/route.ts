@@ -129,8 +129,11 @@ export async function POST(
       .single());
   }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error || !data) {
+    return NextResponse.json(
+      { error: error?.message ?? "Falha ao criar link de compartilhamento" },
+      { status: 500 }
+    );
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
