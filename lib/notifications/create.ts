@@ -1,13 +1,14 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
-import {
-  sendPushToUser,
-  type PushNotificationKind,
-} from "@/lib/notifications/send-push";
+import { notifyUser } from "@/lib/notifications/dispatch";
+import type { NotificationKind } from "@/lib/notifications/kinds";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+/**
+ * @deprecated Prefira `notifyUser` com `dedupeKey` para idempotência.
+ */
 export async function createNotification(
   admin: AdminClient,
   input: {
@@ -15,27 +16,16 @@ export async function createNotification(
     title: string;
     body: string;
     href?: string | null;
-    kind?: PushNotificationKind;
+    kind?: NotificationKind;
+    dedupeKey?: string;
   }
 ): Promise<void> {
-  const { error } = await admin.from("notifications").insert({
-    user_id: input.userId,
+  await notifyUser(admin, {
+    userId: input.userId,
+    kind: input.kind ?? "completed",
     title: input.title,
     body: input.body,
-    href: input.href ?? null,
+    href: input.href,
+    dedupeKey: input.dedupeKey ?? `${input.kind ?? "completed"}:${input.userId}:${Date.now()}`,
   });
-
-  if (error) throw error;
-
-  try {
-    await sendPushToUser(admin, {
-      userId: input.userId,
-      title: input.title,
-      body: input.body,
-      href: input.href,
-      kind: input.kind,
-    });
-  } catch (err) {
-    console.error("Falha ao enviar push (não bloqueante):", err);
-  }
 }
