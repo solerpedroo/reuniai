@@ -839,6 +839,8 @@ export type Database = {
           subject: string;
           body: string;
           follow_up_done_at: string | null;
+          sent_at: string | null;
+          sent_to: string[] | null;
           created_at: string;
           updated_at: string;
         };
@@ -849,6 +851,8 @@ export type Database = {
           subject: string;
           body: string;
           follow_up_done_at?: string | null;
+          sent_at?: string | null;
+          sent_to?: string[] | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -859,6 +863,8 @@ export type Database = {
           subject?: string;
           body?: string;
           follow_up_done_at?: string | null;
+          sent_at?: string | null;
+          sent_to?: string[] | null;
           created_at?: string;
           updated_at?: string;
         };
