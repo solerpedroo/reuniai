@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { NOTIFICATION_KIND_LABELS } from "@/lib/notifications/kinds";
 import type { NotificationPrefs } from "@/lib/workflow/types";
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -14,6 +15,28 @@ function urlBase64ToUint8Array(base64String: string) {
   const raw = window.atob(base64);
   return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
 }
+
+const IN_APP_TOGGLES: Array<{
+  key: keyof Pick<NotificationPrefs, "prep" | "completed" | "bot_failed" | "tasks_due">;
+  description: string;
+}> = [
+  {
+    key: "prep",
+    description: "Briefing ~10 min antes de calls com histórico de participantes",
+  },
+  {
+    key: "completed",
+    description: "Quando resumo e follow-up estiverem prontos para revisão",
+  },
+  {
+    key: "bot_failed",
+    description: "Quando o bot não conseguir entrar na reunião",
+  },
+  {
+    key: "tasks_due",
+    description: "Lembrete matinal de action items vencendo hoje (fuso do perfil)",
+  },
+];
 
 export function NotificationSettings({
   initialPrefs,
@@ -78,9 +101,12 @@ export function NotificationSettings({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <BellRinging size={18} className="text-brand" />
-          Notificações
+          Centro de alertas
         </CardTitle>
-        <CardDescription>Alertas de prep, conclusão de reuniões e push no navegador</CardDescription>
+        <CardDescription>
+          Controle in-app e push por tipo de evento. O fuso horário dos lembretes matinais está em
+          Meu perfil.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-4">
@@ -107,30 +133,35 @@ export function NotificationSettings({
             onCheckedChange={(digest) => void savePrefs({ ...prefs, digest })}
           />
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Prep de reunião</p>
-            <p className="text-xs text-muted-foreground">Briefing antes de calls com histórico</p>
+
+        <div className="border-t border-border/70 pt-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Alertas in-app
+          </p>
+          <div className="space-y-4">
+            {IN_APP_TOGGLES.map((toggle) => (
+              <div key={toggle.key} className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">{NOTIFICATION_KIND_LABELS[toggle.key]}</p>
+                  <p className="text-xs text-muted-foreground">{toggle.description}</p>
+                </div>
+                <Switch
+                  checked={prefs[toggle.key] ?? true}
+                  onCheckedChange={(value) =>
+                    void savePrefs({ ...prefs, [toggle.key]: value })
+                  }
+                />
+              </div>
+            ))}
           </div>
-          <Switch
-            checked={prefs.prep}
-            onCheckedChange={(prep) => void savePrefs({ ...prefs, prep })}
-          />
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Reunião concluída</p>
-            <p className="text-xs text-muted-foreground">Quando resumo e follow-up estiverem prontos</p>
-          </div>
-          <Switch
-            checked={prefs.completed}
-            onCheckedChange={(completed) => void savePrefs({ ...prefs, completed })}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-4">
+
+        <div className="flex items-center justify-between gap-4 border-t border-border/70 pt-4">
           <div>
             <p className="text-sm font-medium">Push no navegador</p>
-            <p className="text-xs text-muted-foreground">Requer PWA instalado ou aba aberta</p>
+            <p className="text-xs text-muted-foreground">
+              Replica os alertas acima no dispositivo (requer PWA ou aba aberta)
+            </p>
           </div>
           {prefs.push ? (
             <Switch
