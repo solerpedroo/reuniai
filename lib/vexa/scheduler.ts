@@ -9,6 +9,10 @@ import { after } from "next/server";
 import { applyBotBranding } from "@/lib/vexa/branding";
 import { createBot } from "@/lib/vexa/client";
 import { mapVexaStatus } from "@/lib/vexa/sync";
+import {
+  isActionableBotJoinFailure,
+  notifyBotJoinFailed,
+} from "@/lib/notifications/bot-failed";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -140,7 +144,7 @@ export async function scheduleBotsForUpcomingMeetings(
   const { data: meetings, error } = await admin
     .from("meetings")
     .select(
-      "id, user_id, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
     )
     .eq("status", "scheduled")
     .not("meeting_url", "is", null)
@@ -154,6 +158,7 @@ export async function scheduleBotsForUpcomingMeetings(
       Meeting,
       | "id"
       | "user_id"
+      | "title"
       | "meeting_url"
       | "status"
       | "platform"
@@ -182,8 +187,23 @@ export async function scheduleBotsForUpcomingMeetings(
     }
 
     const result = await startBotForMeeting(admin, row);
-    if (result.ok) started += 1;
-    else skipped += 1;
+    if (result.ok) {
+      started += 1;
+    } else {
+      skipped += 1;
+      if (isActionableBotJoinFailure(result.reason)) {
+        try {
+          await notifyBotJoinFailed(admin, {
+            userId: row.user_id,
+            meetingId: row.id,
+            meetingTitle: row.title,
+            reason: result.reason,
+          });
+        } catch (err) {
+          console.error("Falha ao notificar auto-join (não bloqueante):", err);
+        }
+      }
+    }
   }
 
   return { candidates: rows.length, started, skipped };
