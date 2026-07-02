@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { PaperPlaneTilt, Quotes, Robot, Sparkle } from "@phosphor-icons/react";
+import { ChatsCircle, PaperPlaneTilt, Quotes } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,7 +53,7 @@ export function GlobalAssistantChat({
   if (!llmEnabled) {
     return (
       <EmptyState
-        icon={Robot}
+        icon={ChatsCircle}
         tone="brand"
         title="Assistente indisponível"
         description="Configure um provedor de IA nas variáveis de ambiente para usar o assistente global."
@@ -114,7 +114,7 @@ export function GlobalAssistantChat({
         <div className="min-h-[360px] space-y-4 rounded-xl border border-border/70 bg-card/40 p-4">
           {messages.length === 0 && (
             <EmptyState
-              icon={Sparkle}
+              icon={ChatsCircle}
               tone="brand"
               title="Pergunte sobre suas reuniões"
               description="A IA busca trechos relevantes em toda a biblioteca — com citações clicáveis."
