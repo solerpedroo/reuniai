@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LinkBreak, Plugs, Plus, Trash } from "@phosphor-icons/react";
@@ -269,7 +270,12 @@ export function IntegrationSettings() {
                   className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{hook.url}</p>
+                    <Link
+                      href={`/integracoes/webhooks/${hook.id}`}
+                      className="truncate text-sm font-medium hover:text-brand"
+                    >
+                      {hook.url.replace(/^(.{32}).+/, "$1…")}
+                    </Link>
                     <p className="text-xs text-muted-foreground">
                       {hook.events.join(", ")}
                     </p>
