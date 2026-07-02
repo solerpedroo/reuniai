@@ -5,7 +5,8 @@
 > UI: patterns de `case_agi` + design system **shadcn/ui Official** (design lab)
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
-**Última atualização:** julho 2026
+**Última atualização:** julho 2026  
+**Foco atual:** uso pessoal — valor de produto antes de monetização (Onda 18 postergada).
 
 ### Andamento das fases
 
@@ -29,11 +30,16 @@
 | 15 | Qualidade e personalização | ✅ Concluída |
 | 16 | Multi-plataforma enterprise | 🟡 Parcial (Outlook lib; Teams/Meet nativo pendente) |
 | 17 | Integrações e automações | ✅ Concluída |
-| 18 | Monetização e API | 📋 Planejada |
-| 19 | Escala e infra própria | 📋 Planejada |
 | **20** | **Inbox de compromissos** | ✅ Concluída |
 | **21** | **Ritual pós-reunião** | ✅ Concluída |
 | **22** | **Centro de alertas** | ✅ Concluída |
+| **23** | **Diretório de participantes** | 📋 Próxima |
+| **24** | **Pastas e organização** | 📋 Planejada |
+| **25** | **Insights e tendências in-app** | 📋 Planejada |
+| **26** | **Prioridade e snooze na inbox** | 📋 Planejada |
+| **27** | **Agenda do dia unificada** | 📋 Planejada |
+| 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
+| 19 | Escala e infra própria | 📋 Baixa prioridade |
 
 ---
 
@@ -65,8 +71,13 @@
 24. [Onda 20 — Inbox de compromissos](#onda-20--inbox-de-compromissos)
 25. [Onda 21 — Ritual pós-reunião](#onda-21--ritual-pós-reunião)
 26. [Onda 22 — Centro de alertas](#onda-22--centro-de-alertas)
-27. [Variáveis de ambiente](#variáveis-de-ambiente)
-28. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+27. [Onda 23 — Diretório de participantes](#onda-23--diretório-de-participantes)
+28. [Onda 24 — Pastas e organização](#onda-24--pastas-e-organização)
+29. [Onda 25 — Insights e tendências in-app](#onda-25--insights-e-tendências-in-app)
+30. [Onda 26 — Prioridade e snooze na inbox](#onda-26--prioridade-e-snooze-na-inbox)
+31. [Onda 27 — Agenda do dia unificada](#onda-27--agenda-do-dia-unificada)
+32. [Variáveis de ambiente](#variáveis-de-ambiente)
+33. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -89,6 +100,12 @@ flowchart TD
     O12 --> O20[Onda 20: Inbox]
     O20 --> O21[Onda 21: Pós-call]
     O21 --> O22[Onda 22: Alertas]
+    O22 --> O23[Onda 23: Participantes]
+    O23 --> O24[Onda 24: Pastas]
+    O24 --> O25[Onda 25: Insights]
+    O25 --> O26[Onda 26: Snooze]
+    O26 --> O27[Onda 27: Agenda]
+    O27 -.-> O18[Onda 18: Monetização]
 ```
 
 | Onda | Nome | Duração | Depende de | Entrega principal |
@@ -106,8 +123,11 @@ flowchart TD
 | 10 | Chat RAG | 3–4 dias | 8, 9 | Chat contextual |
 | 11 | LGPD Polish | 3–5 dias | 10 | MVP production-ready |
 | 12–17 | Fase 2 (produto) | contínuo | 11 | Ver seções 12–17 |
-| 18–19 | Plataforma / escala | contínuo | 17 | Billing, API, infra |
 | **20–22** | **Produto do dia a dia** | **2–4 sem** | **12–13** | **Inbox, pós-call, alertas** |
+| **23–25** | **Valor pessoal (lote 1)** | **2–3 sem** | **20–22** | **Participantes, pastas, insights** |
+| **26–27** | **Valor pessoal (lote 2)** | **1–2 sem** | **20, 25** | **Snooze, agenda do dia** |
+| 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 25+ | ⏸️ Postergada — uso pessoal |
+| 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
 ---
 
@@ -789,13 +809,16 @@ Mapeamento `meeting.status_change`:
 
 ## Ondas futuras — visão geral
 
-As ondas 0–11 entregam o **MVP monetizável**. As ondas **12–17** já estão em grande parte no código (busca, séries, prep, share, PDF, integrações). A prioridade atual é **fechar o loop de uso diário** (ondas 20–22) antes de monetização (18) e escala (19).
+As ondas 0–11 entregam o **MVP**. As ondas **12–17** e **20–22** fecham o loop de uso diário. A prioridade **atual** (jul/2026) é **valor de produto para uso pessoal** (ondas 23–27). Monetização (18) e escala (19) ficam **postergadas** até decisão de comercializar.
 
 ```mermaid
 flowchart LR
     MVP[Ondas 0-11 MVP] --> F2[Ondas 12-17 Fase 2]
     F2 --> DIA[Ondas 20-22 Dia a dia]
-    DIA --> F3[Ondas 18-19 Plataforma]
+    DIA --> VAL1[Ondas 23-25]
+    VAL1 --> VAL2[Ondas 26-27]
+    VAL2 -.-> F3[Onda 18 Monetização]
+    F3 -.-> F4[Onda 19 Escala]
 ```
 
 | Onda | Fase | Tema | Status |
@@ -809,7 +832,12 @@ flowchart LR
 | **20** | **Dia a dia** | **Inbox de compromissos** | **✅** |
 | **21** | **Dia a dia** | **Ritual pós-reunião** | **✅** |
 | **22** | **Dia a dia** | **Centro de alertas** | **✅** |
-| 18 | Plataforma | Monetização e API | 📋 Após 20–22 |
+| **23** | **Valor pessoal** | **Diretório de participantes** | **📋 Próxima** |
+| **24** | **Valor pessoal** | **Pastas e organização** | **📋** |
+| **25** | **Valor pessoal** | **Insights in-app** | **📋** |
+| **26** | **Valor pessoal** | **Prioridade e snooze** | **📋** |
+| **27** | **Valor pessoal** | **Agenda do dia** | **📋** |
+| 18 | Plataforma | Stripe + API REST + MCP | ⏸️ Postergada |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
 **Features recomendadas originalmente** (distribuídas nas ondas abaixo):
@@ -1092,37 +1120,41 @@ flowchart LR
 
 ## Onda 18 — Monetização e API
 
+> ⏸️ **Postergada** — projeto em uso pessoal; sem comercialização no curto prazo.  
+> Retomar quando houver decisão de monetizar. Itens abaixo permanecem especificados para referência.
+
 **Objetivo:** SaaS sustentável + ecossistema.
 
 **Estimativa:** 2–3 semanas  
-**Depende de:** Onda 11 (produção estável)
+**Depende de:** Onda 11 (produção estável), idealmente após 23–25
 
-### Features
+### Features (não iniciadas)
 
 #### 18.1 Stripe billing
 
-- Tiers: Free (60 min/mês), Pro (500 min), Unlimited
-- Metering: `usage_minutes` agregado por `user_id` mensal
-- Portal Stripe para upgrade/cancel
-- Hard stop ou aviso quando limite atingido (bot não entra)
+- [ ] Tiers: Free (60 min/mês), Pro (500 min), Unlimited
+- [ ] Metering: `usage_minutes` agregado por `user_id` mensal
+- [ ] Portal Stripe para upgrade/cancel
+- [ ] Hard stop ou aviso quando limite atingido (bot não entra)
 
 #### 18.2 API pública REST
 
-- API keys em `api_keys` table com scopes
-- Endpoints: list meetings, get transcript, get summary, search
-- Rate limit por key
+- [ ] API keys em `api_keys` table com scopes
+- [ ] Endpoints: list meetings, get transcript, get summary, search
+- [ ] Rate limit por key
+- [ ] UI em Configurações para gerar/revogar chaves
 
-#### 18.3 MCP server *(nova — 7ª feature extra)*
+#### 18.3 MCP server
 
-- Model Context Protocol para Cursor/Claude Desktop
-- Tools: `search_meetings`, `get_meeting_summary`, `list_action_items`
-- Diferencial forte para devs e power users
+- [ ] Model Context Protocol para Cursor/Claude Desktop
+- [ ] Tools: `search_meetings`, `get_meeting_summary`, `list_action_items`, `list_tasks_due`
+- [ ] Auth via API key (18.2)
 
 #### 18.4 Dark mode
 
-- Se não entregue na Onda 11: tokens dark do design lab + toggle persistente
+- [x] Entregue na Onda 11 — tokens dark + toggle persistente
 
-### Critérios de aceite
+### Critérios de aceite (quando retomar)
 
 - Upgrade Pro via Stripe reflete limite imediatamente
 - API key lista meetings do owner apenas
@@ -1276,6 +1308,243 @@ flowchart LR
 
 ---
 
+## Onda 23 — Diretório de participantes
+
+**Objetivo:** Visão relacional — "com quem eu reúno?" — cruzando reuniões, tarefas e histórico.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 9 (participants), Onda 20 (action items)  
+**Branch sugerida:** `feat/onda-23-participantes`
+
+### Features
+
+#### 23.1 Página `/participantes`
+
+- [ ] Item de nav na seção **Principal** do sidebar
+- [ ] Lista agregada por email (fallback: nome normalizado quando sem email)
+- [ ] Colunas: nome, email, N reuniões juntas, última call, action items abertos atribuídos
+- [ ] Busca por nome/email
+- [ ] Ordenação: mais recente, mais reuniões, mais tarefas abertas
+- [ ] `loading.tsx` com skeleton
+
+#### 23.2 Data layer (`lib/participants/directory.ts`)
+
+- [ ] `getParticipantDirectory()` — agrega `participants` + join `meetings`
+- [ ] `getParticipantDetail(emailOrKey)` — timeline de reuniões + action items abertos
+- [ ] Reutilizar normalização de email de `lib/meetings/prep.ts`
+- [ ] Respeitar RLS (via client autenticado ou admin com `user_id`)
+
+#### 23.3 Detalhe do participante
+
+- [ ] Sheet ou página `/participantes/[key]` com timeline de reuniões
+- [ ] Lista de action items abertos onde `assignee` coincide (heurística por nome/email)
+- [ ] Atalho para última reunião em comum
+- [ ] Link para mapeamento de speaker (Onda 15) quando aplicável
+
+#### 23.4 Integração com Prep
+
+- [ ] Card na ficha: "Próxima reunião agendada com esta pessoa" (se existir no calendário)
+- [ ] Link para série recorrente quando `calendar_recurring_event_id` compartilhado
+
+### Critérios de aceite
+
+- Participante que aparece em 3+ reuniões agrega contagem correta
+- Detalhe lista apenas reuniões do usuário logado
+- Busca encontra por fragmento de nome ou email
+
+---
+
+## Onda 24 — Pastas e organização
+
+**Objetivo:** Completar gap da Onda 12.2 — organizar biblioteca em pastas além de tags.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 12 (tags, filtros, `saved_views`)  
+**Branch sugerida:** `feat/onda-24-pastas`
+
+### Features
+
+#### 24.1 Schema
+
+- [ ] Tabela `folders`: `id`, `user_id`, `name`, `color`, `parent_id` (nullable), `created_at`
+- [ ] Tabela `meeting_folders`: `meeting_id`, `folder_id` (unique por par)
+- [ ] RLS: `user_id = auth.uid()`
+- [ ] Índices: `folders(user_id)`, `meeting_folders(folder_id)`
+
+#### 24.2 API
+
+- [ ] `GET/POST /api/folders` — listar e criar
+- [ ] `PATCH/DELETE /api/folders/[id]` — renomear, cor, excluir (cascade meeting_folders)
+- [ ] `PUT /api/meetings/[id]/folder` — mover reunião para pasta (ou remover)
+
+#### 24.3 UI em `/reunioes`
+
+- [ ] Sidebar ou dropdown "Pastas" com lista + contagem por pasta
+- [ ] Filtro ativo: `?pasta={folderId}`
+- [ ] Dialog criar/renomear pasta
+- [ ] Ação "Mover para pasta" na data table (single + bulk opcional)
+- [ ] Pasta "Sem pasta" para reuniões não classificadas
+
+#### 24.4 Vistas salvas + pastas
+
+- [ ] Estender `saved_views` para incluir `folder_id` opcional
+- [ ] Salvar combinação filtro + pasta como vista nomeada
+
+### Critérios de aceite
+
+- Reunião aparece em exatamente uma pasta por vez (ou nenhuma)
+- Excluir pasta não exclui reuniões
+- Filtro por pasta combina com tags e busca existentes
+
+---
+
+## Onda 25 — Insights e tendências in-app
+
+**Objetivo:** Painel analítico além do digest por email — entender padrões de uso ao longo do tempo.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 4 (dashboard queries), Onda 13 (digest stats)  
+**Branch sugerida:** `feat/onda-25-insights`
+
+### Features
+
+#### 25.1 Página `/insights`
+
+- [ ] Item de nav (Principal) ou link destacado na Visão geral
+- [ ] Período selecionável: 7d · 30d · 90d · 12m
+- [ ] `loading.tsx` com skeleton
+
+#### 25.2 Métricas e gráficos
+
+- [ ] **Horas gravadas** — linha ou barra por semana (reutilizar lógica de `getWeeklyDigestStats`)
+- [ ] **Reuniões processadas** — contagem no período
+- [ ] **Taxa de conclusão de tarefas** — `done / (done + open)` criadas no período
+- [ ] **Top decisões** — nuvem ou lista das decisões mais recorrentes nos resumos
+- [ ] **Participantes mais frequentes** — top 5 (prepara terreno para Onda 23)
+- [ ] **Tempo médio de revisão pós-call** — delta `meeting_reviewed_at - completed_at` quando disponível
+
+#### 25.3 Data layer (`lib/insights/period-stats.ts`)
+
+- [ ] `getInsightsForPeriod(userId, range)` — agrega meetings, summaries, action_items
+- [ ] Queries eficientes com índices existentes
+- [ ] Cache curto opcional (revalidate 5 min)
+
+#### 25.4 Integração dashboard
+
+- [ ] Card na home: "Ver insights completos" → `/insights`
+- [ ] KPI clicável leva ao gráfico correspondente com período pré-selecionado
+
+### Critérios de aceite
+
+- Gráficos refletem mesmos totais do digest semanal para a semana corrente
+- Período vazio mostra empty state amigável
+- Página carrega em < 2s com 100 reuniões seed
+
+---
+
+## Onda 26 — Prioridade e snooze na inbox
+
+**Objetivo:** Triage mais inteligente em `/tarefas` — adiar o que não é para hoje e destacar o que importa.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Onda 20 (inbox), Onda 22 (lembrete matinal de tarefas)  
+**Branch sugerida:** `feat/onda-26-snooze-prioridade`
+
+### Features
+
+#### 26.1 Schema
+
+- [ ] Coluna `priority` em `action_items`: `low` | `medium` | `high` (default `medium`)
+- [ ] Coluna `snoozed_until` timestamptz nullable em `action_items`
+- [ ] Índice parcial: action items abertos com `snoozed_until` para queries da inbox
+
+#### 26.2 Data layer
+
+- [ ] Estender `lib/meetings/action-items-inbox.ts`:
+  - [ ] Filtros: `snoozed`, `high_priority`, `focus` (hoje + alta prioridade, não adiadas)
+  - [ ] Itens com `snoozed_until > now()` ocultos das abas Hoje/Atrasados até expirar
+- [ ] Atualizar `getInboxCounts()` com contagem de adiadas e alta prioridade
+
+#### 26.3 API
+
+- [ ] Estender `PATCH /api/meetings/[id]/action-items/[itemId]` com `priority` e `snoozed_until`
+- [ ] Atalho `POST .../snooze` com presets: `tomorrow`, `next_week`, `custom`
+
+#### 26.4 UI em `/tarefas`
+
+- [ ] Badge de prioridade (P1/P2/P3 ou cores discretas)
+- [ ] Menu rápido "Adiar" → amanhã · próxima semana · escolher data
+- [ ] Aba ou filtro **Adiadas**
+- [ ] Aba **Foco** (hoje + alta prioridade)
+- [ ] Ordenação default: alta prioridade primeiro, depois prazo
+
+#### 26.5 Integração alertas
+
+- [ ] Cron `tasks-due-reminder` ignora itens com `snoozed_until` no futuro
+- [ ] Quando snooze expira, item volta para Hoje/Atrasados automaticamente
+
+### Critérios de aceite
+
+- Adiar tarefa remove da aba Hoje até a data do snooze
+- Lembrete matinal não inclui tarefas adiadas
+- Prioridade alta aparece no topo da lista Foco
+
+---
+
+## Onda 27 — Agenda do dia unificada
+
+**Objetivo:** Uma única tela para começar o dia — reuniões, prep, tarefas e alertas em ordem cronológica.
+
+**Estimativa:** 1 semana  
+**Depende de:** Ondas 5 (calendar), 13 (prep), 20 (tarefas), 22 (notificações)  
+**Branch sugerida:** `feat/onda-27-agenda-dia`
+
+### Features
+
+#### 27.1 Página `/agenda`
+
+- [ ] Item de nav na seção **Principal** (ou substituir "Visão geral" como landing opcional)
+- [ ] Cabeçalho com data local + fuso do perfil
+- [ ] `loading.tsx` com skeleton
+- [ ] Layout mobile-first (timeline vertical)
+
+#### 27.2 Timeline do dia (`lib/agenda/daily-timeline.ts`)
+
+- [ ] Agregar eventos ordenados por horário:
+  - [ ] Reuniões **agendadas hoje** (`status` scheduled/bot_joining/recording)
+  - [ ] Cards de **Prep** ativos (Onda 13)
+  - [ ] Reuniões **concluídas hoje** pendentes de revisão (`meeting_reviewed_at` null)
+  - [ ] **Tarefas** vencendo hoje (Onda 20, respeitando snooze da Onda 26)
+  - [ ] **Notificações** não lidas das últimas 24h (opcional, colapsável)
+- [ ] Blocos "Agora" · "Depois" · "Concluído" quando aplicável
+
+#### 27.3 UI da timeline
+
+- [ ] Card por tipo com ícone e cor do design system
+- [ ] Ações inline: entrar na reunião, ver prep, revisar call, marcar tarefa
+- [ ] Empty state: "Dia livre" + atalho para `/reunioes` e `/tarefas`
+- [ ] Navegação ← → para ontem/amanhã
+
+#### 27.4 Integrações
+
+- [ ] Link no KPI "Próxima reunião" da home → `/agenda`
+- [ ] Deep link de notificação `tasks_due` pode apontar para `/agenda` em vez de só `/tarefas`
+- [ ] Card compacto na Visão geral: "Resumo do seu dia" com link Ver agenda
+
+#### 27.5 PWA (complementar)
+
+- [ ] Banner "Instalar app" quando `beforeinstallprompt` disponível (manifest + SW já existem)
+- [ ] `/agenda` como `start_url` opcional no manifest para uso mobile
+
+### Critérios de aceite
+
+- Timeline lista reunião das 14h antes da das 16h
+- Prep aparece ~10 min antes da call agendada
+- Tarefa adiada não aparece na timeline do dia
+- Página útil no celular (touch targets ≥ 44px)
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -1305,9 +1574,9 @@ flowchart LR
 | 23 | Notion export | 17 |
 | 24 | Webhooks outbound | 17 |
 | 25 | Comparador de reuniões | 17 |
-| 26 | Stripe billing | 18 |
-| 27 | API pública | 18 |
-| 28 | MCP server | 18 |
+| 26 | Stripe billing | 18 ⏸️ |
+| 27 | API pública | 18 ⏸️ |
+| 28 | MCP server | 18 ⏸️ |
 | 29 | Bots self-hosted | 19 |
 | 30 | Desktop capture | 19 |
 | 31 | Workspaces / times | 19 |
@@ -1315,6 +1584,11 @@ flowchart LR
 | 33 | Inbox de compromissos (`/tarefas`) | 20 |
 | 34 | Ritual pós-reunião | 21 |
 | 35 | Centro de alertas proativos | 22 |
+| 36 | Diretório de participantes | 23 |
+| 37 | Pastas para reuniões | 24 |
+| 38 | Insights e tendências in-app | 25 |
+| 39 | Prioridade e snooze na inbox | 26 |
+| 40 | Agenda do dia unificada | 27 |
 
 ---
 
