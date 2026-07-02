@@ -19,7 +19,7 @@ export function botFailedNotificationHref(meetingId: string): string {
 }
 
 export function tasksDueNotificationHref(): string {
-  return "/tarefas?filtro=today";
+  return "/agenda";
 }
 
 export function notificationDedupeKey(
