@@ -191,6 +191,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/templates" || pathname.startsWith("/templates/")) {
+    return {
+      href: "/templates",
+      label: "Templates",
+      description: "Templates de análise pós-call",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
