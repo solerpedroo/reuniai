@@ -46,6 +46,11 @@
 | **33** | **Hub global de speakers** | ✅ Concluída |
 | **34** | **Séries recorrentes acionáveis** | ✅ Concluída |
 | **35** | **Biblioteca de highlights** | ✅ Concluída |
+| **36** | **Assistente global** | 📋 Próxima |
+| **37** | **Centro de notificações** | 📋 |
+| **38** | **Participação e talk-time** | 📋 |
+| **39** | **Hub de integrações** | 📋 |
+| **40** | **Templates de análise** | 📋 |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -92,8 +97,13 @@
 37. [Onda 33 — Hub global de speakers](#onda-33--hub-global-de-speakers)
 38. [Onda 34 — Séries recorrentes acionáveis](#onda-34--séries-recorrentes-acionáveis)
 39. [Onda 35 — Biblioteca de highlights](#onda-35--biblioteca-de-highlights)
-40. [Variáveis de ambiente](#variáveis-de-ambiente)
-41. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+40. [Onda 36 — Assistente global](#onda-36--assistente-global)
+41. [Onda 37 — Centro de notificações](#onda-37--centro-de-notificações)
+42. [Onda 38 — Participação e talk-time](#onda-38--participação-e-talk-time)
+43. [Onda 39 — Hub de integrações](#onda-39--hub-de-integrações)
+44. [Onda 40 — Templates de análise](#onda-40--templates-de-análise)
+45. [Variáveis de ambiente](#variáveis-de-ambiente)
+46. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -130,6 +140,11 @@ flowchart TD
     O29 --> O34[Onda 34: Séries acionáveis]
     O33 --> O34
     O34 --> O35[Onda 35: Highlights]
+    O35 --> O36[Onda 36: Assistente global]
+    O36 --> O37[Onda 37: Notificações]
+    O30 --> O38[Onda 38: Talk-time]
+    O17 --> O39[Onda 39: Integrações hub]
+    O34 --> O40[Onda 40: Templates]
     O30 -.-> O18[Onda 18: Monetização]
 ```
 
@@ -153,6 +168,7 @@ flowchart TD
 | **26–27** | **Valor pessoal (lote 2)** | **1–2 sem** | **20, 25** | **Snooze, agenda do dia** |
 | **28–30** | **Valor pessoal (lote 3)** | **2–3 sem** | **21, 23, 27** | **Fila de revisão, revisão semanal, notas** |
 | **31–35** | **Valor pessoal (lote 4)** | **2–3 sem** | **28–30** | **Navegação, email, speakers, séries, highlights** |
+| **36–40** | **Valor pessoal (lote 5)** | **3–4 sem** | **31–35** | **Assistente, alertas, talk-time, integrações, templates** |
 | 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 30+ | ⏸️ Postergada — uso pessoal |
 | 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
@@ -836,7 +852,7 @@ Mapeamento `meeting.status_change`:
 
 ## Ondas futuras — visão geral
 
-As ondas 0–11 entregam o **MVP**. As ondas **12–17** e **20–22** fecham o loop de uso diário. A prioridade **atual** (jul/2026) é **valor de produto para uso pessoal** (ondas 23–27). Monetização (18) e escala (19) ficam **postergadas** até decisão de comercializar.
+As ondas 0–11 entregam o **MVP**. As ondas **12–17** e **20–22** fecham o loop de uso diário. A prioridade **atual** (jul/2026) é **valor de produto para uso pessoal** (ondas 28–40). Monetização (18) e escala (19) ficam **postergadas** até decisão de comercializar.
 
 ```mermaid
 flowchart LR
@@ -864,9 +880,19 @@ flowchart LR
 | **25** | **Valor pessoal** | **Insights in-app** | **✅** |
 | **26** | **Valor pessoal** | **Prioridade e snooze** | **✅** |
 | **27** | **Valor pessoal** | **Agenda do dia** | **✅** |
-| **28** | **Valor pessoal** | **Fila de revisão em batch** | **📋 Próxima** |
-| **29** | **Valor pessoal** | **Revisão semanal in-app** | **📋** |
-| **30** | **Valor pessoal** | **Contexto relacional e notas** | **📋** |
+| **28** | **Valor pessoal** | **Fila de revisão em batch** | **✅** |
+| **29** | **Valor pessoal** | **Revisão semanal in-app** | **✅** |
+| **30** | **Valor pessoal** | **Contexto relacional e notas** | **✅** |
+| **31** | **Valor pessoal** | **Command palette inteligente** | **✅** |
+| **32** | **Valor pessoal** | **Follow-up transacional** | **✅** |
+| **33** | **Valor pessoal** | **Hub de speakers** | **✅** |
+| **34** | **Valor pessoal** | **Séries acionáveis** | **✅** |
+| **35** | **Valor pessoal** | **Biblioteca de highlights** | **✅** |
+| **36** | **Valor pessoal** | **Assistente global** | **📋 Próxima** |
+| **37** | **Valor pessoal** | **Centro de notificações** | **📋** |
+| **38** | **Valor pessoal** | **Participação / talk-time** | **📋** |
+| **39** | **Valor pessoal** | **Hub de integrações** | **📋** |
+| **40** | **Valor pessoal** | **Templates de análise** | **📋** |
 | 18 | Plataforma | Stripe + API REST + MCP | ⏸️ Postergada |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
@@ -1935,6 +1961,225 @@ flowchart LR
 
 ---
 
+## Onda 36 — Assistente global
+
+**Objetivo:** Ir além da `/busca` (hits estáticos) para um **chat conversacional cross-meeting** — perguntas em linguagem natural sobre toda a biblioteca, com citações clicáveis e escopo configurável.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Ondas 10 (RAG por reunião), 12 (embeddings), 30 (notas de participante), 31 (command palette)  
+**Branch sugerida:** `feat/onda-36-assistente-global`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/assistente` | Chat full-page com histórico da sessão, sugestões de perguntas e painel de escopo |
+| `/assistente?escopo=serie&id=…` | Sessão pré-filtrada para uma série recorrente |
+| `/assistente?escopo=participante&key=…` | Sessão focada em reuniões com uma pessoa |
+
+### Features
+
+#### 36.1 Backend (`lib/rag/global-context.ts`)
+
+- [ ] Agregar contexto de N reuniões via embeddings + metadados (título, data, participantes)
+- [ ] `POST /api/assistant/chat` — streaming SSE; body `{ message, scope?, includeParticipantNotes? }`
+- [ ] Tabela `assistant_threads` + `assistant_messages` (opcional v1: sessão em memória/cliente)
+- [ ] **Privacidade:** `personal_notes` **fora** do contexto por padrão; toggle explícito na UI
+
+#### 36.2 UI (`components/assistant/`)
+
+- [ ] Layout split: chat à esquerda · escopo + fontes citadas à direita (desktop)
+- [ ] Chips de escopo: **Tudo** · **Série** · **Participante** · **Últimos 30 dias**
+- [ ] Citações com link → `/reunioes/[id]?t={ms}` (mesmo padrão do chat por reunião)
+- [ ] Sugestões iniciais: "O que ficou pendente com João?", "Decisões sobre pricing nas últimas 4 semanas"
+- [ ] Entrada no command palette e link "Perguntar à IA" na `/busca`
+
+### Critérios de aceite
+
+- Resposta cita pelo menos 1 trecho verificável da transcrição quando relevante
+- Escopo reduz resultados sem vazamento cross-user (RLS)
+- Latência primeira resposta ≤ 8s (p95) com 50 reuniões indexadas
+- Notas pessoais da reunião nunca entram sem opt-in explícito
+
+---
+
+## Onda 37 — Centro de notificações
+
+**Objetivo:** Promover o sino do header para um **centro de alertas completo** — histórico pesquisável, filtros e ações em lote, complementando o painel dropdown da Onda 22.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Onda 22 (kinds, dispatch, deep links), 28 (`/revisar`), 27 (`/agenda`)  
+**Branch sugerida:** `feat/onda-37-notificacoes`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/notificacoes` | Inbox de alertas agrupados por dia, com filtros e bulk actions |
+| `/notificacoes?filtro=nao-lidas` | Vista default ao clicar "Ver todas" no sino |
+
+### Features
+
+#### 37.1 Data layer (`lib/notifications/inbox.ts`)
+
+- [ ] `getNotificationInbox()` — paginação cursor, filtros por `kind`, lidas/não lidas, período
+- [ ] `markNotificationsRead(ids | all)` · `deleteNotifications(ids)`
+- [ ] Contagens por kind para badges nas abas
+
+#### 37.2 API
+
+- [ ] Estender `GET /api/notifications` com query params (`kind`, `unread`, `cursor`)
+- [ ] `PATCH /api/notifications/batch` — marcar lida / excluir em lote
+
+#### 37.3 UI
+
+- [ ] Abas: **Todas** · **Reuniões** · **Tarefas** · **Prep** · **Sistema**
+- [ ] Card por notificação: ícone por kind, título, corpo, timestamp relativo, CTA deep link
+- [ ] Ações: marcar lida · excluir · "Marcar todas como lidas"
+- [ ] Link **Ver todas** no `NotificationPanel` do header → `/notificacoes`
+- [ ] Empty state ilustrado quando inbox zerada
+
+### Critérios de aceite
+
+- Deep links abrem destino correto (reunião, `/revisar`, `/tarefas`, `/agenda`)
+- Filtro "não lidas" bate com badge do sino
+- Bulk mark-read atualiza badge em tempo real (optimistic UI)
+- RLS: usuário só vê próprias notificações
+
+---
+
+## Onda 38 — Participação e talk-time
+
+**Objetivo:** Tornar visível **quem fala quanto** — equilíbrio em 1:1s, dominância em standups, evolução ao longo do tempo. Hoje o gráfico existe **por reunião**; falta a visão agregada.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 15 (`lib/meetings/talk-time.ts`), 25 (insights), 23 (participantes), 34 (séries)  
+**Branch sugerida:** `feat/onda-38-participacao`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/participacao` | Dashboard de talk-time: KPIs, gráficos e ranking por período |
+| `/participacao?period=30d` | Filtro temporal (7d / 30d / 90d) |
+| `/participantes/[key]` (aba) | Mini-widget de participação da pessoa em reuniões em comum |
+
+### Features
+
+#### 38.1 Data layer (`lib/insights/talk-time-stats.ts`)
+
+- [ ] Agregar `SpeakerTalkTime` de reuniões `completed` no período
+- [ ] Métricas: % médio por speaker, reuniões analisadas, speaker mais dominante, balance score (0–100)
+- [ ] Breakdown por série recorrente e por participante conhecido (via email/speaker mapping)
+
+#### 38.2 UI (`components/participation/`)
+
+- [ ] KPI cards: horas faladas · reuniões · equilíbrio médio · # speakers únicos
+- [ ] Gráfico de barras: top 8 speakers no período
+- [ ] Tabela "Suas 1:1s": ratio você vs outro (alerta visual se > 70/30)
+- [ ] Seção **Por série**: compare talk-time entre ocorrências de standup
+- [ ] Link desde `/insights` e card na home quando ≥ 5 reuniões no período
+
+### Critérios de aceite
+
+- Percentuais somam ~100% por reunião agregada
+- Speaker mappings (Onda 33) refletem nos nomes exibidos
+- Página carrega em < 2s com 30 reuniões no período
+- Dados respeitam RLS (somente reuniões do usuário)
+
+---
+
+## Onda 39 — Hub de integrações
+
+**Objetivo:** Centralizar Slack, Notion e webhooks num **hub dedicado** — hoje enterrados em `/configuracoes`. Status, testes e logs visíveis num só lugar.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 17 (Slack, Notion, webhooks), 22 (eventos de notificação)  
+**Branch sugerida:** `feat/onda-39-integracoes-hub`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/integracoes` | Hub com cards por integração + log de entregas recentes |
+| `/integracoes/webhooks/[id]` | Detalhe de webhook: URL, eventos, histórico de disparos, teste |
+
+### Features
+
+#### 39.1 Schema (opcional)
+
+- [ ] Tabela `integration_delivery_log`: `user_id`, `integration`, `event`, `status`, `payload_summary`, `created_at`
+- [ ] Retention 30 dias; RLS por `user_id`
+
+#### 39.2 UI
+
+- [ ] Cards: **Slack** · **Notion** · **Webhooks** — status conectado/desconectado, última sync
+- [ ] Botão **Testar conexão** por integração (ping sem efeito colateral destrutivo)
+- [ ] Webhook builder: seleção de eventos (`meeting.completed`, `action_item.created`) com preview JSON
+- [ ] Log table: timestamp · integração · evento · sucesso/erro · link para reunião
+- [ ] Mover `IntegrationSettings` de configurações para hub; configurações mantém link "Gerenciar integrações"
+
+#### 39.3 API
+
+- [ ] `POST /api/integrations/test` — body `{ provider: 'slack' | 'notion' | 'webhook', id? }`
+- [ ] `GET /api/integrations/logs` — paginado
+
+### Critérios de aceite
+
+- Usuário conecta Slack e vê status "Conectado" em ≤ 5s após OAuth callback
+- Teste de webhook registra entrada no log
+- Secrets nunca expostos na UI (mascarar URLs/tokens)
+- Desconectar remove tokens sem orphan data
+
+---
+
+## Onda 40 — Templates de análise
+
+**Objetivo:** Biblioteca de **templates de pós-call** (standup, 1:1, retro, discovery) — personalizar seções do resumo IA, defaults por série/pasta e preview antes de aplicar.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Ondas 15 (`analysis_template`), 12 (séries, pastas), 34 (hub de séries)  
+**Branch sugerida:** `feat/onda-40-templates`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/templates` | Galeria de templates built-in + customizados |
+| `/templates/[id]` | Editor: seções, prompts auxiliares, preview com reunião de exemplo |
+| `/templates/novo` | Criar template a partir de blank ou duplicar built-in |
+
+### Features
+
+#### 40.1 Schema
+
+- [ ] Tabela `analysis_templates`: `user_id`, `slug`, `name`, `description`, `sections` jsonb, `is_builtin`, `updated_at`
+- [ ] Coluna `analysis_template_id` nullable em `series_analysis_defaults` (ou generalizar de `analysis_template` text)
+- [ ] RLS: built-ins read-only; custom CRUD pelo dono
+
+#### 40.2 Backend
+
+- [ ] Seed built-ins: `general`, `standup`, `one_on_one`, `retro`, `sales_discovery`
+- [ ] `GET/POST/PATCH/DELETE /api/templates/[id]`
+- [ ] Aplicar template dispara re-análise opcional (`POST /api/meetings/[id]/reanalyze`)
+
+#### 40.3 UI
+
+- [ ] Galeria em cards com ícone, descrição e "Usado em N séries"
+- [ ] Editor de seções: toggle habilitar/desabilitar (decisões, riscos, próximos passos…)
+- [ ] Preview side-by-side: resumo atual vs preview com template selecionado
+- [ ] Atalho "Definir template padrão" na página `/series/[id]` (evoluir `SeriesTemplateSelect`)
+- [ ] Integração com wizard pós-call: sugerir template por título/série
+
+### Critérios de aceite
+
+- Template custom aparece no seletor do detalhe da reunião
+- Série com default aplica template automaticamente no pós-call
+- Built-ins não podem ser excluídos (apenas duplicados)
+- Re-análise respeita limite de rate (1/min por reunião)
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -1991,6 +2236,11 @@ flowchart LR
 | 49 | Hub global de speakers | 33 |
 | 50 | Hub de séries + compare integrado | 34 |
 | 51 | Biblioteca de highlights cross-meeting | 35 |
+| 52 | Assistente global cross-meeting (`/assistente`) | 36 |
+| 53 | Centro de notificações (`/notificacoes`) | 37 |
+| 54 | Dashboard de participação / talk-time | 38 |
+| 55 | Hub de integrações (`/integracoes`) | 39 |
+| 56 | Biblioteca de templates de análise | 40 |
 
 ---
 
