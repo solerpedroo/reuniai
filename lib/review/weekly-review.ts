@@ -10,6 +10,8 @@ import {
 } from "@/lib/review/week-utils";
 import { resolveTimezone } from "@/lib/timezone/local-date";
 import type { ActionItem, Meeting, MeetingSummary } from "@/lib/supabase/types";
+import type { MeetingSeries } from "@/lib/workflow/types";
+import { getMeetingSeriesList } from "@/lib/series/queries";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -37,6 +39,7 @@ export type WeeklyReviewData = {
   dueNextWeekTasks: WeeklyReviewTask[];
   topDecisions: string[];
   upcomingMeetings: WeeklyReviewMeeting[];
+  activeSeries: MeetingSeries[];
 };
 
 function isSnoozed(item: Pick<ActionItem, "snoozed_until">, now: Date): boolean {
@@ -74,6 +77,7 @@ export async function getWeeklyReview(
       dueNextWeekTasks: [],
       topDecisions: [],
       upcomingMeetings: [],
+      activeSeries: [],
     };
   }
 
@@ -195,6 +199,8 @@ export async function getWeeklyReview(
   const taskCompletionRate =
     openTasksTotal > 0 ? Math.round((openTasksDone / openTasksTotal) * 100) : null;
 
+  const activeSeries = (await getMeetingSeriesList(supabase)).slice(0, 3);
+
   return {
     weekKey,
     weekLabel: formatWeekRangeLabel(weekKey, timezone),
@@ -210,5 +216,6 @@ export async function getWeeklyReview(
     dueNextWeekTasks,
     topDecisions,
     upcomingMeetings: (upcomingRes.data ?? []) as WeeklyReviewMeeting[],
+    activeSeries,
   };
 }
