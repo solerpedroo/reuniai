@@ -1,4 +1,4 @@
-import { Gear, House, UserCircle, VideoCamera } from "@phosphor-icons/react/dist/ssr";
+import { CheckSquare, Gear, House, UserCircle, VideoCamera } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
 export type NavItem = {
@@ -20,6 +20,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Reuniões",
     description: "Lista completa de reuniões gravadas",
     icon: VideoCamera,
+  },
+  {
+    href: "/tarefas",
+    label: "Tarefas",
+    description: "Action items de todas as reuniões",
+    icon: CheckSquare,
   },
   {
     href: "/perfil",
@@ -45,6 +51,10 @@ export function getNavItem(pathname: string): NavItem {
       description: "Pesquisar título e transcrições",
       icon: NAV_ITEMS[1]!.icon,
     };
+  }
+
+  if (pathname === "/tarefas" || pathname.startsWith("/tarefas?")) {
+    return NAV_ITEMS.find((item) => item.href === "/tarefas") ?? NAV_ITEMS[0];
   }
 
   const exact = NAV_ITEMS.find((item) => item.href === pathname);
