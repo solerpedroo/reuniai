@@ -16,6 +16,7 @@ type PrepInput = {
   relatedSummary?: string | null;
   openActionItems: { title: string; assignee: string | null }[];
   participantOverlap: string[];
+  participantNotes?: string[];
 };
 
 export async function generateMeetingPrep(input: PrepInput): Promise<MeetingPrepBriefing> {
@@ -32,6 +33,9 @@ export async function generateMeetingPrep(input: PrepInput): Promise<MeetingPrep
           .map((item) => `- ${item.title}${item.assignee ? ` (${item.assignee})` : ""}`)
           .join("\n")}`
       : "Nenhum action item em aberto identificado.",
+    input.participantNotes && input.participantNotes.length > 0
+      ? `Notas privadas sobre participantes:\n${input.participantNotes.map((note) => `- ${note}`).join("\n")}`
+      : null,
     "",
     'Retorne JSON: { "briefing": "briefing em 3-6 frases para preparar o usuário" }',
   ]
