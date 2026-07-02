@@ -74,6 +74,11 @@ export function InsightsDashboard({ insights }: { insights: PeriodInsights }) {
             <Link href="/semana">Ver revisão completa</Link>
           </Button>
         )}
+        {insights.meetingCount >= 5 && (
+          <Button variant="outline" size="sm" asChild className={insights.period === "7d" ? "" : "ml-auto"}>
+            <Link href="/participacao">Ver participação</Link>
+          </Button>
+        )}
       </div>
 
       {empty ? (
