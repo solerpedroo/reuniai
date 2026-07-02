@@ -39,6 +39,13 @@ export default async function BuscaPage({
       </form>
 
       <GlobalSearchResults result={result} />
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Quer ir além dos resultados?{" "}
+        <a href="/assistente" className="text-brand hover:underline">
+          Perguntar ao assistente global
+        </a>
+      </p>
     </div>
   );
 }
