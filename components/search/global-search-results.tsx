@@ -49,6 +49,9 @@ export function GlobalSearchResults({
         <span className="font-medium text-foreground">
           {result.mode === "semantic" ? "semântico" : "texto"}
         </span>
+        {!result.embeddingsAvailable && result.mode === "text" && (
+          <span className="ml-2 text-xs text-amber-700">(sem embeddings configurados)</span>
+        )}
       </p>
 
       {[...grouped.entries()].map(([meetingId, hits]) => (
