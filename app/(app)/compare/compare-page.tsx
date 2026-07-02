@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowsLeftRight } from "@phosphor-icons/react";
+import { ComparePicker } from "@/components/compare/compare-picker";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ComparePickerMeeting } from "@/lib/meetings/compare-picker-types";
 import { formatMeetingDate } from "@/lib/meetings/types";
 
 type CompareResponse = {
@@ -17,16 +18,29 @@ type CompareResponse = {
   narrative: string | null;
 };
 
-export default function ComparePage() {
-  const searchParams = useSearchParams();
-  const a = searchParams.get("a");
-  const b = searchParams.get("b");
+export default function ComparePage({
+  meetings,
+  seriesId,
+  initialA,
+  initialB,
+}: {
+  meetings: ComparePickerMeeting[];
+  seriesId?: string;
+  initialA?: string;
+  initialB?: string;
+}) {
+  const a = initialA;
+  const b = initialB;
   const [data, setData] = useState<CompareResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!a || !b) return;
+    if (!a || !b) {
+      setData(null);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     void fetch(`/api/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`)
@@ -42,34 +56,34 @@ export default function ComparePage() {
   return (
     <div>
       <Link
-        href="/reunioes"
+        href={seriesId ? `/series/${encodeURIComponent(seriesId)}` : "/reunioes"}
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={14} />
-        Voltar para reuniões
+        {seriesId ? "Voltar à série" : "Voltar para reuniões"}
       </Link>
 
       <PageHeader
         title="Comparar reuniões"
-        description="Veja o que mudou entre duas ocorrências da mesma série."
-        meta="Série"
+        description="Veja o que mudou entre duas ocorrências — tópicos, atribuições e narrativa."
+        meta="Diff"
       />
 
-      {!a || !b ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            Use <code className="rounded bg-muted px-1">/compare?a=&lt;id&gt;&amp;b=&lt;id&gt;</code> com
-            duas reuniões da mesma série.
-          </CardContent>
-        </Card>
-      ) : loading ? (
-        <p className="text-sm text-muted-foreground">Comparando reuniões…</p>
+      <ComparePicker
+        meetings={meetings}
+        meetingAId={a}
+        meetingBId={b}
+        seriesId={seriesId}
+      />
+
+      {!a || !b ? null : loading ? (
+        <p className="mt-6 text-sm text-muted-foreground">Comparando reuniões…</p>
       ) : error ? (
-        <Card>
+        <Card className="mt-6">
           <CardContent className="py-8 text-sm text-destructive">{error}</CardContent>
         </Card>
       ) : data ? (
-        <div className="space-y-4">
+        <div className="mt-6 space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
