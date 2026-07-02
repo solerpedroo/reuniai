@@ -6,7 +6,7 @@ import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnections } from "@/components/settings/calendar-connections";
 import { RetentionSettings } from "@/components/settings/retention-settings";
 import Link from "next/link";
-import { Plugs } from "@phosphor-icons/react/dist/ssr";
+import { LinkSimple, Plugs } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
@@ -199,7 +199,22 @@ export default async function ConfiguracoesPage({
           initialDefaultTemplate={defaultTemplate}
         />
 
-        <Card className="md:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <LinkSimple size={18} aria-hidden />
+              Links compartilhados
+            </CardTitle>
+            <CardDescription>URLs read-only — revogar ou copiar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/compartilhar">Gerenciar links</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Plugs size={18} aria-hidden />
