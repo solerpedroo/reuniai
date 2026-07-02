@@ -7,9 +7,11 @@ import {
   ChatCircleDots,
   EnvelopeSimple,
   ListChecks,
+  NotePencil,
   Sparkle,
   TextAlignLeft,
 } from "@phosphor-icons/react";
+import { MeetingPersonalNotesTab } from "@/components/meetings/meeting-personal-notes-tab";
 import { AnimatePresence, motion } from "motion/react";
 import { ActionItemsTab } from "@/components/meetings/action-items-tab";
 import { FollowUpTab } from "@/components/meetings/follow-up-tab";
@@ -31,6 +33,7 @@ export type ChatUiMessage = {
 const TABS = [
   { value: "resumo", label: "Resumo", icon: Sparkle },
   { value: "atribuicoes", label: "Atribuições", icon: ListChecks },
+  { value: "minhas-notas", label: "Minhas notas", icon: NotePencil },
   { value: "followup", label: "Follow-up", icon: EnvelopeSimple },
   { value: "transcricao", label: "Transcrição", icon: TextAlignLeft },
   { value: "chat", label: "Chat", icon: ChatCircleDots },
@@ -59,6 +62,7 @@ export function MeetingTabs({
   onCitationClick,
   followUp,
   participantEmails = [],
+  personalNotes = "",
 }: {
   meetingId: string;
   summary: ReactNode;
@@ -73,6 +77,7 @@ export function MeetingTabs({
   onCitationClick?: (citation: Citation) => void;
   followUp?: MeetingFollowUp | null;
   participantEmails?: string[];
+  personalNotes?: string;
 }) {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabValue>(() =>
@@ -156,6 +161,9 @@ export function MeetingTabs({
             {activeTab === "resumo" && summary}
             {activeTab === "atribuicoes" && (
               <ActionItemsTab meetingId={meetingId} initialItems={actionItems} />
+            )}
+            {activeTab === "minhas-notas" && (
+              <MeetingPersonalNotesTab meetingId={meetingId} initialNotes={personalNotes} />
             )}
             {activeTab === "followup" && (
               <FollowUpTab
