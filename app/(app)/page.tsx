@@ -16,6 +16,7 @@ import { getMeetingSeriesList } from "@/lib/series/queries";
 import { ReviewQueueHomeCard } from "@/components/review/review-queue-home-card";
 import { WeeklyReviewHomeCard } from "@/components/review/weekly-review-home-card";
 import { HighlightsHomeCard } from "@/components/highlights/highlights-home-card";
+import { LibraryHomeCard } from "@/components/library/library-home-card";
 import { getHighlightsLibrary } from "@/lib/meetings/highlights-library";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
 import { getWeeklyReview } from "@/lib/review/weekly-review";
