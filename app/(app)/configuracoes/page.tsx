@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
+import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/profile/notification-prefs";
 import type { NotificationPrefs } from "@/lib/workflow/types";
 
 const STATUS_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
@@ -50,13 +51,7 @@ export default async function ConfiguracoesPage({
   let displayName: string | null = null;
   let autoJoin = true;
   let retentionDays = 365;
-  let notificationPrefs: NotificationPrefs = {
-    email: false,
-    push: false,
-    prep: true,
-    completed: true,
-    digest: true,
-  };
+  let notificationPrefs: NotificationPrefs = { ...DEFAULT_NOTIFICATION_PREFS };
   let locale: UserLocale = "pt-BR";
   let defaultTemplate: AnalysisTemplateId = "generic";
 
@@ -76,7 +71,9 @@ export default async function ConfiguracoesPage({
       displayName = typed.display_name;
       autoJoin = typed.auto_join_enabled;
       retentionDays = typed.retention_days;
-      if (typed.notification_prefs) notificationPrefs = typed.notification_prefs;
+      if (typed.notification_prefs) {
+        notificationPrefs = { ...DEFAULT_NOTIFICATION_PREFS, ...typed.notification_prefs };
+      }
       locale = parseUserLocale(typed.locale);
       defaultTemplate = parseTemplateId(typed.default_analysis_template);
     }
