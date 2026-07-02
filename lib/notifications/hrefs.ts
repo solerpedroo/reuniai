@@ -10,7 +10,10 @@ export function prepNotificationHref(meetingId: string): string {
   return `/reunioes/${meetingId}?prep=1`;
 }
 
-export function completedNotificationHref(meetingId: string): string {
+export function completedNotificationHref(meetingId: string, queuePending?: number): string {
+  if (queuePending != null && queuePending > 1) {
+    return "/revisar";
+  }
   return `/reunioes/${meetingId}?revisar=1`;
 }
 
