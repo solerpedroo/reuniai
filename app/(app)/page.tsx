@@ -66,6 +66,22 @@ export default async function HomePage() {
       <HighlightsHomeCard count={highlightsLibrary.total} />
 
       <Link
+        href="/prep"
+        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
+      >
+        <div className="flex items-center gap-3">
+          <CalendarBlank size={20} className="text-brand" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">Hub de prep</p>
+            <p className="text-xs text-muted-foreground">
+              Briefings e contexto das próximas reuniões
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-muted-foreground" aria-hidden />
+      </Link>
+
+      <Link
         href="/agenda"
         className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
       >
