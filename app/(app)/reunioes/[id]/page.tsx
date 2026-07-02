@@ -32,6 +32,9 @@ import { getFollowUpForMeeting } from "@/lib/meetings/follow-up";
 import { getPrepCardForMeeting } from "@/lib/meetings/prep";
 import { getSpeakerMappings } from "@/lib/speakers/mappings";
 import { parseTemplateId } from "@/lib/analysis/template-types";
+import { ReviewQueueBanner } from "@/components/review/review-queue-banner";
+import { needsPostCallReview } from "@/lib/meetings/post-call-review";
+import { getReviewQueueCounts } from "@/lib/review/review-queue";
 import { getTagsForMeeting } from "@/lib/tags/queries";
 import type { Meeting } from "@/lib/supabase/types";
 
@@ -59,7 +62,7 @@ export default async function MeetingDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings, prepCard] =
+  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings, prepCard, reviewCounts] =
     await Promise.all([
       getTranscriptSegments(supabase, meeting.id),
       getMeetingSummary(supabase, meeting.id),
@@ -73,7 +76,23 @@ export default async function MeetingDetailPage({
       prep === "1" && user
         ? getPrepCardForMeeting(admin, user.id, meeting.id)
         : Promise.resolve(null),
+      getReviewQueueCounts(supabase),
     ]);
+
+  const { data: participantRows } = await supabase
+    .from("participants")
+    .select("email")
+    .eq("meeting_id", meeting.id)
+    .not("email", "is", null)
+    .returns<{ email: string | null }[]>();
+
+  const participantEmails = Array.from(
+    new Set(
+      ((participantRows ?? []) as { email: string | null }[])
+        .map((p) => p.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email))
+    )
+  );
 
   const meetingWithTemplate = meeting as Meeting & { analysis_template?: string | null };
   const analysisTemplate = meetingWithTemplate.analysis_template
@@ -142,6 +161,10 @@ export default async function MeetingDetailPage({
         </div>
       )}
 
+      {revisar === "1" && needsPostCallReview(meeting) && (
+        <ReviewQueueBanner pendingCount={reviewCounts.pending} />
+      )}
+
       <MeetingReviewWizard
         meeting={meeting}
         summary={summary}
@@ -149,6 +172,7 @@ export default async function MeetingDetailPage({
         followUp={followUp}
         llmEnabled={isLlmConfigured()}
         forceOpen={revisar === "1"}
+        participantEmails={participantEmails}
       />
 
       <MeetingReview
@@ -164,6 +188,7 @@ export default async function MeetingDetailPage({
         comments={comments}
         highlights={highlights}
         speakerMappings={speakerMappings}
+        participantEmails={participantEmails}
       />
     </div>
   );
