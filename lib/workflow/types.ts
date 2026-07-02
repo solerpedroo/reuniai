@@ -41,6 +41,7 @@ export type MeetingFollowUp = {
   user_id: string;
   subject: string;
   body: string;
+  follow_up_done_at: string | null;
   created_at: string;
   updated_at: string;
 };
