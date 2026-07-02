@@ -119,6 +119,15 @@ export function getNavItem(pathname: string): NavItem {
     return NAV_ITEMS.find((item) => item.href === "/semana") ?? NAV_ITEMS[0];
   }
 
+  if (pathname === "/speakers" || pathname.startsWith("/speakers/")) {
+    return {
+      href: "/speakers",
+      label: "Speakers",
+      description: "Mapeamento global de rótulos de transcrição",
+      icon: NAV_ITEMS.find((item) => item.href === "/participantes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
