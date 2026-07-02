@@ -2,6 +2,7 @@ import {
   CalendarBlank,
   ChartLineUp,
   CheckSquare,
+  ClipboardText,
   Gear,
   House,
   UserCircle,
@@ -29,6 +30,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Agenda",
     description: "Seu dia em ordem cronológica",
     icon: CalendarBlank,
+  },
+  {
+    href: "/revisar",
+    label: "Revisar",
+    description: "Fila de reuniões pendentes de fechamento",
+    icon: ClipboardText,
   },
   {
     href: "/reunioes",
@@ -95,6 +102,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/agenda" || pathname.startsWith("/agenda?")) {
     return NAV_ITEMS.find((item) => item.href === "/agenda") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/revisar" || pathname.startsWith("/revisar?")) {
+    return NAV_ITEMS.find((item) => item.href === "/revisar") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
