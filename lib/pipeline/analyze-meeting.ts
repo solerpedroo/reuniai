@@ -9,11 +9,14 @@ import { isLlmConfigured } from "@/lib/llm/client";
 import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
 import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
 import { dispatchMeetingCompleted } from "@/lib/integrations/dispatch";
-import { createNotification } from "@/lib/notifications/create";
 import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
+import { notifyUser } from "@/lib/notifications/dispatch";
+import {
+  completedNotificationHref,
+  notificationDedupeKey,
+} from "@/lib/notifications/hrefs";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
-import { meetingReviewHref } from "@/lib/meetings/post-call-review";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -132,12 +135,13 @@ export async function analyzeMeetingById(
 
     try {
       await generateAndSaveFollowUp(admin, meetingId);
-      await createNotification(admin, {
+      await notifyUser(admin, {
         userId: meeting.user_id,
+        kind: "completed",
         title: "Reunião processada",
         body: `Revise atribuições, follow-up e compartilhamento de "${meeting.title}".`,
-        href: meetingReviewHref(meetingId),
-        kind: "completed",
+        href: completedNotificationHref(meetingId),
+        dedupeKey: notificationDedupeKey("completed", [meetingId]),
       });
       await sendMeetingCompletedEmail(admin, meetingId);
       await suggestAndApplyTags(admin, meetingId);
