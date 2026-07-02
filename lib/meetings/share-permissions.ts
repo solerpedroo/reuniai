@@ -69,10 +69,19 @@ export const DEFAULT_SHARE_PERMISSIONS: SharePermissions = {
 
 export const SHARE_PERMISSION_PRESETS: Record<
   "minimal" | "standard" | "full",
-  { label: string; description: string; permissions: SharePermissions }
+  {
+    label: string;
+    description: string;
+    permissions: SharePermissions;
+    friendlyTitle: string;
+    friendlySubtitle: string;
+    recommended?: boolean;
+  }
 > = {
   minimal: {
     label: "Mínimo",
+    friendlyTitle: "Só o essencial",
+    friendlySubtitle: "Resumo da reunião e lista de tarefas",
     description: "Só resumo executivo e atribuições",
     permissions: {
       executive_summary: true,
@@ -86,7 +95,10 @@ export const SHARE_PERMISSION_PRESETS: Record<
   },
   standard: {
     label: "Padrão",
+    friendlyTitle: "Resumo completo",
+    friendlySubtitle: "Assuntos, decisões e tarefas — sem a transcrição",
     description: "Resumo completo sem transcrição",
+    recommended: true,
     permissions: {
       executive_summary: true,
       topics: true,
@@ -99,6 +111,8 @@ export const SHARE_PERMISSION_PRESETS: Record<
   },
   full: {
     label: "Tudo",
+    friendlyTitle: "Tudo, com transcrição",
+    friendlySubtitle: "Inclui quem falou o quê, palavra por palavra",
     description: "Todo o conteúdo disponível",
     permissions: {
       executive_summary: true,
@@ -111,6 +125,37 @@ export const SHARE_PERMISSION_PRESETS: Record<
     },
   },
 };
+
+export const SHARE_PERMISSION_SIMPLE_LABELS: Record<keyof SharePermissions, string> = {
+  executive_summary: "Resumo da reunião",
+  topics: "Assuntos discutidos",
+  decisions: "Decisões tomadas",
+  action_items: "Tarefas e responsáveis",
+  participants: "Quem participou",
+  talk_time: "Quanto cada um falou",
+  transcript: "Tudo que foi dito (transcrição)",
+};
+
+export function describeSharePreview(permissions: SharePermissions): string[] {
+  const normalized = normalizeSharePermissions(permissions);
+  return (Object.keys(SHARE_PERMISSION_SIMPLE_LABELS) as (keyof SharePermissions)[])
+    .filter((key) => normalized[key])
+    .map((key) => SHARE_PERMISSION_SIMPLE_LABELS[key]);
+}
+
+export function formatSharePermissionsSummaryFriendly(permissions: SharePermissions): string {
+  const preset = (
+    Object.entries(SHARE_PERMISSION_PRESETS) as [
+      keyof typeof SHARE_PERMISSION_PRESETS,
+      (typeof SHARE_PERMISSION_PRESETS)[keyof typeof SHARE_PERMISSION_PRESETS],
+    ][]
+  ).find(([, option]) =>
+    SHARE_PERMISSION_FIELDS.every(({ key }) => permissions[key] === option.permissions[key])
+  );
+
+  if (preset) return preset[1].friendlyTitle;
+  return formatSharePermissionsSummary(permissions);
+}
 
 export function parseSharePermissions(value: unknown): SharePermissions {
   const parsed = SharePermissionsSchema.safeParse(value);
