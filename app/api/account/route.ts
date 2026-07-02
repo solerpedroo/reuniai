@@ -23,7 +23,8 @@ const PatchSchema = z.object({
       push: z.boolean().optional(),
       prep: z.boolean().optional(),
       completed: z.boolean().optional(),
-      digest: z.boolean().optional(),
+      bot_failed: z.boolean().optional(),
+      tasks_due: z.boolean().optional(),
     })
     .optional(),
   timezone: z.string().optional(),

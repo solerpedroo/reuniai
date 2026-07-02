@@ -60,7 +60,7 @@ export async function sendMeetingCompletedEmail(
   >[];
 
   const appUrl = getAppUrl();
-  const meetingUrl = `${appUrl}/reunioes/${meetingId}`;
+  const meetingUrl = `${appUrl}/reunioes/${meetingId}?revisar=1`;
   const title = escapeHtml(meeting.title);
   const executiveSummary = summary?.executive_summary
     ? escapeHtml(summary.executive_summary)

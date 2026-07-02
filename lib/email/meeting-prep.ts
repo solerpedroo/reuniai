@@ -4,6 +4,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
 import { emailButton, emailLink, wrapEmailHtml } from "@/lib/brand/email-layout";
 import { getAppUrl } from "@/lib/brand/config";
+import { prepNotificationHref } from "@/lib/notifications/hrefs";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -40,7 +41,7 @@ export async function sendMeetingPrepEmail(
   if (!email) return;
 
   const appUrl = getAppUrl();
-  const meetingUrl = `${appUrl}/reunioes/${meetingId}`;
+  const meetingUrl = `${appUrl}${prepNotificationHref(meetingId)}`;
   const seriesUrl = meeting.calendar_recurring_event_id
     ? `${appUrl}/series/${encodeURIComponent(meeting.calendar_recurring_event_id)}`
     : `${appUrl}/reunioes/${relatedMeetingId}`;

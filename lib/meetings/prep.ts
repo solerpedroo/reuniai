@@ -3,7 +3,11 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { generateMeetingPrep } from "@/lib/llm/meeting-prep";
 import { isLlmConfigured } from "@/lib/llm/client";
-import { createNotification } from "@/lib/notifications/create";
+import { notifyUser } from "@/lib/notifications/dispatch";
+import {
+  notificationDedupeKey,
+  prepNotificationHref,
+} from "@/lib/notifications/hrefs";
 import { sendMeetingPrepEmail } from "@/lib/email/meeting-prep";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { MeetingPrepCard } from "@/lib/workflow/types";
@@ -11,7 +15,7 @@ import type { ActionItem, Meeting, MeetingSummary } from "@/lib/supabase/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-const PREP_WINDOW_MINUTES = 5;
+const PREP_WINDOW_MINUTES = 10;
 
 export async function getActivePrepCard(
   admin: AdminClient,
@@ -171,15 +175,14 @@ export async function generatePrepForMeeting(
 
   const prefs = await getUserNotificationPrefs(admin, meeting.user_id);
 
-  if (prefs.prep) {
-    await createNotification(admin, {
-      userId: meeting.user_id,
-      title: "Prep disponível",
-      body: `Briefing pronto para "${meeting.title}".`,
-      href: `/reunioes/${meetingId}`,
-      kind: "prep",
-    });
-  }
+  await notifyUser(admin, {
+    userId: meeting.user_id,
+    kind: "prep",
+    title: "Prep disponível",
+    body: `Briefing pronto para "${meeting.title}" — começa em breve.`,
+    href: prepNotificationHref(meetingId),
+    dedupeKey: notificationDedupeKey("prep", [meetingId]),
+  });
 
   if (prefs.prep && prefs.email) {
     try {
@@ -190,6 +193,42 @@ export async function generatePrepForMeeting(
   }
 
   return data as MeetingPrepCard;
+}
+
+export async function getPrepCardForMeeting(
+  admin: AdminClient,
+  userId: string,
+  meetingId: string
+): Promise<
+  (MeetingPrepCard & {
+    meeting: Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">;
+  }) | null
+> {
+  const now = new Date().toISOString();
+
+  const { data: prep, error } = await admin
+    .from("meeting_prep_cards")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("meeting_id", meetingId)
+    .gt("expires_at", now)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!prep) return null;
+
+  const card = prep as MeetingPrepCard;
+  const { data: meeting } = await admin
+    .from("meetings")
+    .select("id, title, started_at, calendar_recurring_event_id")
+    .eq("id", meetingId)
+    .maybeSingle<
+      Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">
+    >();
+
+  if (!meeting) return null;
+
+  return { ...card, meeting };
 }
 
 export async function runMeetingPrepCron(admin: AdminClient): Promise<{ generated: number }> {

@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Meeting } from "@/lib/supabase/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  isActionableBotJoinFailure,
+  notifyBotJoinFailed,
+} from "@/lib/notifications/bot-failed";
 import { startBotForMeeting } from "@/lib/vexa/scheduler";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
   const { data: meeting } = await supabase
     .from("meetings")
     .select(
-      "id, user_id, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
     )
     .eq("id", meetingId)
     .maybeSingle<
@@ -40,6 +44,7 @@ export async function POST(request: NextRequest) {
         Meeting,
         | "id"
         | "user_id"
+        | "title"
         | "meeting_url"
         | "status"
         | "platform"
@@ -56,6 +61,18 @@ export async function POST(request: NextRequest) {
   const result = await startBotForMeeting(admin, meeting);
 
   if (!result.ok) {
+    if (isActionableBotJoinFailure(result.reason)) {
+      try {
+        await notifyBotJoinFailed(admin, {
+          userId: meeting.user_id,
+          meetingId: meeting.id,
+          meetingTitle: meeting.title,
+          reason: result.reason,
+        });
+      } catch (err) {
+        console.error("Falha ao notificar bot manual (não bloqueante):", err);
+      }
+    }
     return NextResponse.json({ error: result.reason }, { status: 400 });
   }
 

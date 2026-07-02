@@ -3,6 +3,7 @@ import "server-only";
 import type { Database } from "@/lib/supabase/database.types";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { MeetingStatus } from "@/lib/supabase/types";
+import { notifyBotJoinFailed } from "@/lib/notifications/bot-failed";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type MeetingUpdate = Database["public"]["Tables"]["meetings"]["Update"];
@@ -48,11 +49,17 @@ export async function applyMeetingStatus(
 
   const { data: meeting } = await admin
     .from("meetings")
-    .select("id, started_at, status")
+    .select("id, user_id, title, started_at, status")
     .eq("recall_bot_id", input.nativeMeetingId)
     .order("started_at", { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle<{
+      id: string;
+      user_id: string;
+      title: string;
+      started_at: string;
+      status: MeetingStatus;
+    }>();
 
   if (!meeting) return { updated: false };
 
@@ -83,5 +90,19 @@ export async function applyMeetingStatus(
   }
 
   await admin.from("meetings").update(patch).eq("id", meeting.id);
+
+  if (nextStatus === "failed" && meeting.status !== "failed") {
+    try {
+      await notifyBotJoinFailed(admin, {
+        userId: meeting.user_id,
+        meetingId: meeting.id,
+        meetingTitle: meeting.title,
+        reason: input.reason,
+      });
+    } catch (err) {
+      console.error("Falha ao notificar bot failed (não bloqueante):", err);
+    }
+  }
+
   return { updated: true };
 }

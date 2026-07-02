@@ -35,7 +35,7 @@ jobs:
           fi
 
           failed=0
-          for path in schedule-bots poll-bots poll-native-transcripts meeting-prep calendar-sync; do
+          for path in schedule-bots poll-bots poll-native-transcripts meeting-prep calendar-sync tasks-due-reminder; do
             url="${APP_URL%/}/api/cron/${path}"
             code=$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
               -H "Authorization: Bearer ${CRON_SECRET}" "${url}")
