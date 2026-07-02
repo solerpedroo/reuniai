@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatNotificationTimestamp } from "@/lib/notifications/format-relative-time";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import type { AppNotification } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ type Filter = "all" | "unread";
 
 export function NotificationPanel() {
   const router = useRouter();
+  const mounted = useMounted();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -145,6 +147,14 @@ export function NotificationPanel() {
       setOpen(false);
       router.push(notification.href);
     }
+  }
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">
+        <Bell size={18} />
+      </Button>
+    );
   }
 
   return (

@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Moon, Sun } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/providers/theme-provider";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 export function ThemeToggleButton() {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  const mounted = useMounted();
   const isDark = theme === "dark";
 
   return (
@@ -20,8 +15,8 @@ export function ThemeToggleButton() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
-      title={isDark ? "Modo claro" : "Modo escuro"}
+      aria-label={mounted ? (isDark ? "Ativar modo claro" : "Ativar modo escuro") : "Alternar tema"}
+      title={mounted ? (isDark ? "Modo claro" : "Modo escuro") : "Tema"}
       className="text-muted-foreground hover:text-foreground"
     >
       {mounted && isDark ? (

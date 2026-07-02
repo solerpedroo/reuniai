@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { MOTION, easePremium } from "@/components/motion/presets";
 import { NAV_ITEMS } from "@/components/shell/nav-config";
 import { Input } from "@/components/ui/input";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 
 type CommandItem = {
@@ -315,11 +316,8 @@ function CommandPaletteDialog() {
 
 export function CommandTrigger({ className }: { className?: string }) {
   const { toggle } = useCommandPalette();
-  const [isMac, setIsMac] = useState(false);
-
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
-  }, []);
+  const mounted = useMounted();
+  const shortcut = mounted && /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘K" : "Ctrl+K";
 
   return (
     <button
@@ -332,8 +330,11 @@ export function CommandTrigger({ className }: { className?: string }) {
     >
       <MagnifyingGlass size={14} />
       <span className="flex-1">Buscar ou executar…</span>
-      <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">
-        {isMac ? "⌘K" : "Ctrl+K"}
+      <kbd
+        className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]"
+        suppressHydrationWarning
+      >
+        {shortcut}
       </kbd>
     </button>
   );

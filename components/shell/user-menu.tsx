@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 type UserMenuProps = {
   name?: string | null;
@@ -33,6 +34,7 @@ function getInitials(name?: string | null): string {
 
 export function UserMenu({ name, email }: UserMenuProps) {
   const router = useRouter();
+  const mounted = useMounted();
   const [loading, setLoading] = useState(false);
   const displayName = name?.trim() || "Minha conta";
   const initials = getInitials(name);
@@ -43,6 +45,19 @@ export function UserMenu({ name, email }: UserMenuProps) {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  }
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        aria-label="Abrir menu da conta"
+        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-semibold text-brand-foreground shadow-sm"
+        tabIndex={-1}
+      >
+        {initials}
+      </button>
+    );
   }
 
   return (
