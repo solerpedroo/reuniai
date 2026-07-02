@@ -4,14 +4,16 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ParticipantNotesEditor } from "@/components/participants/participant-notes-editor";
 import type { ParticipantDetail } from "@/lib/participants/directory";
 import { formatMeetingDate } from "@/lib/meetings/types";
 
 type ParticipantDetailViewProps = {
   participant: ParticipantDetail;
+  initialNoteBody: string;
 };
 
-export function ParticipantDetailView({ participant }: ParticipantDetailViewProps) {
+export function ParticipantDetailView({ participant, initialNoteBody }: ParticipantDetailViewProps) {
   return (
     <div>
       <div className="mb-6">
@@ -52,6 +54,20 @@ export function ParticipantDetailView({ participant }: ParticipantDetailViewProp
           </CardContent>
         </Card>
       )}
+
+      <div className="mb-6">
+        <Card className="surface-card">
+          <CardHeader>
+            <CardTitle className="text-base">Notas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ParticipantNotesEditor
+              participantKey={participant.hrefKey}
+              initialBody={initialNoteBody}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="surface-card">
