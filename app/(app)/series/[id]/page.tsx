@@ -99,7 +99,7 @@ export default async function SeriesPage({
       {meetings.length >= 2 && (
         <p className="mb-4 text-sm">
           <Link
-            href={`/compare?a=${meetings[0]!.id}&b=${meetings[1]!.id}`}
+            href={`/compare?series=${encodeURIComponent(recurringEventId)}&a=${meetings[0]!.id}&b=${meetings[1]!.id}`}
             className="text-brand underline-offset-4 hover:underline"
           >
             Comparar última vs anterior
