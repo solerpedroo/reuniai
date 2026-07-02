@@ -21,7 +21,8 @@ export async function generateMetadata({
   }
 
   const description =
-    share.summary?.executive_summary?.slice(0, 160) ??
+    (share.permissions.executive_summary &&
+      share.summary?.executive_summary?.slice(0, 160)) ||
     `Reunião compartilhada via ${PRODUCT_NAME}`;
 
   return {
@@ -47,7 +48,7 @@ export default async function PublicSharePage({
 
   if (!share) notFound();
 
-  const { meeting, summary, actionItems, segments, participants, token: shareToken } = share;
+  const { meeting, summary, actionItems, segments, talkTime, participants, permissions } = share;
 
   return (
     <PublicMeetingView
@@ -55,9 +56,10 @@ export default async function PublicSharePage({
       summary={summary}
       actionItems={actionItems}
       segments={segments}
+      talkTime={talkTime}
       participants={participants}
-      scope={shareToken.scope}
-      redactPii={shareToken.redact_pii !== false}
+      permissions={permissions}
+      redactPii={share.token.redact_pii !== false}
     />
   );
 }
