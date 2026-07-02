@@ -5,6 +5,7 @@ import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
 import { emailButton, wrapEmailHtml } from "@/lib/brand/email-layout";
 import { PRODUCT_NAME, getAppUrl } from "@/lib/brand/config";
 import { getWeeklyDigestStats } from "@/lib/digest/weekly-stats";
+import { isoWeekKeyFromDate, weekHref } from "@/lib/review/week-utils";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -53,6 +54,8 @@ export async function sendWeeklyDigestEmail(
   }
 
   const appUrl = getAppUrl();
+  const weekKey = isoWeekKeyFromDate(new Date());
+  const reviewUrl = `${appUrl}${weekHref(weekKey)}`;
 
   const decisionsHtml =
     stats.topDecisions.length > 0
@@ -82,7 +85,7 @@ export async function sendWeeklyDigestEmail(
       ${decisionsHtml}
       <h2 style="font-size: 16px; margin-top: 24px;">Atribuições com prazo</h2>
       ${dueHtml}
-      <p style="margin-top: 32px;">${emailButton(`${appUrl}/reunioes`, "Ver reuniões")}</p>
+      <p style="margin-top: 32px;">${emailButton(reviewUrl, "Ver revisão da semana")}</p>
     `,
     footerNote:
       "Digest semanal enviado aos domingos. Desative em Configurações → Notificações.",
@@ -96,7 +99,7 @@ export async function sendWeeklyDigestEmail(
       "Resumo semanal ReuniAI",
       `${stats.meetingCount} reuniões · ${formatHours(stats.hoursRecordedMs)} gravadas`,
       "",
-      `Ver reuniões: ${appUrl}/reunioes`,
+      `Ver revisão da semana: ${reviewUrl}`,
     ].join("\n"),
   });
 
