@@ -402,6 +402,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      folders: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          color: string;
+          parent_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          color?: string;
+          parent_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          color?: string;
+          parent_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_folders: {
+        Row: {
+          meeting_id: string;
+          folder_id: string;
+          created_at: string;
+        };
+        Insert: {
+          meeting_id: string;
+          folder_id: string;
+          created_at?: string;
+        };
+        Update: {
+          meeting_id?: string;
+          folder_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       meeting_tags: {
         Row: {
           meeting_id: string;
