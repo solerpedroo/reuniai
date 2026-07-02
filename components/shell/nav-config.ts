@@ -191,6 +191,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/prep" || pathname.startsWith("/prep?")) {
+    return {
+      href: "/prep",
+      label: "Prep",
+      description: "Briefings das próximas reuniões",
+      icon: NAV_ITEMS.find((item) => item.href === "/agenda")!.icon,
+    };
+  }
+
   if (pathname === "/templates" || pathname.startsWith("/templates/")) {
     return {
       href: "/templates",
