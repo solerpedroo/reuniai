@@ -1,7 +1,15 @@
-import Link from "next/link";
-import { ArrowRight, CalendarBlank, ChartLineUp } from "@phosphor-icons/react/dist/ssr";
+import {
+  CalendarBlank,
+  CalendarCheck,
+  ClipboardText,
+  EnvelopeSimple,
+} from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { getDailyTimeline } from "@/lib/agenda/daily-timeline";
+import {
+  DashboardActionQueue,
+  type DashboardAction,
+} from "@/components/dashboard/dashboard-action-queue";
 import { AttentionCard } from "@/components/dashboard/attention-card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MeetingsChart } from "@/components/dashboard/meetings-chart";
@@ -13,17 +21,58 @@ import { getInboxCounts } from "@/lib/meetings/action-items-inbox";
 import { getActivePrepCard } from "@/lib/meetings/prep";
 import { getDashboardData, getMeetingsWeeklyChart } from "@/lib/meetings/queries";
 import { getMeetingSeriesList } from "@/lib/series/queries";
-import { ReviewQueueHomeCard } from "@/components/review/review-queue-home-card";
-import { WeeklyReviewHomeCard } from "@/components/review/weekly-review-home-card";
-import { HighlightsHomeCard } from "@/components/highlights/highlights-home-card";
-import { LibraryHomeCard } from "@/components/library/library-home-card";
-import { FollowUpsHomeCard } from "@/components/follow-ups/follow-ups-home-card";
-import { getHighlightsLibrary } from "@/lib/meetings/highlights-library";
 import { getFollowUpsHub } from "@/lib/follow-ups/hub";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
 import { getWeeklyReview } from "@/lib/review/weekly-review";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+
+function buildDashboardActions(input: {
+  reviewPending: number;
+  weeklyPending: number;
+  followUpsPending: number;
+  agendaTodayCount: number;
+}): DashboardAction[] {
+  const actions: DashboardAction[] = [];
+
+  if (input.reviewPending > 0) {
+    actions.push({
+      href: "/revisar",
+      icon: ClipboardText,
+      title: `${input.reviewPending} para revisar`,
+      subtitle: "Feche atribuições e follow-ups em lote",
+    });
+  }
+
+  if (input.weeklyPending > 0) {
+    actions.push({
+      href: "/semana",
+      icon: CalendarCheck,
+      title: "Revisão da semana",
+      subtitle: `${input.weeklyPending} pendência${input.weeklyPending === 1 ? "" : "s"} para fechar`,
+    });
+  }
+
+  if (input.followUpsPending > 0) {
+    actions.push({
+      href: "/follow-ups",
+      icon: EnvelopeSimple,
+      title: `${input.followUpsPending} follow-up${input.followUpsPending === 1 ? "" : "s"}`,
+      subtitle: "Rascunhos e envios aguardando fechamento",
+    });
+  }
+
+  if (input.agendaTodayCount > 0) {
+    actions.push({
+      href: "/agenda",
+      icon: CalendarBlank,
+      title: "Agenda de hoje",
+      subtitle: `${input.agendaTodayCount} compromisso${input.agendaTodayCount === 1 ? "" : "s"} restante${input.agendaTodayCount === 1 ? "" : "s"}`,
+    });
+  }
+
+  return actions;
+}
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -32,118 +81,66 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline, reviewCounts, weeklyReview, highlightsLibrary, followUpsHub] =
-    await Promise.all([
-      getDashboardData(supabase),
-      getMeetingsWeeklyChart(supabase),
-      getMeetingSeriesList(supabase),
-      user ? getActivePrepCard(admin, user.id) : Promise.resolve(null),
-      getInboxCounts(supabase),
-      getDailyTimeline(supabase),
-      getReviewQueueCounts(supabase),
-      getWeeklyReview(supabase),
-      getHighlightsLibrary(supabase, { limit: 1 }),
-      getFollowUpsHub(supabase, { status: "all" }),
-    ]);
+  const [
+    { stats, recentMeetings, attentionItems },
+    chartData,
+    series,
+    prepCard,
+    inboxCounts,
+    dayTimeline,
+    reviewCounts,
+    weeklyReview,
+    followUpsHub,
+  ] = await Promise.all([
+    getDashboardData(supabase),
+    getMeetingsWeeklyChart(supabase),
+    getMeetingSeriesList(supabase),
+    user ? getActivePrepCard(admin, user.id) : Promise.resolve(null),
+    getInboxCounts(supabase),
+    getDailyTimeline(supabase),
+    getReviewQueueCounts(supabase),
+    getWeeklyReview(supabase),
+    getFollowUpsHub(supabase, { status: "all" }),
+  ]);
 
   const meetingTitleById = new Map(recentMeetings.map((m) => [m.id, m.title]));
+  const weeklyPending =
+    weeklyReview.unreviewedMeetings.length + weeklyReview.overdueTasks.length;
+
+  const dashboardActions = buildDashboardActions({
+    reviewPending: reviewCounts.pending,
+    weeklyPending,
+    followUpsPending: followUpsHub.pendingCount,
+    agendaTodayCount: dayTimeline.entries.length,
+  });
 
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
         title="Visão geral"
-        description="Resumo das suas reuniões, indicadores e itens que precisam de atenção."
+        description="Indicadores, pendências e reuniões recentes."
         meta="Dashboard"
         actions={<JoinMeetingDialog />}
       />
 
       <KpiCards stats={stats} inboxCounts={inboxCounts} />
 
-      <ReviewQueueHomeCard pendingCount={reviewCounts.pending} />
+      {prepCard ? <PrepCard prep={prepCard} meeting={prepCard.meeting} /> : null}
 
-      <WeeklyReviewHomeCard
-        pendingCount={
-          weeklyReview.unreviewedMeetings.length + weeklyReview.overdueTasks.length
-        }
-      />
+      <DashboardActionQueue actions={dashboardActions} />
 
-      <HighlightsHomeCard count={highlightsLibrary.total} />
+      <MeetingsChart data={chartData} />
 
-      <LibraryHomeCard />
-
-      <FollowUpsHomeCard pendingCount={followUpsHub.pendingCount} />
-
-      <Link
-        href="/prep"
-        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
-      >
-        <div className="flex items-center gap-3">
-          <CalendarBlank size={20} className="text-brand" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">Hub de prep</p>
-            <p className="text-xs text-muted-foreground">
-              Briefings e contexto das próximas reuniões
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={16} className="text-muted-foreground" aria-hidden />
-      </Link>
-
-      <Link
-        href="/agenda"
-        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
-      >
-        <div className="flex items-center gap-3">
-          <CalendarBlank size={20} className="text-brand" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">Resumo do seu dia</p>
-            <p className="text-xs text-muted-foreground">
-              {dayTimeline.entries.length > 0
-                ? `${dayTimeline.entries.length} item${dayTimeline.entries.length === 1 ? "" : "s"} na agenda de hoje`
-                : "Nenhum compromisso urgente — veja a agenda completa"}
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
-      </Link>
-
-      <Link
-        href="/insights"
-        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
-      >
-        <div className="flex items-center gap-3">
-          <ChartLineUp size={20} className="text-brand" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">Ver insights completos</p>
-            <p className="text-xs text-muted-foreground">
-              Horas gravadas, decisões e participantes frequentes
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
-      </Link>
-
-      {prepCard && (
-        <div className="mt-6">
-          <PrepCard prep={prepCard} meeting={prepCard.meeting} />
-        </div>
-      )}
-
-      <div className="mt-6">
-        <MeetingsChart data={chartData} />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
           <RecentMeetingsTable meetings={recentMeetings} />
         </div>
-        <div>
+        <div className="lg:col-span-2">
           <AttentionCard items={attentionItems} meetingTitleById={meetingTitleById} />
         </div>
-        <div className="lg:col-span-3">
-          <SeriesListCard series={series} />
-        </div>
       </div>
+
+      {series.length > 0 ? <SeriesListCard series={series} /> : null}
     </div>
   );
 }
