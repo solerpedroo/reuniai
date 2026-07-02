@@ -209,6 +209,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/compartilhar" || pathname.startsWith("/compartilhar?")) {
+    return {
+      href: "/compartilhar",
+      label: "Compartilhar",
+      description: "Links read-only ativos e revogados",
+      icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
+    };
+  }
+
   if (pathname === "/templates" || pathname.startsWith("/templates/")) {
     return {
       href: "/templates",
