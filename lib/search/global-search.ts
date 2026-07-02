@@ -1,5 +1,7 @@
 import "server-only";
 
+import { FOLDER_NONE } from "@/lib/folders/constants";
+import { getMeetingIdsByFolder, getMeetingIdsWithoutFolder } from "@/lib/folders/queries";
 import type { createClient } from "@/lib/supabase/server";
 import {
   cosineSimilarity,
@@ -9,6 +11,11 @@ import {
   parseVector,
 } from "@/lib/embeddings/generate";
 import { searchMeetings } from "@/lib/meetings/queries";
+import type {
+  GlobalSearchOptions,
+  SearchModeFilter,
+} from "@/lib/search/search-filters-types";
+import { searchPeriodStart } from "@/lib/search/search-filters-types";
 import type { GlobalSearchResponse, SearchResultHit } from "@/lib/search/types";
 
 const TOP_K = 24;
@@ -31,6 +38,47 @@ type RpcRow = {
   started_at: string;
   similarity: number;
 };
+
+async function resolveAllowedMeetingIds(
+  supabase: Client,
+  options: GlobalSearchOptions
+): Promise<Set<string> | null> {
+  let allowed: Set<string> | null = null;
+
+  if (options.seriesId) {
+    const { data, error } = await supabase
+      .from("meetings")
+      .select("id")
+      .eq("calendar_recurring_event_id", options.seriesId);
+    if (error) throw error;
+    allowed = new Set((data ?? []).map((row) => (row as { id: string }).id));
+  }
+
+  if (options.folderId) {
+    const folderIds =
+      options.folderId === FOLDER_NONE
+        ? await getMeetingIdsWithoutFolder(supabase)
+        : await getMeetingIdsByFolder(supabase, options.folderId);
+    allowed = allowed
+      ? new Set([...allowed].filter((id) => folderIds.has(id)))
+      : folderIds;
+  }
+
+  return allowed;
+}
+
+function filterHits(
+  hits: SearchResultHit[],
+  options: GlobalSearchOptions,
+  allowedMeetingIds: Set<string> | null
+): SearchResultHit[] {
+  const periodStart = searchPeriodStart(options.period ?? "all");
+  return hits.filter((hit) => {
+    if (periodStart && new Date(hit.startedAt) < periodStart) return false;
+    if (allowedMeetingIds && !allowedMeetingIds.has(hit.meetingId)) return false;
+    return true;
+  });
+}
 
 async function semanticSearchFallback(
   supabase: Client,
@@ -137,11 +185,17 @@ type TranscriptSegmentRow = {
   text: string;
 };
 
-async function textSearch(supabase: Client, query: string): Promise<SearchResultHit[]> {
-  const page = await searchMeetings(supabase, query, { limit: 12 });
+async function textSearch(
+  supabase: Client,
+  query: string,
+  allowedMeetingIds: Set<string> | null
+): Promise<SearchResultHit[]> {
+  const page = await searchMeetings(supabase, query, { limit: 24 });
   const hits: SearchResultHit[] = [];
 
   for (const meeting of page.meetings) {
+    if (allowedMeetingIds && !allowedMeetingIds.has(meeting.id)) continue;
+
     const { data: segments } = await supabase
       .from("transcript_segments")
       .select("id, start_ms, speaker_label, text")
@@ -185,22 +239,43 @@ async function textSearch(supabase: Client, query: string): Promise<SearchResult
   return hits.slice(0, TOP_K);
 }
 
+function emptyResponse(embeddingsAvailable: boolean): GlobalSearchResponse {
+  return { query: "", mode: "text", hits: [], embeddingsAvailable };
+}
+
 export async function globalSearch(
   supabase: Client,
-  query: string
+  query: string,
+  options: GlobalSearchOptions = {}
 ): Promise<GlobalSearchResponse> {
+  const embeddingsAvailable = isEmbeddingsConfigured();
   const trimmed = query.trim();
   if (!trimmed) {
-    return { query: "", mode: "text", hits: [] };
+    return emptyResponse(embeddingsAvailable);
   }
 
-  const semantic = await semanticSearchRpc(supabase, trimmed);
-  if (semantic) {
-    return { query: trimmed, mode: "semantic", hits: semantic };
+  const allowedMeetingIds = await resolveAllowedMeetingIds(supabase, options);
+  const mode: SearchModeFilter = options.mode ?? "auto";
+
+  if (mode !== "text") {
+    const semantic = await semanticSearchRpc(supabase, trimmed);
+    if (semantic?.length) {
+      const hits = filterHits(semantic, options, allowedMeetingIds);
+      if (hits.length > 0 || mode === "semantic") {
+        return { query: trimmed, mode: "semantic", hits, embeddingsAvailable };
+      }
+    }
+    if (mode === "semantic") {
+      return { query: trimmed, mode: "semantic", hits: [], embeddingsAvailable };
+    }
   }
 
-  const text = await textSearch(supabase, trimmed);
-  return { query: trimmed, mode: "text", hits: text };
+  const text = filterHits(
+    await textSearch(supabase, trimmed, allowedMeetingIds),
+    options,
+    allowedMeetingIds
+  );
+  return { query: trimmed, mode: "text", hits: text, embeddingsAvailable };
 }
 
 export type { GlobalSearchResponse, SearchResultHit } from "@/lib/search/types";
