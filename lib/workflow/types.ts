@@ -1,3 +1,5 @@
+import type { SharePermissions } from "@/lib/meetings/share-permissions";
+
 export type ShareScope = "summary_only" | "full_transcript";
 
 export type ShareToken = {
@@ -6,6 +8,7 @@ export type ShareToken = {
   user_id: string;
   token: string;
   scope: ShareScope;
+  permissions: SharePermissions;
   expires_at: string;
   revoked_at: string | null;
   redact_pii: boolean;
