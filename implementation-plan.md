@@ -33,7 +33,7 @@
 | 19 | Escala e infra própria | 📋 Planejada |
 | **20** | **Inbox de compromissos** | ✅ Concluída |
 | **21** | **Ritual pós-reunião** | ✅ Concluída |
-| 22 | Centro de alertas | 📋 Planejada |
+| **22** | **Centro de alertas** | ✅ Concluída |
 
 ---
 
@@ -808,7 +808,7 @@ flowchart LR
 | 17 | Plataforma | Integrações | ✅ |
 | **20** | **Dia a dia** | **Inbox de compromissos** | **✅** |
 | **21** | **Dia a dia** | **Ritual pós-reunião** | **✅** |
-| **22** | **Dia a dia** | **Centro de alertas** | 📋 Planejada |
+| **22** | **Dia a dia** | **Centro de alertas** | **✅** |
 | 18 | Plataforma | Monetização e API | 📋 Após 20–22 |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
@@ -1257,15 +1257,17 @@ flowchart LR
 
 #### 22.1 Eventos
 
-- [ ] Transcrição/resumo prontos
-- [ ] Meeting prep (~10 min antes)
-- [ ] Bot falhou ao entrar
-- [ ] Action items vencendo hoje (manhã, timezone do perfil)
+- [x] Transcrição/resumo prontos (`completed` com dedupe e deep link `?revisar=1`)
+- [x] Meeting prep (~10 min antes, dedupe por reunião)
+- [x] Bot falhou ao entrar (scheduler auto-join + webhook Vexa)
+- [x] Action items vencendo hoje (cron matinal 8h, timezone do perfil)
 
 #### 22.2 Preferências e deep links
 
-- [ ] Granular em `/configuracoes` (`notification_prefs`)
-- [ ] Notificação abre reunião, prep ou `/tarefas`
+- [x] Granular em `/configuracoes` (`bot_failed`, `tasks_due` + existentes)
+- [x] Notificação abre reunião, prep (`?prep=1`) ou `/tarefas?filtro=today`
+- [x] `notifyUser` central com `kind` + `dedupe_key` anti-spam
+- [x] Cron `tasks-due-reminder` no GitHub Actions
 
 ### Critérios de aceite
 
