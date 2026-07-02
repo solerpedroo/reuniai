@@ -5,14 +5,36 @@ import { parseDecisions, parseTopics } from "@/lib/meetings/insights";
 import type { SpeakerTalkTime } from "@/lib/meetings/talk-time";
 import type { MeetingSummary } from "@/lib/supabase/types";
 
+export type SummaryVisibility = {
+  executive_summary: boolean;
+  topics: boolean;
+  decisions: boolean;
+  talk_time: boolean;
+};
+
+const DEFAULT_VISIBILITY: SummaryVisibility = {
+  executive_summary: true,
+  topics: true,
+  decisions: true,
+  talk_time: true,
+};
+
 export function SummaryView({
   summary,
   talkTime = [],
+  visibility,
 }: {
   summary: MeetingSummary | null;
   talkTime?: SpeakerTalkTime[];
+  visibility?: Partial<SummaryVisibility>;
 }) {
+  const show = { ...DEFAULT_VISIBILITY, ...visibility };
+
   if (!summary) {
+    if (!show.executive_summary && !show.topics && !show.decisions) {
+      return null;
+    }
+
     return (
       <EmptyState
         icon={Sparkle}
@@ -23,12 +45,13 @@ export function SummaryView({
     );
   }
 
-  const topics = parseTopics(summary.topics);
-  const decisions = parseDecisions(summary.decisions);
+  const topics = show.topics ? parseTopics(summary.topics) : [];
+  const decisions = show.decisions ? parseDecisions(summary.decisions) : [];
+  const visibleTalkTime = show.talk_time ? talkTime : [];
 
   return (
     <article className="space-y-8">
-      {summary.executive_summary && (
+      {show.executive_summary && summary.executive_summary && (
         <section className="relative overflow-hidden rounded-xl border border-brand/15 bg-gradient-to-br from-brand/6 via-card to-card p-6 sm:p-8">
           <Quotes
             size={48}
@@ -43,7 +66,7 @@ export function SummaryView({
         </section>
       )}
 
-      {talkTime.length > 1 && <TalkTimeChart data={talkTime} />}
+      {visibleTalkTime.length > 1 && <TalkTimeChart data={visibleTalkTime} />}
 
       {topics.length > 0 && (
         <section className="space-y-4">
