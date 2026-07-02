@@ -333,6 +333,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      analysis_templates: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          slug: string;
+          name: string;
+          description: string | null;
+          sections: Json;
+          is_builtin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          slug: string;
+          name: string;
+          description?: string | null;
+          sections?: Json;
+          is_builtin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          slug?: string;
+          name?: string;
+          description?: string | null;
+          sections?: Json;
+          is_builtin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       chat_messages: {
         Row: {
           id: string;
