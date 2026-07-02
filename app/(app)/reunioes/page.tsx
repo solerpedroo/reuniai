@@ -4,9 +4,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { JoinMeetingDialog } from "@/components/meetings/join-meeting-dialog";
 import { MeetingsDataTable } from "@/components/meetings/meetings-data-table";
 import { MeetingsFilterBar } from "@/components/meetings/meetings-filter-bar";
+import { MeetingsFoldersBar } from "@/components/meetings/meetings-folders-bar";
 import { Button } from "@/components/ui/button";
+import { getFoldersForUser, getMeetingIdsWithoutFolder } from "@/lib/folders/queries";
 import {
   attachTagsToMeetings,
+  filterMeetingsByFolder,
   getFilteredMeetingsPaginated,
   getSavedViews,
   type MeetingListFilters,
@@ -51,6 +54,7 @@ function filterParamsFromSearch(params: {
   status?: string;
   platform?: string;
   tag?: string;
+  pasta?: string;
   participant?: string;
   minDuration?: string;
   maxDuration?: string;
@@ -60,6 +64,7 @@ function filterParamsFromSearch(params: {
     status: params.status,
     platform: params.platform,
     tag: params.tag,
+    pasta: params.pasta,
     participant: params.participant,
     minDuration: params.minDuration,
     maxDuration: params.maxDuration,
@@ -71,6 +76,7 @@ function parseFilters(params: {
   status?: string;
   platform?: string;
   tag?: string;
+  pasta?: string;
   participant?: string;
   minDuration?: string;
   maxDuration?: string;
@@ -80,6 +86,7 @@ function parseFilters(params: {
     status: params.status as MeetingStatus | undefined,
     platform: params.platform as MeetingPlatform | undefined,
     tagId: params.tag,
+    folderId: params.pasta,
     participant: params.participant,
     minDurationMin: params.minDuration ? Number(params.minDuration) : undefined,
     maxDurationMin: params.maxDuration ? Number(params.maxDuration) : undefined,
@@ -92,6 +99,7 @@ function hasAdvancedFilters(filters: MeetingListFilters): boolean {
     filters.status ||
       filters.platform ||
       filters.tagId ||
+      filters.folderId ||
       filters.participant?.trim() ||
       filters.minDurationMin !== undefined ||
       filters.maxDurationMin !== undefined ||
@@ -109,6 +117,7 @@ export default async function ReunioesPage({
     status?: string;
     platform?: string;
     tag?: string;
+    pasta?: string;
     participant?: string;
     minDuration?: string;
     maxDuration?: string;
@@ -121,10 +130,14 @@ export default async function ReunioesPage({
   const filters = parseFilters(params);
   const advanced = hasAdvancedFilters(filters);
 
-  const [tags, savedViews] = await Promise.all([
+  const [tags, savedViews, folders, unassignedIds] = await Promise.all([
     getTagsForUser(supabase),
     getSavedViews(supabase),
+    getFoldersForUser(supabase),
+    getMeetingIdsWithoutFolder(supabase),
   ]);
+
+  const unassignedCount = unassignedIds.size;
 
   let meetings: MeetingWithTags[];
   let nextCursor: MeetingsCursor | null = null;
@@ -134,7 +147,10 @@ export default async function ReunioesPage({
       limit: PAGE_SIZE,
       cursor,
     });
-    meetings = await attachTagsToMeetings(supabase, page.meetings);
+    const filtered = filters.folderId
+      ? await filterMeetingsByFolder(supabase, page.meetings, filters.folderId)
+      : page.meetings;
+    meetings = await attachTagsToMeetings(supabase, filtered);
     nextCursor = page.nextCursor;
   } else if (advanced) {
     const page = await getFilteredMeetingsPaginated(supabase, filters, {
@@ -156,7 +172,7 @@ export default async function ReunioesPage({
 
   const nextHref = nextCursor
     ? params.q?.trim()
-      ? buildListHref({ q: params.q.trim() }, nextCursor)
+      ? buildListHref({ ...filterQuery, q: params.q.trim() }, nextCursor)
       : advanced
         ? buildListHref(filterQuery, nextCursor)
         : buildListHref({}, nextCursor)
@@ -173,6 +189,14 @@ export default async function ReunioesPage({
 
       <div className="space-y-4">
         <Suspense fallback={null}>
+          <MeetingsFoldersBar
+            folders={folders}
+            activeFolderId={filters.folderId}
+            unassignedCount={unassignedCount}
+          />
+        </Suspense>
+
+        <Suspense fallback={null}>
           <MeetingsFilterBar
             tags={tags}
             savedViews={savedViews}
@@ -182,9 +206,10 @@ export default async function ReunioesPage({
 
         <MeetingsDataTable
           meetings={meetings}
+          folders={folders}
           initialQuery={params.q ?? ""}
           searchMode={Boolean(params.q?.trim())}
-          serverFiltered={advanced}
+          serverFiltered={advanced || Boolean(filters.folderId && params.q?.trim())}
         />
       </div>
 

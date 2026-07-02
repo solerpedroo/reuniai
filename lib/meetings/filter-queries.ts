@@ -3,6 +3,13 @@ import type { Meeting, MeetingPlatform, MeetingStatus } from "@/lib/supabase/typ
 import { getMeetingDurationMs } from "@/lib/meetings/types";
 import type { MeetingsCursor } from "@/lib/meetings/queries";
 import type { Tag } from "@/lib/workflow/types";
+import {
+  getMeetingIdsByFolder,
+  getMeetingIdsWithoutFolder,
+} from "@/lib/folders/queries";
+import { FOLDER_NONE } from "@/lib/folders/constants";
+
+export { FOLDER_NONE };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -10,13 +17,14 @@ export type MeetingListFilters = {
   status?: MeetingStatus;
   platform?: MeetingPlatform;
   tagId?: string;
+  folderId?: string;
   participant?: string;
   minDurationMin?: number;
   maxDurationMin?: number;
   openActionsOnly?: boolean;
 };
 
-export type MeetingWithTags = Meeting & { tags: Tag[] };
+export type MeetingWithTags = Meeting & { tags: Tag[]; folderId: string | null };
 
 export type SavedView = {
   id: string;
@@ -86,9 +94,22 @@ async function attachTags(
     tagMap.set(row.meeting_id, list);
   }
 
+  const { data: folderLinks, error: folderError } = await supabase
+    .from("meeting_folders")
+    .select("meeting_id, folder_id")
+    .in("meeting_id", ids);
+
+  if (folderError) throw folderError;
+
+  const folderMap = new Map<string, string>();
+  for (const row of (folderLinks ?? []) as { meeting_id: string; folder_id: string }[]) {
+    folderMap.set(row.meeting_id, row.folder_id);
+  }
+
   return meetings.map((meeting) => ({
     ...meeting,
     tags: tagMap.get(meeting.id) ?? [],
+    folderId: folderMap.get(meeting.id) ?? null,
   }));
 }
 
@@ -129,7 +150,30 @@ async function applyAsyncFilters(
     result = result.filter((m) => allowed.has(m.id));
   }
 
+  if (filters.folderId) {
+    const allowed =
+      filters.folderId === FOLDER_NONE
+        ? await getMeetingIdsWithoutFolder(supabase)
+        : await getMeetingIdsByFolder(supabase, filters.folderId);
+    result = result.filter((m) => allowed.has(m.id));
+  }
+
   return applyDurationFilters(result, filters);
+}
+
+export async function filterMeetingsByFolder(
+  supabase: Client,
+  meetings: Meeting[],
+  folderId?: string
+): Promise<Meeting[]> {
+  if (!folderId) return meetings;
+
+  const allowed =
+    folderId === FOLDER_NONE
+      ? await getMeetingIdsWithoutFolder(supabase)
+      : await getMeetingIdsByFolder(supabase, folderId);
+
+  return meetings.filter((m) => allowed.has(m.id));
 }
 
 export type FilteredMeetingsPage = {

@@ -63,6 +63,7 @@ export function MeetingsFilterBar({
         status: (searchParams.get("status") as MeetingStatus | null) ?? undefined,
         platform: (searchParams.get("platform") as MeetingPlatform | null) ?? undefined,
         tagId: searchParams.get("tag") ?? undefined,
+        folderId: searchParams.get("pasta") ?? undefined,
         participant: searchParams.get("participant") ?? undefined,
         minDurationMin: searchParams.get("minDuration")
           ? Number(searchParams.get("minDuration"))
@@ -201,6 +202,7 @@ export function MeetingsFilterBar({
                 status: view.filters.status,
                 platform: view.filters.platform,
                 tag: view.filters.tagId,
+                pasta: view.filters.folderId,
                 participant: view.filters.participant,
                 minDuration: view.filters.minDurationMin?.toString(),
                 maxDuration: view.filters.maxDurationMin?.toString(),

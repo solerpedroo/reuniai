@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, MagnifyingGlass, VideoCamera } from "@phosphor-icons/react";
 import { BotActions } from "@/components/meetings/bot-actions";
+import { MeetingFolderMenu } from "@/components/meetings/meeting-folder-menu";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { MeetingWithTags } from "@/lib/meetings/filter-queries";
+import type { FolderWithCount } from "@/lib/folders/queries";
 import {
   formatDuration,
   formatMeetingDate,
@@ -30,11 +32,13 @@ type SortDir = "asc" | "desc";
 
 export function MeetingsDataTable({
   meetings,
+  folders = [],
   initialQuery = "",
   searchMode = false,
   serverFiltered = false,
 }: {
   meetings: MeetingWithTags[];
+  folders?: FolderWithCount[];
   initialQuery?: string;
   searchMode?: boolean;
   serverFiltered?: boolean;
@@ -108,13 +112,14 @@ export function MeetingsDataTable({
               <TableHead className="hidden sm:table-cell">Plataforma</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Duração</TableHead>
+              <TableHead className="hidden md:table-cell text-right">Pasta</TableHead>
               <TableHead className="text-right">Bot</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="p-4">
+                <TableCell colSpan={7} className="p-4">
                   <EmptyState
                     icon={VideoCamera}
                     tone={hasFilters ? "default" : "brand"}
@@ -167,6 +172,16 @@ export function MeetingsDataTable({
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-muted-foreground">
                     {formatDuration(getMeetingDurationMs(meeting))}
+                  </TableCell>
+                  <TableCell
+                    className="hidden md:table-cell text-right"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <MeetingFolderMenu
+                      meetingId={meeting.id}
+                      folderId={meeting.folderId}
+                      folders={folders}
+                    />
                   </TableCell>
                   <TableCell
                     className="text-right"
