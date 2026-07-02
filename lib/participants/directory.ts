@@ -10,6 +10,7 @@ import {
   normalizeEmail,
   participantKey,
 } from "@/lib/participants/normalize";
+import { getParticipantNotesByKeys, truncateNotePreview } from "@/lib/participants/notes";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -23,6 +24,8 @@ export type ParticipantDirectoryEntry = {
   meetingCount: number;
   lastMeetingAt: string | null;
   openTaskCount: number;
+  hasNotes: boolean;
+  notePreview: string | null;
 };
 
 export type ParticipantMeetingRow = Pick<
@@ -167,7 +170,28 @@ export async function getParticipantDirectory(
       meetingCount: value.meetingIds.size,
       lastMeetingAt: value.lastMeetingAt,
       openTaskCount,
+      hasNotes: false,
+      notePreview: null,
     });
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user && entries.length > 0) {
+    const notes = await getParticipantNotesByKeys(
+      supabase,
+      user.id,
+      entries.map((entry) => entry.key)
+    );
+    for (const entry of entries) {
+      const note = notes.get(entry.key);
+      if (note?.body.trim()) {
+        entry.hasNotes = true;
+        entry.notePreview = truncateNotePreview(note.body);
+      }
+    }
   }
 
   let filtered = entries;
