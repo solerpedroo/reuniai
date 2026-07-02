@@ -1,5 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { AgendaEntry, DailyTimeline } from "@/lib/agenda/types";
+import { getMeetingParticipantContexts } from "@/lib/participants/context";
 import { needsPostCallReview, REVIEW_QUEUE_HREF } from "@/lib/meetings/post-call-review";
 import { getActivePrepCard } from "@/lib/meetings/prep";
 import { localDateIsoInTimezone, resolveTimezone } from "@/lib/timezone/local-date";
@@ -172,6 +173,22 @@ export async function getDailyTimeline(
   }
 
   entries.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+
+  const scheduledIds = entries
+    .filter((entry) => entry.kind === "scheduled_meeting")
+    .map((entry) => entry.id.replace(/^meeting-/, ""));
+
+  if (scheduledIds.length > 0) {
+    const contexts = await getMeetingParticipantContexts(supabase, scheduledIds, { now });
+    for (const entry of entries) {
+      if (entry.kind !== "scheduled_meeting") continue;
+      const meetingId = entry.id.replace(/^meeting-/, "");
+      const context = contexts.get(meetingId);
+      if (context?.subtitle) {
+        entry.subtitle = context.subtitle;
+      }
+    }
+  }
 
   return { dateIso, timezone, todayIso, entries };
 }
