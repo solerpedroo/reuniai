@@ -16,6 +16,7 @@ export type GlobalSearchResponse = {
   query: string;
   mode: "semantic" | "text";
   hits: SearchResultHit[];
+  embeddingsAvailable: boolean;
 };
 
 export function formatSearchHitMeta(hit: SearchResultHit): string {
