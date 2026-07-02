@@ -307,6 +307,11 @@ export function NotificationPanel() {
               <span />
             )}
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
+              <Link href="/notificacoes?filtro=nao-lidas" onClick={() => setOpen(false)}>
+                Ver todas
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
               <Link href="/configuracoes" onClick={() => setOpen(false)}>
                 Preferências
               </Link>
