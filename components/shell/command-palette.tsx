@@ -6,15 +6,24 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Icon } from "@phosphor-icons/react";
-import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import {
+  CheckSquare,
+  Lightning,
+  MagnifyingGlass,
+  Plus,
+  UsersThree,
+  VideoCamera,
+} from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { MOTION, easePremium } from "@/components/motion/presets";
 import { NAV_ITEMS } from "@/components/shell/nav-config";
 import { Input } from "@/components/ui/input";
+import type { CommandSearchHit, CommandSearchHitType } from "@/lib/command/types";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +36,31 @@ type CommandItem = {
   action?: "search" | "join" | "busca";
   group: string;
 };
+
+const HIT_GROUP_LABELS: Record<CommandSearchHitType, string> = {
+  action: "Ações",
+  meeting: "Reuniões",
+  task: "Tarefas",
+  participant: "Participantes",
+};
+
+const HIT_ICONS: Record<CommandSearchHitType, Icon> = {
+  action: Lightning,
+  meeting: VideoCamera,
+  task: CheckSquare,
+  participant: UsersThree,
+};
+
+function hitToCommandItem(hit: CommandSearchHit): CommandItem {
+  return {
+    id: hit.id,
+    label: hit.label,
+    description: hit.description,
+    icon: HIT_ICONS[hit.type],
+    href: hit.href,
+    group: HIT_GROUP_LABELS[hit.type],
+  };
+}
 
 const BASE_COMMANDS: CommandItem[] = [
   ...NAV_ITEMS.map((item) => ({
@@ -88,19 +122,67 @@ function CommandPaletteDialog() {
   const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [dynamicHits, setDynamicHits] = useState<CommandSearchHit[]>([]);
+  const [loadingDynamic, setLoadingDynamic] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const timer = setTimeout(async () => {
+      setLoadingDynamic(true);
+      try {
+        const params = new URLSearchParams({ q: query.trim() });
+        const res = await fetch(`/api/command-search?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { results: CommandSearchHit[] };
+        if (!controller.signal.aborted) {
+          setDynamicHits(data.results ?? []);
+        }
+      } catch {
+        // ignore abort/network
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingDynamic(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [open, query]);
 
   const items = useMemo(() => {
     const term = query.trim().toLowerCase();
-    const filtered = BASE_COMMANDS.filter((item) => {
-      if (!term) return true;
+    const navFiltered = BASE_COMMANDS.filter((item) => {
+      if (!term) return item.group === "Navegação" || item.group === "Ações";
       return (
         item.label.toLowerCase().includes(term) ||
         item.description?.toLowerCase().includes(term)
       );
     });
 
-    if (term) {
-      filtered.push({
+    const dynamicItems = dynamicHits.map(hitToCommandItem);
+    const merged = [...dynamicItems, ...navFiltered];
+
+    const seen = new Set<string>();
+    const deduped = merged.filter((item) => {
+      const key = item.href ?? item.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (term.length >= 2 && deduped.length === 0 && !loadingDynamic) {
+      deduped.push({
         id: `search-${term}`,
         label: `Buscar "${query.trim()}" em todas as reuniões`,
         description: "Abrir busca global",
@@ -110,8 +192,8 @@ function CommandPaletteDialog() {
       });
     }
 
-    return filtered;
-  }, [query]);
+    return deduped;
+  }, [query, dynamicHits, loadingDynamic]);
 
   const runItem = useCallback(
     (item: CommandItem) => {
@@ -237,7 +319,9 @@ function CommandPaletteDialog() {
             </div>
 
             <div className="max-h-72 overflow-y-auto p-2">
-              {items.length === 0 ? (
+              {loadingDynamic && items.length === 0 ? (
+                <p className="px-3 py-6 text-center text-sm text-muted-foreground">Buscando…</p>
+              ) : items.length === 0 ? (
                 <p className="px-3 py-6 text-center text-sm text-muted-foreground">
                   Nenhum resultado para &ldquo;{query}&rdquo;
                 </p>
