@@ -1,11 +1,15 @@
 import {
+  BookmarkSimple,
   CalendarBlank,
   CalendarCheck,
   ChartLineUp,
+  ChatCircleDots,
   CheckSquare,
   ClipboardText,
+  Gavel,
   Gear,
   House,
+  LinkSimple,
   UserCircle,
   UsersThree,
   VideoCamera,
@@ -70,6 +74,40 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
   },
 ];
 
+/** Ondas 41–45 — bibliotecas e hubs cross-meeting. */
+export const NAV_LIBRARY_ITEMS: NavItem[] = [
+  {
+    href: "/prep",
+    label: "Prep",
+    description: "Briefings das próximas reuniões",
+    icon: CalendarCheck,
+  },
+  {
+    href: "/decisoes",
+    label: "Decisões",
+    description: "Registro de decisões cross-meeting",
+    icon: Gavel,
+  },
+  {
+    href: "/vistas",
+    label: "Vistas",
+    description: "Filtros salvos da lista de reuniões",
+    icon: BookmarkSimple,
+  },
+  {
+    href: "/comentarios",
+    label: "Comentários",
+    description: "Anotações na timeline cross-meeting",
+    icon: ChatCircleDots,
+  },
+  {
+    href: "/compartilhar",
+    label: "Compartilhar",
+    description: "Links read-only ativos e revogados",
+    icon: LinkSimple,
+  },
+];
+
 export const NAV_ACCOUNT_ITEMS: NavItem[] = [
   {
     href: "/perfil",
@@ -85,7 +123,15 @@ export const NAV_ACCOUNT_ITEMS: NavItem[] = [
   },
 ];
 
-export const NAV_ITEMS: NavItem[] = [...NAV_PRIMARY_ITEMS, ...NAV_ACCOUNT_ITEMS];
+export const NAV_ITEMS: NavItem[] = [
+  ...NAV_PRIMARY_ITEMS,
+  ...NAV_LIBRARY_ITEMS,
+  ...NAV_ACCOUNT_ITEMS,
+];
+
+function findLibraryNav(href: string): NavItem | undefined {
+  return NAV_LIBRARY_ITEMS.find((item) => item.href === href);
+}
 
 export { PRODUCT } from "@/lib/brand/config";
 
@@ -192,48 +238,23 @@ export function getNavItem(pathname: string): NavItem {
   }
 
   if (pathname === "/decisoes" || pathname.startsWith("/decisoes?")) {
-    return {
-      href: "/decisoes",
-      label: "Decisões",
-      description: "Registro de decisões cross-meeting",
-      icon: NAV_ITEMS.find((item) => item.href === "/insights")!.icon,
-    };
+    return findLibraryNav("/decisoes") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/prep" || pathname.startsWith("/prep?")) {
-    return {
-      href: "/prep",
-      label: "Prep",
-      description: "Briefings das próximas reuniões",
-      icon: NAV_ITEMS.find((item) => item.href === "/agenda")!.icon,
-    };
+    return findLibraryNav("/prep") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/compartilhar" || pathname.startsWith("/compartilhar?")) {
-    return {
-      href: "/compartilhar",
-      label: "Compartilhar",
-      description: "Links read-only ativos e revogados",
-      icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
-    };
+    return findLibraryNav("/compartilhar") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/vistas" || pathname.startsWith("/vistas")) {
-    return {
-      href: "/vistas",
-      label: "Vistas",
-      description: "Filtros salvos da lista de reuniões",
-      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
-    };
+    return findLibraryNav("/vistas") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/comentarios" || pathname.startsWith("/comentarios?")) {
-    return {
-      href: "/comentarios",
-      label: "Comentários",
-      description: "Anotações na timeline cross-meeting",
-      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
-    };
+    return findLibraryNav("/comentarios") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/templates" || pathname.startsWith("/templates/")) {
