@@ -38,6 +38,9 @@
 | **25** | **Insights e tendências in-app** | ✅ Concluída |
 | **26** | **Prioridade e snooze na inbox** | ✅ Concluída |
 | **27** | **Agenda do dia unificada** | ✅ Concluída |
+| **28** | **Fila de revisão em batch** | 📋 Próxima |
+| **29** | **Revisão semanal in-app** | 📋 |
+| **30** | **Contexto relacional e notas** | 📋 |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -76,8 +79,11 @@
 29. [Onda 25 — Insights e tendências in-app](#onda-25--insights-e-tendências-in-app)
 30. [Onda 26 — Prioridade e snooze na inbox](#onda-26--prioridade-e-snooze-na-inbox)
 31. [Onda 27 — Agenda do dia unificada](#onda-27--agenda-do-dia-unificada)
-32. [Variáveis de ambiente](#variáveis-de-ambiente)
-33. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+32. [Onda 28 — Fila de revisão em batch](#onda-28--fila-de-revisão-em-batch)
+33. [Onda 29 — Revisão semanal in-app](#onda-29--revisão-semanal-in-app)
+34. [Onda 30 — Contexto relacional e notas](#onda-30--contexto-relacional-e-notas)
+35. [Variáveis de ambiente](#variáveis-de-ambiente)
+36. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -105,7 +111,10 @@ flowchart TD
     O24 --> O25[Onda 25: Insights]
     O25 --> O26[Onda 26: Snooze]
     O26 --> O27[Onda 27: Agenda]
-    O27 -.-> O18[Onda 18: Monetização]
+    O27 --> O28[Onda 28: Fila de revisão]
+    O28 --> O29[Onda 29: Revisão semanal]
+    O29 --> O30[Onda 30: Contexto relacional]
+    O30 -.-> O18[Onda 18: Monetização]
 ```
 
 | Onda | Nome | Duração | Depende de | Entrega principal |
@@ -126,7 +135,8 @@ flowchart TD
 | **20–22** | **Produto do dia a dia** | **2–4 sem** | **12–13** | **Inbox, pós-call, alertas** |
 | **23–25** | **Valor pessoal (lote 1)** | **2–3 sem** | **20–22** | **Participantes, pastas, insights** |
 | **26–27** | **Valor pessoal (lote 2)** | **1–2 sem** | **20, 25** | **Snooze, agenda do dia** |
-| 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 25+ | ⏸️ Postergada — uso pessoal |
+| **28–30** | **Valor pessoal (lote 3)** | **2–3 sem** | **21, 23, 27** | **Fila de revisão, revisão semanal, notas** |
+| 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 30+ | ⏸️ Postergada — uso pessoal |
 | 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
 ---
@@ -832,11 +842,14 @@ flowchart LR
 | **20** | **Dia a dia** | **Inbox de compromissos** | **✅** |
 | **21** | **Dia a dia** | **Ritual pós-reunião** | **✅** |
 | **22** | **Dia a dia** | **Centro de alertas** | **✅** |
-| **23** | **Valor pessoal** | **Diretório de participantes** | **📋 Próxima** |
-| **24** | **Valor pessoal** | **Pastas e organização** | **📋** |
-| **25** | **Valor pessoal** | **Insights in-app** | **📋** |
-| **26** | **Valor pessoal** | **Prioridade e snooze** | **📋** |
-| **27** | **Valor pessoal** | **Agenda do dia** | **📋** |
+| **23** | **Valor pessoal** | **Diretório de participantes** | **✅** |
+| **24** | **Valor pessoal** | **Pastas e organização** | **✅** |
+| **25** | **Valor pessoal** | **Insights in-app** | **✅** |
+| **26** | **Valor pessoal** | **Prioridade e snooze** | **✅** |
+| **27** | **Valor pessoal** | **Agenda do dia** | **✅** |
+| **28** | **Valor pessoal** | **Fila de revisão em batch** | **📋 Próxima** |
+| **29** | **Valor pessoal** | **Revisão semanal in-app** | **📋** |
+| **30** | **Valor pessoal** | **Contexto relacional e notas** | **📋** |
 | 18 | Plataforma | Stripe + API REST + MCP | ⏸️ Postergada |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
@@ -1153,6 +1166,13 @@ flowchart LR
 #### 18.4 Dark mode
 
 - [x] Entregue na Onda 11 — tokens dark + toggle persistente
+
+#### 18.5 Follow-up por email (Resend) *(postergado da Onda 28)*
+
+- [ ] `POST /api/meetings/[id]/follow-up/send` — envio transacional via Resend
+- [ ] Colunas `sent_at`, `sent_to` em `meeting_follow_ups`
+- [ ] Modal de confirmação com seleção de destinatários
+- [ ] Requer domínio verificado em resend.com (não sandbox)
 
 ### Critérios de aceite (quando retomar)
 
@@ -1521,7 +1541,7 @@ flowchart LR
 #### 27.3 UI da timeline
 
 - [ ] Card por tipo com ícone e cor do design system
-- [ ] Ações inline: entrar na reunião, ver prep, revisar call, marcar tarefa
+- [ ] Ações inline: entrar na reunião, ver prep, revisar call (→ `/revisar` quando fila Onda 28), marcar tarefa
 - [ ] Empty state: "Dia livre" + atalho para `/reunioes` e `/tarefas`
 - [ ] Navegação ← → para ontem/amanhã
 
@@ -1536,12 +1556,186 @@ flowchart LR
 - [ ] Banner "Instalar app" quando `beforeinstallprompt` disponível (manifest + SW já existem)
 - [ ] `/agenda` como `start_url` opcional no manifest para uso mobile
 
+#### 27.6 Navegação por calendário (complementar)
+
+- [ ] Componente `Calendar` reutilizável no design system (`components/ui/calendar.tsx`)
+- [ ] Toolbar na agenda: botão **Hoje**, dropdown com calendário mensual, setas dia a dia
+- [ ] `AgendaDateNav` substitui links Anterior/Próximo na timeline
+
 ### Critérios de aceite
 
 - Timeline lista reunião das 14h antes da das 16h
 - Prep aparece ~10 min antes da call agendada
 - Tarefa adiada não aparece na timeline do dia
 - Página útil no celular (touch targets ≥ 44px)
+
+---
+
+## Onda 28 — Fila de revisão em batch
+
+**Objetivo:** Fechar o ciclo pós-reunião em lote — o wizard da Onda 21 funciona reunião a reunião; uma tela dedicada `/revisar` transforma calls concluídas e não revisadas em fila acionável, para zerar pendências em poucos minutos sem navegar call por call.
+
+> **Substitui** o envio de follow-up por email (Resend), postergado para quando houver monetização/enterprise (Onda 18). O rascunho de follow-up (Onda 13) permanece com copiar/`mailto:`.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Onda 21 (wizard, `meeting_reviewed_at`), Onda 13 (follow-up draft), Onda 20 (action items), Onda 27 (agenda)  
+**Branch sugerida:** `feat/onda-28-fila-revisao`
+
+### Features
+
+#### 28.1 Schema
+
+- [ ] Coluna `review_snoozed_until` timestamptz nullable em `meetings`
+- [ ] Colunas em `meeting_follow_ups`: `follow_up_done_at` timestamptz nullable (tracking local, sem Resend)
+- [ ] Índice parcial: `completed` + `meeting_reviewed_at IS NULL` + `review_snoozed_until` expirado ou null
+- [ ] RLS inalterada
+
+#### 28.2 Data layer (`lib/review/review-queue.ts`)
+
+- [ ] `getReviewQueue()` — reuniões `status = completed`, `meeting_reviewed_at` null, respeitando snooze
+- [ ] `getReviewQueueCounts()` — total pendente + adiadas + revisadas hoje (para badges)
+- [ ] Join leve: título, `started_at`, contagem de action items abertos, flag de follow-up gerado
+- [ ] Ordenação default: mais recente primeiro
+
+#### 28.3 API
+
+- [ ] `GET /api/review/queue` — lista paginada da fila
+- [ ] `POST /api/meetings/[id]/review/snooze` — body `{ until: ISO date }`; valida ownership
+- [ ] Estender `PATCH /api/meetings/[id]/follow-up` ou rota dedicada para `follow_up_done_at`
+- [ ] Reutilizar `POST /api/meetings/[id]/review` existente para marcar revisada
+
+#### 28.4 Página `/revisar`
+
+- [ ] Item de nav na seção **Principal** (ícone distinto de `/agenda`)
+- [ ] Cabeçalho: "X reuniões para revisar" + badge de adiadas
+- [ ] `loading.tsx` com skeleton
+- [ ] Layout mobile-first (lista vertical de cards expandíveis)
+- [ ] Empty state: "Tudo revisado" + link para `/reunioes` e `/agenda`
+
+#### 28.5 UI da fila (`components/review/review-queue.tsx`)
+
+- [ ] Card por reunião: título, data/hora, "há X dias", badges (action items abertos, follow-up pendente)
+- [ ] Expansão inline com passos resumidos do wizard (Onda 21):
+  - [ ] **Atribuições** — aceitar/rejeitar sugestões e marcar concluídas sem sair da fila
+  - [ ] **Follow-up** — preview editável + **Copiar** + **Abrir no email** (`mailto:` com participantes)
+  - [ ] **Marcar follow-up feito** (preenche `follow_up_done_at`, opcional)
+- [ ] Ações no card: **Marcar como revisada** · **Revisar depois** (snooze: amanhã / +3 dias) · **Abrir detalhe**
+- [ ] Atalho de teclado: `j`/`k` navegar, `Enter` expandir (desktop)
+
+#### 28.6 Integrações
+
+- [ ] Link na `/agenda` no bloco "Concluído — pendente de revisão" → `/revisar`
+- [ ] KPI/card na home: "X para revisar" → `/revisar`
+- [ ] Deep link de notificação `meeting_completed` pode apontar para `/revisar` quando houver fila
+- [ ] Banner no detalhe da reunião (`?revisar=1`) linka "Ver todas na fila"
+
+#### 28.7 Follow-up simplificado (sem Resend)
+
+- [ ] Helper `buildFollowUpMailto()` — assunto, corpo e `to` a partir de participantes da call
+- [ ] Botão **Abrir no email** em `FollowUpTab` e no passo inline da fila
+- [ ] Badge **Follow-up feito** quando `follow_up_done_at` preenchido
+
+### Critérios de aceite
+
+- Usuário revisa 3+ reuniões seguidas sem voltar à lista de reuniões
+- Reunião revisada some da fila, da agenda do dia e das pendências da Onda 29
+- Snooze remove da fila até a data; expira no timezone do perfil
+- `mailto:` abre cliente local com assunto/corpo/destinatários preenchidos
+- Nenhum vazamento cross-user (RLS + checagem `user_id` nas APIs)
+
+---
+
+## Onda 29 — Revisão semanal in-app
+
+**Objetivo:** Ritual semanal complementar à agenda diária (Onda 27) e ao digest por email (Onda 13) — uma tela para **fechar a semana** e planejar a próxima, com dados acionáveis.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 25 (stats), Onda 20/26 (inbox), Onda 21 (`meeting_reviewed_at`), Onda 27 (padrão de navegação por data), Onda 28 (fila `/revisar`)  
+**Branch sugerida:** `feat/onda-29-revisao-semanal`
+
+### Features
+
+#### 29.1 Página `/semana`
+
+- [ ] Item de nav ou card destacado na Visão geral / Insights
+- [ ] Seletor de semana (reutilizar `Calendar` + navegação ← → semana)
+- [ ] Botão **Esta semana** (equivalente ao "Hoje" da agenda)
+- [ ] `loading.tsx` com skeleton
+
+#### 29.2 Painéis acionáveis (`lib/review/weekly-review.ts`)
+
+- [ ] **Resumo numérico** — reutilizar lógica de `getWeeklyDigestStats` + taxa de conclusão de tarefas (Onda 25)
+- [ ] **Reuniões não revisadas** — `status = completed` e `meeting_reviewed_at` null na semana (link → `/revisar`)
+- [ ] **Tarefas em aberto** — vencidas na semana + vencendo na próxima (respeita snooze Onda 26)
+- [ ] **Decisões da semana** — top N de resumos no período
+- [ ] **Próximas reuniões** — primeiras calls agendadas da semana seguinte (calendar sync)
+
+#### 29.3 UI e ações rápidas
+
+- [ ] Cards com links diretos: fila `/revisar`, inbox filtrada, insights da semana
+- [ ] Empty state quando semana sem atividade
+- [ ] Layout mobile-first (mesmo padrão `/agenda`)
+
+#### 29.4 Integrações
+
+- [ ] Email digest semanal linka para `/semana?semana=YYYY-Www`
+- [ ] Card na home: "Revisão da semana" com contagem de pendências
+- [ ] Insights: atalho "Ver revisão completa" quando período = 7d
+
+### Critérios de aceite
+
+- Totais da semana corrente batem com digest email e `/insights?period=7d`
+- Reunião revisada some da lista de pendências
+- Tarefa adiada não aparece em "vencendo esta semana" até expirar snooze
+- Semana navegável no passado e futuro sem quebrar timezone do perfil
+
+---
+
+## Onda 30 — Contexto relacional e notas
+
+**Objetivo:** Transformar participantes e reuniões de catálogo passivo em **memória de trabalho** — notas privadas, contexto na agenda e prep enriquecido antes de calls recorrentes.
+
+**Estimativa:** 1–2 semanas  
+**Depende de:** Onda 23 (participantes), Onda 13 (prep), Onda 27 (agenda), Onda 9 (detalhe)  
+**Branch sugerida:** `feat/onda-30-contexto-notas`
+
+### Features
+
+#### 30.1 Schema
+
+- [ ] Tabela `participant_notes`: `user_id`, `participant_key` (email normalizado ou slug), `body` text, `updated_at`
+- [ ] Coluna `personal_notes` text nullable em `meetings` (notas do usuário, separadas do resumo IA)
+- [ ] RLS: `user_id = auth.uid()`; unique `(user_id, participant_key)`
+
+#### 30.2 API
+
+- [ ] `GET/PATCH /api/participants/[key]/notes` — ler e salvar nota do participante
+- [ ] Estender `PATCH /api/meetings/[id]` ou rota dedicada para `personal_notes`
+- [ ] Autosave debounced no client (sem spam de requests)
+
+#### 30.3 UI — Participantes
+
+- [ ] Aba ou seção **Notas** em `/participantes/[key]` (textarea com save indicator)
+- [ ] Preview da nota na lista quando existir (truncada)
+- [ ] Indicador "tem notas" no diretório
+
+#### 30.4 UI — Reuniões
+
+- [ ] Aba **Minhas notas** no detalhe da reunião (markdown simples ou plain text)
+- [ ] Distinção visual clara vs resumo gerado por IA
+
+#### 30.5 Contexto proativo (agenda + prep)
+
+- [ ] Na `/agenda`: subtítulo enriquecido em reuniões agendadas — ex.: "2 tarefas abertas com João · última call há 5 dias"
+- [ ] No prep card (Onda 13): incluir trecho das `participant_notes` quando participante conhecido
+- [ ] `lib/participants/context.ts` — agrega notas + última reunião + tarefas abertas por assignee
+
+### Critérios de aceite
+
+- Notas visíveis apenas para o dono (RLS verificado)
+- Nota de participante aparece no prep da próxima call com essa pessoa
+- Agenda mostra contexto sem degradar performance (< 2s com 20 eventos/dia)
+- Notas pessoais da reunião não entram no prompt de chat/RAG por padrão (privacidade)
 
 ---
 
@@ -1589,6 +1783,13 @@ flowchart LR
 | 38 | Insights e tendências in-app | 25 |
 | 39 | Prioridade e snooze na inbox | 26 |
 | 40 | Agenda do dia unificada | 27 |
+| 41 | Seletor de calendário na agenda | 27 |
+| 42 | Fila de revisão em batch (`/revisar`) | 28 |
+| 42b | Follow-up por email (Resend) | 18 ⏸️ |
+| 43 | Revisão semanal in-app (`/semana`) | 29 |
+| 44 | Notas de participante | 30 |
+| 45 | Notas pessoais por reunião | 30 |
+| 46 | Contexto relacional na agenda/prep | 30 |
 
 ---
 
