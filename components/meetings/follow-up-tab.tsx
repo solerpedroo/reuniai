@@ -3,19 +3,23 @@
 import { useCallback, useState } from "react";
 import { Check, Copy, EnvelopeSimple, Sparkle } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { buildFollowUpMailto } from "@/lib/meetings/follow-up-mailto";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
 
 export function FollowUpTab({
   meetingId,
   initialFollowUp,
   llmEnabled,
+  participantEmails = [],
 }: {
   meetingId: string;
   initialFollowUp: MeetingFollowUp | null;
   llmEnabled: boolean;
+  participantEmails?: string[];
 }) {
   const [followUp, setFollowUp] = useState(initialFollowUp);
   const [subject, setSubject] = useState(initialFollowUp?.subject ?? "");
@@ -60,6 +64,21 @@ export function FollowUpTab({
     }
   }, [meetingId, subject, body]);
 
+  const markDone = useCallback(async () => {
+    const res = await fetch(`/api/meetings/${meetingId}/follow-up`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ follow_up_done: true }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error ?? "Falha ao marcar follow-up");
+      return;
+    }
+    setFollowUp(data.followUp);
+    toast.success("Follow-up marcado como feito");
+  }, [meetingId]);
+
   const copyAll = useCallback(async () => {
     const text = `Assunto: ${subject}\n\n${body}`;
     await navigator.clipboard.writeText(text);
@@ -68,13 +87,19 @@ export function FollowUpTab({
     setTimeout(() => setCopied(false), 2000);
   }, [subject, body]);
 
+  const mailtoHref =
+    subject && body
+      ? buildFollowUpMailto({ subject, body, to: participantEmails })
+      : undefined;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-medium">Follow-up por email</h3>
           <p className="text-sm text-muted-foreground">
-            Rascunho gerado por IA para enviar aos participantes. Edite antes de copiar.
+            Rascunho gerado por IA para enviar aos participantes. Edite antes de copiar ou abrir no
+            seu cliente de email.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -93,10 +118,30 @@ export function FollowUpTab({
                 {copied ? <Check size={14} className="mr-1.5" /> : <Copy size={14} className="mr-1.5" />}
                 Copiar email
               </Button>
+              {mailtoHref && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={mailtoHref}>
+                    <EnvelopeSimple size={14} className="mr-1.5" />
+                    Abrir no email
+                  </a>
+                </Button>
+              )}
+              {!followUp.follow_up_done_at && (
+                <Button variant="ghost" size="sm" onClick={markDone}>
+                  Marcar follow-up feito
+                </Button>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {followUp?.follow_up_done_at && (
+        <Badge variant="secondary" className="gap-1">
+          <Check size={12} />
+          Follow-up feito
+        </Badge>
+      )}
 
       {!followUp ? (
         <div className="surface-card flex flex-col items-center justify-center gap-3 p-10 text-center">
