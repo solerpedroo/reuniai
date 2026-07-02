@@ -5,11 +5,13 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnections } from "@/components/settings/calendar-connections";
 import { RetentionSettings } from "@/components/settings/retention-settings";
-import { IntegrationSettings } from "@/components/settings/integration-settings";
+import Link from "next/link";
+import { Plugs } from "@phosphor-icons/react/dist/ssr";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocaleAndTemplateSettings } from "@/components/settings/locale-template-settings";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -197,7 +199,20 @@ export default async function ConfiguracoesPage({
           initialDefaultTemplate={defaultTemplate}
         />
 
-        <IntegrationSettings />
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Plugs size={18} aria-hidden />
+              Integrações
+            </CardTitle>
+            <CardDescription>Slack, Notion e webhooks outbound</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/integracoes">Gerenciar integrações</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
