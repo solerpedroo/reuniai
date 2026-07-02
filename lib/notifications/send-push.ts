@@ -4,10 +4,14 @@ import webpush from "web-push";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+import {
+  KIND_PREF_KEY,
+  type NotificationKind,
+} from "@/lib/notifications/kinds";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-export type PushNotificationKind = "prep" | "completed" | "general";
+export type PushNotificationKind = NotificationKind;
 
 let vapidConfigured = false;
 
@@ -27,11 +31,10 @@ function ensureVapid(): boolean {
   return true;
 }
 
-function shouldSendPush(prefs: NotificationPrefs, kind: PushNotificationKind): boolean {
+function shouldSendPush(prefs: NotificationPrefs, kind: NotificationKind): boolean {
   if (!prefs.push) return false;
-  if (kind === "prep") return prefs.prep;
-  if (kind === "completed") return prefs.completed;
-  return true;
+  const prefKey = KIND_PREF_KEY[kind];
+  return Boolean(prefs[prefKey]);
 }
 
 export async function sendPushToUser(
@@ -41,12 +44,12 @@ export async function sendPushToUser(
     title: string;
     body: string;
     href?: string | null;
-    kind?: PushNotificationKind;
+    kind?: NotificationKind;
   }
 ): Promise<{ sent: number; failed: number }> {
   if (!ensureVapid()) return { sent: 0, failed: 0 };
 
-  const kind = input.kind ?? "general";
+  const kind = input.kind ?? "completed";
   const prefs = await getUserNotificationPrefs(admin, input.userId);
   if (!shouldSendPush(prefs, kind)) return { sent: 0, failed: 0 };
 
@@ -61,6 +64,7 @@ export async function sendPushToUser(
     title: input.title,
     body: input.body,
     href: input.href ?? "/",
+    kind: input.kind,
   });
 
   let sent = 0;
