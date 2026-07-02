@@ -51,6 +51,11 @@
 | **38** | **Participação e talk-time** | ✅ Concluída |
 | **39** | **Hub de integrações** | ✅ Concluída |
 | **40** | **Templates de análise** | ✅ Concluída |
+| **41** | **Hub de prep** | 📋 Próxima |
+| **42** | **Registro de decisões** | 📋 |
+| **43** | **Links compartilhados** | 📋 |
+| **44** | **Vistas salvas** | 📋 |
+| **45** | **Biblioteca de comentários** | 📋 |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -102,8 +107,13 @@
 42. [Onda 38 — Participação e talk-time](#onda-38--participação-e-talk-time)
 43. [Onda 39 — Hub de integrações](#onda-39--hub-de-integrações)
 44. [Onda 40 — Templates de análise](#onda-40--templates-de-análise)
-45. [Variáveis de ambiente](#variáveis-de-ambiente)
-46. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+45. [Onda 41 — Hub de prep](#onda-41--hub-de-prep)
+46. [Onda 42 — Registro de decisões](#onda-42--registro-de-decisões)
+47. [Onda 43 — Links compartilhados](#onda-43--links-compartilhados)
+48. [Onda 44 — Vistas salvas](#onda-44--vistas-salvas)
+49. [Onda 45 — Biblioteca de comentários](#onda-45--biblioteca-de-comentários)
+50. [Variáveis de ambiente](#variáveis-de-ambiente)
+51. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -145,6 +155,11 @@ flowchart TD
     O30 --> O38[Onda 38: Talk-time]
     O17 --> O39[Onda 39: Integrações hub]
     O34 --> O40[Onda 40: Templates]
+    O40 --> O41[Onda 41: Prep hub]
+    O25 --> O42[Onda 42: Decisões]
+    O14 --> O43[Onda 43: Share hub]
+    O12 --> O44[Onda 44: Vistas]
+    O14 --> O45[Onda 45: Comentários]
     O30 -.-> O18[Onda 18: Monetização]
 ```
 
@@ -168,7 +183,8 @@ flowchart TD
 | **26–27** | **Valor pessoal (lote 2)** | **1–2 sem** | **20, 25** | **Snooze, agenda do dia** |
 | **28–30** | **Valor pessoal (lote 3)** | **2–3 sem** | **21, 23, 27** | **Fila de revisão, revisão semanal, notas** |
 | **31–35** | **Valor pessoal (lote 4)** | **2–3 sem** | **28–30** | **Navegação, email, speakers, séries, highlights** |
-| **36–40** | **Valor pessoal (lote 5)** | **3–4 sem** | **31–35** | **Assistente, alertas, talk-time, integrações, templates** |
+| **36–40** | **Valor pessoal (lote 5)** | **✅ Concluído** | **31–35** | **Assistente, alertas, talk-time, integrações, templates** |
+| **41–45** | **Valor pessoal (lote 6)** | **3–4 sem** | **13–14, 25, 30** | **Prep hub, decisões, share, vistas, comentários** |
 | 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 30+ | ⏸️ Postergada — uso pessoal |
 | 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
@@ -893,6 +909,11 @@ flowchart LR
 | **38** | **Valor pessoal** | **Participação / talk-time** | **✅** |
 | **39** | **Valor pessoal** | **Hub de integrações** | **✅** |
 | **40** | **Valor pessoal** | **Templates de análise** | **✅** |
+| **41** | **Valor pessoal** | **Hub de prep** | **📋 Próxima** |
+| **42** | **Valor pessoal** | **Registro de decisões** | **📋** |
+| **43** | **Valor pessoal** | **Links compartilhados** | **📋** |
+| **44** | **Valor pessoal** | **Vistas salvas** | **📋** |
+| **45** | **Valor pessoal** | **Biblioteca de comentários** | **📋** |
 | 18 | Plataforma | Stripe + API REST + MCP | ⏸️ Postergada |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
@@ -2180,6 +2201,205 @@ flowchart LR
 
 ---
 
+## Onda 41 — Hub de prep
+
+**Objetivo:** Centralizar **briefings de prep** das próximas reuniões — hoje espalhados entre home, agenda e notificações. Uma tela para ver o que vem aí, gerar/ler prep e contexto de participantes.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Ondas 13 (prep cards), 27 (agenda), 30 (notas de participante), 34 (séries)  
+**Branch sugerida:** `feat/onda-41-prep-hub`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/prep` | Próximas reuniões (7 dias) com status de prep, briefing e contexto |
+| `/prep?dias=14` | Janela temporal configurável |
+
+### Features
+
+#### 41.1 Data layer (`lib/prep/hub.ts`)
+
+- [ ] `getPrepHub()` — reuniões `scheduled`/`bot_joining` nos próximos N dias
+- [ ] Anexar `MeetingPrepCard` quando existir; flag `hasPrep`
+- [ ] Contagem de participantes com notas (`participant_notes`)
+- [ ] Última ocorrência da mesma série (título + link)
+
+#### 41.2 UI (`components/prep/`)
+
+- [ ] Cards por reunião: horário · título · badge prep · participantes com contexto
+- [ ] Expandir briefing IA quando disponível
+- [ ] CTA: abrir reunião · ver série · ir para participante
+- [ ] Empty state quando sem reuniões futuras
+- [ ] Link desde `/agenda` e card na home
+
+### Critérios de aceite
+
+- Reuniões ordenadas cronologicamente
+- Prep card ativo aparece com briefing legível
+- Contexto de participante linka para `/participantes/[key]`
+- RLS: só reuniões do usuário
+
+---
+
+## Onda 42 — Registro de decisões
+
+**Objetivo:** Extrair e tornar **pesquisável** o histórico de decisões de todas as reuniões — hoje enterradas nos resumos individuais.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Ondas 8 (summaries), 25 (insights), 34 (séries)  
+**Branch sugerida:** `feat/onda-42-decisoes`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/decisoes` | Timeline de decisões com busca e filtros |
+| `/decisoes?period=30d` | Filtro temporal (7d / 30d / 90d) |
+
+### Features
+
+#### 42.1 Data layer (`lib/decisions/registry.ts`)
+
+- [ ] Agregar `decisions` de `meeting_summaries` no período
+- [ ] Dedupe por texto normalizado; contagem de ocorrências
+- [ ] Metadados: meeting_id, title, started_at, série
+
+#### 42.2 UI (`components/decisions/`)
+
+- [ ] KPI: total de decisões · reuniões com decisão · mais recorrente
+- [ ] Busca client-side por texto
+- [ ] Lista agrupada por semana; link → `/reunioes/[id]`
+- [ ] Link desde `/insights`
+
+### Critérios de aceite
+
+- Decisões vazias/whitespace ignoradas
+- Busca filtra em tempo real (< 100ms local)
+- Período default 30 dias
+- RLS via join em meetings
+
+---
+
+## Onda 43 — Links compartilhados
+
+**Objetivo:** Hub para **gerenciar share links** ativos — revogar, copiar URL, ver expiração. Hoje só via dialog por reunião (Onda 14).
+
+**Estimativa:** 2–3 dias  
+**Depende de:** Onda 14 (share_tokens, permissions)  
+**Branch sugerida:** `feat/onda-43-compartilhar`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/compartilhar` | Lista de links ativos com ações |
+| `/compartilhar?status=expirados` | Links expirados/revogados (últimos 30 dias) |
+
+### Features
+
+#### 43.1 Data layer (`lib/meetings/share-hub.ts`)
+
+- [ ] `getShareLinksHub()` — tokens do usuário + título da reunião
+- [ ] Status: ativo · expirado · revogado
+- [ ] Mascarar token na UI (últimos 6 chars)
+
+#### 43.2 API
+
+- [ ] `GET /api/share-links` — lista paginada
+- [ ] Reutilizar `DELETE` existente por meeting ou `PATCH` revoke em batch
+
+#### 43.3 UI
+
+- [ ] Tabela/cards: reunião · expira em · permissões resumidas · copiar link
+- [ ] Botão revogar com confirmação
+- [ ] Link "Gerenciar links" no dialog de share e em `/configuracoes`
+
+### Critérios de aceite
+
+- URL copiável com um clique (`/s/{token}`)
+- Revogar remove acesso imediato
+- Tokens nunca exibidos por completo
+- RLS: só tokens do `user_id`
+
+---
+
+## Onda 44 — Vistas salvas
+
+**Objetivo:** Promover **filtros salvos** de `/reunioes` para uma galeria dedicada — criar, renomear, excluir e abrir com um clique.
+
+**Estimativa:** 2–3 dias  
+**Depende de:** Onda 12 (filtros, `saved_views` em profiles)  
+**Branch sugerida:** `feat/onda-44-vistas`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/vistas` | Galeria de vistas salvas com preview dos filtros |
+| `/vistas/nova` | Criar vista manualmente ou duplicar existente |
+
+### Features
+
+#### 44.1 Backend
+
+- [ ] `lib/meetings/saved-views-hub.ts` — CRUD sobre `profiles.saved_views`
+- [ ] `PATCH /api/account` já suporta `saved_views` — estender validação se necessário
+
+#### 44.2 UI
+
+- [ ] Cards: nome · chips de filtros (status, tag, pasta, texto)
+- [ ] Ações: abrir em `/reunioes?…` · renomear · excluir
+- [ ] Empty state com link para `/reunioes`
+- [ ] Atalho "Gerenciar vistas" na filter bar
+
+### Critérios de aceite
+
+- Abrir vista aplica query params corretos
+- Excluir atualiza galeria e filter bar na próxima visita
+- Máximo 20 vistas por usuário
+- Vistas persistem em `profiles.saved_views`
+
+---
+
+## Onda 45 — Biblioteca de comentários
+
+**Objetivo:** Timeline **cross-meeting** dos comentários em timestamp (Onda 14) — voltar ao momento exato sem abrir cada reunião.
+
+**Estimativa:** 2–3 dias  
+**Depende de:** Onda 14 (`meeting_comments`), 35 (highlights library como referência)  
+**Branch sugerida:** `feat/onda-45-comentarios`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/comentarios` | Biblioteca de anotações com jump para timestamp |
+| `/comentarios?meeting=…` | Filtro por reunião |
+
+### Features
+
+#### 45.1 Data layer (`lib/meetings/comments-library.ts`)
+
+- [ ] `getCommentsLibrary()` — join comments + meetings, ordenado por `created_at`
+- [ ] Filtro opcional por `meeting_id`
+- [ ] Paginação/limit 100
+
+#### 45.2 UI (`components/comments/`)
+
+- [ ] Lista estilo `/destaques`: label · reunião · timestamp formatado
+- [ ] Link → `/reunioes/[id]?t={start_ms}`
+- [ ] Empty state ilustrado
+- [ ] Link desde detalhe da reunião ("Ver todos os comentários")
+
+### Critérios de aceite
+
+- Timestamp link abre reunião no trecho correto
+- Ordem cronológica decrescente (mais recentes primeiro)
+- RLS: só comentários de reuniões do usuário
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -2241,6 +2461,11 @@ flowchart LR
 | 54 | Dashboard de participação / talk-time | 38 |
 | 55 | Hub de integrações (`/integracoes`) | 39 |
 | 56 | Biblioteca de templates de análise | 40 |
+| 57 | Hub de prep (`/prep`) | 41 |
+| 58 | Registro de decisões (`/decisoes`) | 42 |
+| 59 | Links compartilhados (`/compartilhar`) | 43 |
+| 60 | Galeria de vistas salvas (`/vistas`) | 44 |
+| 61 | Biblioteca de comentários (`/comentarios`) | 45 |
 
 ---
 
