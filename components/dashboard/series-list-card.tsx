@@ -9,12 +9,19 @@ export function SeriesListCard({ series }: { series: MeetingSeries[] }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <ArrowsClockwise size={18} className="text-brand" />
-          Séries recorrentes
-        </CardTitle>
-        <CardDescription>Reuniões agrupadas pelo calendário</CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between gap-3">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ArrowsClockwise size={18} className="text-brand" />
+            Séries recorrentes
+          </CardTitle>
+          <CardDescription>Reuniões agrupadas pelo calendário</CardDescription>
+        </div>
+        {series.length > 0 && (
+          <Link href="/series" className="text-xs text-brand hover:underline">
+            Ver todas
+          </Link>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         {series.slice(0, 5).map((item) => (
