@@ -146,6 +146,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/destaques" || pathname.startsWith("/destaques/")) {
+    return {
+      href: "/destaques",
+      label: "Destaques",
+      description: "Momentos marcados nas reuniões",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
