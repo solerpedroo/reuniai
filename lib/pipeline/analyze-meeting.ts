@@ -13,6 +13,7 @@ import { createNotification } from "@/lib/notifications/create";
 import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
+import { meetingReviewHref } from "@/lib/meetings/post-call-review";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -55,7 +56,10 @@ export async function analyzeMeetingById(
 
   const transcript = segments.map((s) => `${s.speaker_label}: ${s.text}`).join("\n");
 
-  await admin.from("meetings").update({ status: "processing" }).eq("id", meetingId);
+  await admin
+    .from("meetings")
+    .update({ status: "processing", meeting_reviewed_at: null })
+    .eq("id", meetingId);
 
   try {
     const [templateId, profileRes] = await Promise.all([
@@ -131,8 +135,8 @@ export async function analyzeMeetingById(
       await createNotification(admin, {
         userId: meeting.user_id,
         title: "Reunião processada",
-        body: `O resumo e follow-up de "${meeting.title}" estão prontos.`,
-        href: `/reunioes/${meetingId}?tab=followup`,
+        body: `Revise atribuições, follow-up e compartilhamento de "${meeting.title}".`,
+        href: meetingReviewHref(meetingId),
         kind: "completed",
       });
       await sendMeetingCompletedEmail(admin, meetingId);
