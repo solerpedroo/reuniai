@@ -99,3 +99,44 @@ export async function upsertSpeakerMapping(
   if (error) throw error;
   return data as SpeakerMapping;
 }
+
+export async function deleteSpeakerMapping(
+  admin: AdminClient,
+  userId: string,
+  labelPattern: string
+): Promise<void> {
+  const { error } = await admin
+    .from("speaker_mappings")
+    .delete()
+    .eq("user_id", userId)
+    .eq("label_pattern", labelPattern.trim());
+
+  if (error) throw error;
+}
+
+export async function reapplySpeakerMappingsToRecentMeetings(
+  admin: AdminClient,
+  userId: string,
+  limit = 20
+): Promise<{ meetingsProcessed: number; segmentsUpdated: number }> {
+  const { data: meetings, error } = await admin
+    .from("meetings")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .order("started_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  let segmentsUpdated = 0;
+  for (const row of meetings ?? []) {
+    segmentsUpdated += await applySpeakerMappingsToMeeting(
+      admin,
+      (row as { id: string }).id,
+      userId
+    );
+  }
+
+  return { meetingsProcessed: meetings?.length ?? 0, segmentsUpdated };
+}
