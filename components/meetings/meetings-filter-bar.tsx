@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { BookmarkSimple, Funnel } from "@phosphor-icons/react";
@@ -216,6 +217,9 @@ export function MeetingsFilterBar({
         ))}
         <Button variant="ghost" size="sm" onClick={() => void saveView()}>
           Salvar vista atual
+        </Button>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/vistas">Gerenciar vistas</Link>
         </Button>
         <Button
           variant="ghost"
