@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, ChartLineUp } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, CalendarBlank, ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
+import { getDailyTimeline } from "@/lib/agenda/daily-timeline";
 import { AttentionCard } from "@/components/dashboard/attention-card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MeetingsChart } from "@/components/dashboard/meetings-chart";
@@ -22,13 +23,14 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts] =
+  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline] =
     await Promise.all([
       getDashboardData(supabase),
       getMeetingsWeeklyChart(supabase),
       getMeetingSeriesList(supabase),
       user ? getActivePrepCard(admin, user.id) : Promise.resolve(null),
       getInboxCounts(supabase),
+      getDailyTimeline(supabase),
     ]);
 
   const meetingTitleById = new Map(recentMeetings.map((m) => [m.id, m.title]));
@@ -43,6 +45,24 @@ export default async function HomePage() {
       />
 
       <KpiCards stats={stats} inboxCounts={inboxCounts} />
+
+      <Link
+        href="/agenda"
+        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
+      >
+        <div className="flex items-center gap-3">
+          <CalendarBlank size={20} className="text-brand" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">Resumo do seu dia</p>
+            <p className="text-xs text-muted-foreground">
+              {dayTimeline.entries.length > 0
+                ? `${dayTimeline.entries.length} item${dayTimeline.entries.length === 1 ? "" : "s"} na agenda de hoje`
+                : "Nenhum compromisso urgente — veja a agenda completa"}
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+      </Link>
 
       <Link
         href="/insights"
