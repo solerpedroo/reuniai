@@ -118,6 +118,7 @@ export type Database = {
           analysis_template: string | null;
           meeting_reviewed_at: string | null;
           review_snoozed_until: string | null;
+          personal_notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -142,6 +143,7 @@ export type Database = {
           analysis_template?: string | null;
           meeting_reviewed_at?: string | null;
           review_snoozed_until?: string | null;
+          personal_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -166,6 +168,7 @@ export type Database = {
           analysis_template?: string | null;
           meeting_reviewed_at?: string | null;
           review_snoozed_until?: string | null;
+          personal_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -192,6 +195,30 @@ export type Database = {
           name?: string;
           email?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      participant_notes: {
+        Row: {
+          id: string;
+          user_id: string;
+          participant_key: string;
+          body: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          participant_key: string;
+          body?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          participant_key?: string;
+          body?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
