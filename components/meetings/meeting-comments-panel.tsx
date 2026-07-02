@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useState } from "react";
 import { BookmarkSimple, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -70,9 +71,19 @@ export function MeetingCommentsPanel({
           <BookmarkSimple size={16} className="text-brand" />
           Notas na timeline
         </p>
-        <span className="text-xs text-muted-foreground font-mono">
-          {formatTimestamp(Math.round(currentTimeMs))}
-        </span>
+        <div className="flex items-center gap-2">
+          {comments.length > 0 && (
+            <Link
+              href={`/comentarios?meeting=${meetingId}`}
+              className="text-xs text-muted-foreground hover:text-brand"
+            >
+              Ver todos
+            </Link>
+          )}
+          <span className="text-xs text-muted-foreground font-mono">
+            {formatTimestamp(Math.round(currentTimeMs))}
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
