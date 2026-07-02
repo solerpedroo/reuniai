@@ -3,17 +3,15 @@
 import Link from "next/link";
 import {
   CalendarBlank,
-  CaretLeft,
-  CaretRight,
   CheckSquare,
   Sparkle,
   VideoCamera,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
+import { AgendaDateNav } from "@/components/agenda/agenda-date-nav";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import type { AgendaEntry, AgendaSection, DailyTimeline } from "@/lib/agenda/types";
-import { formatAgendaDateLabel, shiftAgendaDate } from "@/lib/agenda/types";
 import { cn } from "@/lib/utils";
 
 const SECTION_LABELS: Record<AgendaSection, string> = {
@@ -63,37 +61,15 @@ function groupBySection(entries: AgendaEntry[]): Map<AgendaSection, AgendaEntry[
 }
 
 export function DailyAgendaView({ timeline }: { timeline: DailyTimeline }) {
-  const dateLabel = formatAgendaDateLabel(
-    timeline.dateIso,
-    timeline.timezone,
-    timeline.todayIso
-  );
   const grouped = groupBySection(timeline.entries);
-  const prevDate = shiftAgendaDate(timeline.dateIso, -1);
-  const nextDate = shiftAgendaDate(timeline.dateIso, 1);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Agenda</p>
-          <h2 className="text-xl font-semibold capitalize">{dateLabel}</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/agenda?data=${prevDate}`}>
-              <CaretLeft size={14} />
-              Anterior
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/agenda?data=${nextDate}`}>
-              Próximo
-              <CaretRight size={14} />
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <AgendaDateNav
+        dateIso={timeline.dateIso}
+        todayIso={timeline.todayIso}
+        timezone={timeline.timezone}
+      />
 
       {timeline.entries.length === 0 ? (
         <EmptyState
