@@ -3,10 +3,12 @@ import "server-only";
 import {
   formatSharePermissionsSummaryFriendly,
   parseSharePermissions,
+  permissionsFromScope,
 } from "@/lib/meetings/share-permissions";
 import type { ShareLinkHubItem, ShareLinksHub, ShareLinkStatus } from "@/lib/meetings/share-hub-types";
 import { maskShareToken } from "@/lib/meetings/share-hub-types";
 import type { createClient } from "@/lib/supabase/server";
+import type { ShareScope } from "@/lib/workflow/types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -33,7 +35,7 @@ export async function getShareLinksHub(
 
   let query = supabase
     .from("share_tokens")
-    .select("id, meeting_id, token, permissions, expires_at, revoked_at, created_at, meetings(title)")
+    .select("id, meeting_id, token, scope, expires_at, revoked_at, created_at, meetings(title)")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -60,7 +62,8 @@ export async function getShareLinksHub(
     id: string;
     meeting_id: string;
     token: string;
-    permissions: unknown;
+    scope: ShareScope;
+    permissions?: unknown;
     expires_at: string;
     revoked_at: string | null;
     created_at: string;
@@ -72,7 +75,9 @@ export async function getShareLinksHub(
   const items: ShareLinkHubItem[] = (data ?? []).map((row) => {
     const typed = row as Row;
     const meeting = Array.isArray(typed.meetings) ? typed.meetings[0] : typed.meetings;
-    const permissions = parseSharePermissions(typed.permissions);
+    const permissions = parseSharePermissions(
+      typed.permissions ?? permissionsFromScope(typed.scope)
+    );
     const status = resolveStatus(typed.expires_at, typed.revoked_at, now);
 
     return {
