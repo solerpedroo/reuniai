@@ -7,6 +7,7 @@ import {
   CheckCircle,
   CheckSquare,
   ClipboardText,
+  ArrowsClockwise,
   Sparkle,
   VideoCamera,
 } from "@phosphor-icons/react";
@@ -14,7 +15,7 @@ import { WeekDateNav } from "@/components/review/week-date-nav";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import type { WeeklyReviewData } from "@/lib/review/weekly-review";
-import { formatHours } from "@/lib/meetings/types";
+import { formatHours, formatMeetingDate } from "@/lib/meetings/types";
 import { inboxHref } from "@/lib/meetings/action-items-inbox";
 
 function Panel({
@@ -241,6 +242,36 @@ export function WeeklyReviewView({ data }: { data: WeeklyReviewData }) {
               </ul>
             )}
           </Panel>
+
+          {data.activeSeries.length > 0 && (
+            <Panel
+              title="Séries recorrentes"
+              action={
+                <Link href="/series" className="text-xs text-brand hover:underline">
+                  Ver hub
+                </Link>
+              }
+            >
+              <ul className="space-y-2">
+                {data.activeSeries.map((item) => (
+                  <li key={item.recurringEventId}>
+                    <Link
+                      href={`/series/${encodeURIComponent(item.recurringEventId)}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2 transition-colors hover:border-brand/40 hover:bg-brand/5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.meetingCount} ocorrências · {formatMeetingDate(item.lastStartedAt)}
+                        </p>
+                      </div>
+                      <ArrowsClockwise size={16} className="shrink-0 text-brand" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
           <Panel title="Ações rápidas">
             <div className="flex flex-col gap-2">
