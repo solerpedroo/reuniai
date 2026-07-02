@@ -8,6 +8,11 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/notifications/queries";
+import {
+  getNotificationInbox,
+  NOTIFICATION_TAB_KINDS,
+  type NotificationInboxTab,
+} from "@/lib/notifications/inbox";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +30,16 @@ const DeleteSchema = z.union([
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const filter = request.nextUrl.searchParams.get("filter");
+  const tab = request.nextUrl.searchParams.get("tab") as NotificationInboxTab | null;
+  const unreadOnly = request.nextUrl.searchParams.get("filtro") === "nao-lidas";
+
+  if (tab && tab in NOTIFICATION_TAB_KINDS) {
+    const inbox = await getNotificationInbox(supabase, { tab, unreadOnly });
+    return NextResponse.json(inbox);
+  }
+
   const notifications = await getRecentNotifications(supabase, {
-    unreadOnly: filter === "unread",
+    unreadOnly: request.nextUrl.searchParams.get("filter") === "unread" || unreadOnly,
   });
   return NextResponse.json({ notifications });
 }
