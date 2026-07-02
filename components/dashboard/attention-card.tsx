@@ -15,9 +15,19 @@ export function AttentionCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Warning size={18} className="text-amber-500" aria-hidden />
-          <CardTitle>Precisa de atenção</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Warning size={18} className="text-amber-500" aria-hidden />
+            <CardTitle>Precisa de atenção</CardTitle>
+          </div>
+          {items.length > 0 && (
+            <Link
+              href="/tarefas"
+              className="text-xs font-medium text-brand hover:underline"
+            >
+              Ver todas
+            </Link>
+          )}
         </div>
         <CardDescription>Action items abertos, dos mais urgentes aos próximos.</CardDescription>
       </CardHeader>

@@ -5,7 +5,7 @@
 > UI: patterns de `case_agi` + design system **shadcn/ui Official** (design lab)
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
-**Última atualização:** junho 2026
+**Última atualização:** julho 2026
 
 ### Andamento das fases
 
@@ -23,7 +23,17 @@
 | 9 | Detalhe da reunião (UI completa) | ✅ Concluída |
 | 10 | Chat com IA (RAG) | ✅ Concluída |
 | 11 | Segurança, LGPD e polish | ✅ Concluída |
-| 12–19 | Ondas futuras (post-MVP) | 📋 Planejadas |
+| 12 | Descoberta e organização | ✅ Concluída |
+| 13 | Inteligência proativa | ✅ Concluída |
+| 14 | Colaboração e privacidade | ✅ Concluída |
+| 15 | Qualidade e personalização | ✅ Concluída |
+| 16 | Multi-plataforma enterprise | 🟡 Parcial (Outlook lib; Teams/Meet nativo pendente) |
+| 17 | Integrações e automações | ✅ Concluída |
+| 18 | Monetização e API | 📋 Planejada |
+| 19 | Escala e infra própria | 📋 Planejada |
+| **20** | **Inbox de compromissos** | ✅ Concluída |
+| 21 | Ritual pós-reunião | 📋 Planejada |
+| 22 | Centro de alertas | 📋 Planejada |
 
 ---
 
@@ -52,8 +62,11 @@
 21. [Onda 17 — Integrações e automações](#onda-17--integrações-e-automações)
 22. [Onda 18 — Monetização e API](#onda-18--monetização-e-api)
 23. [Onda 19 — Escala e infra própria](#onda-19--escala-e-infra-própria)
-24. [Variáveis de ambiente](#variáveis-de-ambiente)
-25. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+24. [Onda 20 — Inbox de compromissos](#onda-20--inbox-de-compromissos)
+25. [Onda 21 — Ritual pós-reunião](#onda-21--ritual-pós-reunião)
+26. [Onda 22 — Centro de alertas](#onda-22--centro-de-alertas)
+27. [Variáveis de ambiente](#variáveis-de-ambiente)
+28. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -73,6 +86,9 @@ flowchart TD
     O9 --> O10[Onda 10: Chat RAG]
     O10 --> O11[Onda 11: LGPD Polish]
     O11 --> O12[Onda 12: Fase 2]
+    O12 --> O20[Onda 20: Inbox]
+    O20 --> O21[Onda 21: Pós-call]
+    O21 --> O22[Onda 22: Alertas]
 ```
 
 | Onda | Nome | Duração | Depende de | Entrega principal |
@@ -89,7 +105,9 @@ flowchart TD
 | 9 | Detalhe UI | 3–4 dias | 8 | Abas completas |
 | 10 | Chat RAG | 3–4 dias | 8, 9 | Chat contextual |
 | 11 | LGPD Polish | 3–5 dias | 10 | MVP production-ready |
-| 12–19 | Ondas futuras | contínuo | 11 | Ver seção [Ondas futuras](#ondas-futuras--visão-geral) |
+| 12–17 | Fase 2 (produto) | contínuo | 11 | Ver seções 12–17 |
+| 18–19 | Plataforma / escala | contínuo | 17 | Billing, API, infra |
+| **20–22** | **Produto do dia a dia** | **2–4 sem** | **12–13** | **Inbox, pós-call, alertas** |
 
 ---
 
@@ -771,25 +789,28 @@ Mapeamento `meeting.status_change`:
 
 ## Ondas futuras — visão geral
 
-As ondas 0–11 entregam o **MVP monetizável**. As ondas 12–19 expandem valor, integrações e escala — **não bloqueiam o launch**. Priorizar por feedback de usuários e custo operacional.
+As ondas 0–11 entregam o **MVP monetizável**. As ondas **12–17** já estão em grande parte no código (busca, séries, prep, share, PDF, integrações). A prioridade atual é **fechar o loop de uso diário** (ondas 20–22) antes de monetização (18) e escala (19).
 
 ```mermaid
 flowchart LR
-    MVP[Ondas 0-11 MVP] --> F2[Fase 2: 12-15 Produto]
-    F2 --> F3[Fase 3: 16-18 Plataforma]
-    F3 --> F4[Fase 4: 19 Escala]
+    MVP[Ondas 0-11 MVP] --> F2[Ondas 12-17 Fase 2]
+    F2 --> DIA[Ondas 20-22 Dia a dia]
+    DIA --> F3[Ondas 18-19 Plataforma]
 ```
 
-| Onda | Fase | Tema | Prioridade sugerida |
-|------|------|------|---------------------|
-| 12 | Produto | Descoberta e organização | Alta — retorno imediato após MVP |
-| 13 | Produto | Inteligência proativa | Alta — diferencial vs Fireflies |
-| 14 | Produto | Colaboração e privacidade | Média — antes de share público |
-| 15 | Produto | Qualidade e personalização | Média — polish de IA |
-| 16 | Plataforma | Multi-plataforma enterprise | Média — Outlook/Teams nativo |
-| 17 | Plataforma | Integrações | Média — workflow do usuário |
-| 18 | Plataforma | Monetização e API | Alta — quando houver usuários pagantes |
-| 19 | Escala | Infra própria | Baixa — só com volume/custo |
+| Onda | Fase | Tema | Status |
+|------|------|------|--------|
+| 12 | Produto | Descoberta e organização | ✅ |
+| 13 | Produto | Inteligência proativa | ✅ |
+| 14 | Produto | Colaboração e privacidade | ✅ |
+| 15 | Produto | Qualidade e personalização | ✅ |
+| 16 | Plataforma | Multi-plataforma enterprise | 🟡 Parcial |
+| 17 | Plataforma | Integrações | ✅ |
+| **20** | **Dia a dia** | **Inbox de compromissos** | **✅** |
+| **21** | **Dia a dia** | **Ritual pós-reunião** | 📋 Próxima |
+| **22** | **Dia a dia** | **Centro de alertas** | 📋 Planejada |
+| 18 | Plataforma | Monetização e API | 📋 Após 20–22 |
+| 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
 **Features recomendadas originalmente** (distribuídas nas ondas abaixo):
 
@@ -1153,6 +1174,104 @@ flowchart LR
 
 ---
 
+## Onda 20 — Inbox de compromissos
+
+**Objetivo:** Um lugar único para triar e concluir action items de todas as reuniões — resposta diária à pergunta "o que preciso fazer?".
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 9 (action items), Onda 13 (sugestões de compromisso)  
+**Branch:** `feat/onda-20-inbox-compromissos`
+
+### Features
+
+#### 20.1 Página `/tarefas`
+
+- [x] Rota no shell com item de nav "Tarefas"
+- [x] Abas/filtros: **Hoje** · **Atrasados** · **Esta semana** · **Todos abertos** · **Sugestões IA**
+- [x] Lista com título, reunião de origem, responsável, prazo, badge de status
+- [x] Toggle concluir / reabrir inline (sem abrir detalhe da reunião)
+- [x] Link para `/reunioes/[id]` em cada item
+- [x] Edição inline de título, responsável e prazo
+- [x] Filtros avançados por reunião, responsável e tag
+- [x] `loading.tsx` com skeleton
+
+#### 20.2 Data layer (`lib/meetings/action-items-inbox.ts`)
+
+- [x] `getInboxActionItems(filter)` com join em `meetings.title`
+- [x] `getInboxCounts()` para badges nas abas
+- [x] Filtros por data local (hoje, atrasado, +7 dias)
+- [x] `parseInboxQuery` / `inboxHref` para deep links
+- [x] `getInboxFilterOptions` para selects de escopo
+
+#### 20.3 Integração com dashboard
+
+- [x] KPI "Action items abertos" linka para `/tarefas` (contextual: hoje vs todos)
+- [x] Card "Precisa de atenção" com link "Ver todas"
+
+#### 20.4 Sugestões em batch
+
+- [x] Aba "Sugestões IA" lista `status = suggested` de todas as reuniões
+- [x] Aceitar/rejeitar individual ou em lote via API existente
+
+### Critérios de aceite
+
+- Usuário zera pendências do dia sem abrir página de reunião individual
+- Contagens das abas batem com a lista exibida
+- RLS: usuário só vê próprios action items
+
+---
+
+## Onda 21 — Ritual pós-reunião
+
+**Objetivo:** Fluxo único "Fechar a call" em ~3 minutos após `status = completed`.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 20, Ondas 8–9, share (14), follow-up (13), export PDF
+
+### Features
+
+#### 21.1 Wizard "Revisar reunião"
+
+- [ ] Modal ou página guiada disparada ao concluir processamento
+- [ ] Passos: atribuições → resumo (opcional) → follow-up → compartilhar/exportar
+- [ ] Campo `meeting_reviewed_at` para não reaparecer
+- [ ] Badge "Revisar" na lista de reuniões
+
+### Critérios de aceite
+
+- Fluxo completo sem trocar de aba manualmente
+- Estado "revisado" persiste
+
+---
+
+## Onda 22 — Centro de alertas
+
+**Objetivo:** Notificações push e in-app nos momentos certos do dia.
+
+**Estimativa:** 1 semana  
+**Depende de:** Onda 13 (prep), Onda 20 (link para tarefas), `push_subscriptions` existente
+
+### Features
+
+#### 22.1 Eventos
+
+- [ ] Transcrição/resumo prontos
+- [ ] Meeting prep (~10 min antes)
+- [ ] Bot falhou ao entrar
+- [ ] Action items vencendo hoje (manhã, timezone do perfil)
+
+#### 22.2 Preferências e deep links
+
+- [ ] Granular em `/configuracoes` (`notification_prefs`)
+- [ ] Notificação abre reunião, prep ou `/tarefas`
+
+### Critérios de aceite
+
+- Push recebido em staging para cada tipo de evento
+- Sem spam (agrupamento quando aplicável)
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -1189,6 +1308,9 @@ flowchart LR
 | 30 | Desktop capture | 19 |
 | 31 | Workspaces / times | 19 |
 | 32 | SSO enterprise | 19 |
+| 33 | Inbox de compromissos (`/tarefas`) | 20 |
+| 34 | Ritual pós-reunião | 21 |
+| 35 | Centro de alertas proativos | 22 |
 
 ---
 
