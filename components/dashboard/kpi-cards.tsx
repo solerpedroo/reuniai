@@ -38,6 +38,7 @@ function buildKpis(stats: DashboardStats, inboxCounts: InboxCounts): Kpi[] {
       value: stats.hoursRecordedMs > 0 ? formatHours(stats.hoursRecordedMs) : "0h",
       detail: "Total processado",
       icon: Clock,
+      href: "/insights?period=30d",
     },
     {
       label: "Action items abertos",

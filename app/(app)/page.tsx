@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowRight, ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { AttentionCard } from "@/components/dashboard/attention-card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
@@ -41,6 +43,22 @@ export default async function HomePage() {
       />
 
       <KpiCards stats={stats} inboxCounts={inboxCounts} />
+
+      <Link
+        href="/insights"
+        className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
+      >
+        <div className="flex items-center gap-3">
+          <ChartLineUp size={20} className="text-brand" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">Ver insights completos</p>
+            <p className="text-xs text-muted-foreground">
+              Horas gravadas, decisões e participantes frequentes
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+      </Link>
 
       {prepCard && (
         <div className="mt-6">
