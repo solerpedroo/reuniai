@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
+import { ReviewBadge } from "@/components/meetings/review-badge";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Meeting } from "@/lib/supabase/types";
+import { needsPostCallReview } from "@/lib/meetings/post-call-review";
 import { formatDuration, formatMeetingDate, getMeetingDurationMs } from "@/lib/meetings/types";
 
 export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
@@ -52,9 +54,10 @@ export function RecentMeetingsTable({ meetings }: { meetings: Meeting[] }) {
                   <TableCell className="font-medium">
                     <Link
                       href={`/reunioes/${meeting.id}`}
-                      className="block truncate transition-colors group-hover:text-brand"
+                      className="flex min-w-0 items-center gap-2 transition-colors group-hover:text-brand"
                     >
-                      {meeting.title}
+                      <span className="truncate">{meeting.title}</span>
+                      {needsPostCallReview(meeting) && <ReviewBadge />}
                     </Link>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
