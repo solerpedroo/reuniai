@@ -8,6 +8,8 @@ import {
   notificationDedupeKey,
   prepNotificationHref,
 } from "@/lib/notifications/hrefs";
+import { getParticipantNoteSnippetsForPrep } from "@/lib/participants/context";
+import { normalizeEmail, participantKey } from "@/lib/participants/normalize";
 import { sendMeetingPrepEmail } from "@/lib/email/meeting-prep";
 import { getUserNotificationPrefs } from "@/lib/profile/notification-prefs";
 import type { MeetingPrepCard } from "@/lib/workflow/types";
@@ -54,11 +56,6 @@ export async function getActivePrepCard(
     ...card,
     meeting,
   };
-}
-
-function normalizeEmail(email: string | null | undefined): string | null {
-  if (!email) return null;
-  return email.trim().toLowerCase();
 }
 
 async function findRelatedMeeting(
@@ -152,6 +149,13 @@ export async function generatePrepForMeeting(
     relatedSummary: related.summary?.executive_summary,
     openActionItems: (openItems ?? []) as Pick<ActionItem, "title" | "assignee">[],
     participantOverlap: ((participants ?? []) as { name: string }[]).map((p) => p.name),
+    participantNotes: await getParticipantNoteSnippetsForPrep(
+      admin,
+      meeting.user_id,
+      ((participants ?? []) as { email: string | null; name: string }[]).map((p) =>
+        participantKey(p.email, p.name)
+      )
+    ),
   });
 
   const expiresAt = new Date(startsAt + 60 * 60_000).toISOString();
