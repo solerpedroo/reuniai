@@ -25,13 +25,16 @@ async function countOpenActionItemsDueToday(
 ): Promise<number> {
   const today = localDateIsoInTimezone(timezone);
 
+  const nowIso = new Date().toISOString();
+
   const { count, error } = await admin
     .from("action_items")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("status", "open")
     .not("due_date", "is", null)
-    .lte("due_date", today);
+    .lte("due_date", today)
+    .or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`);
 
   if (error) throw error;
   return count ?? 0;

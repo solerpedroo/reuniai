@@ -64,7 +64,12 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
 
   async function saveItem(
     item: InboxActionItem,
-    patch: { title?: string; assignee?: string | null; due_date?: string | null }
+    patch: {
+      title?: string;
+      assignee?: string | null;
+      due_date?: string | null;
+      priority?: InboxActionItem["priority"];
+    }
   ) {
     setBusy(true);
     try {
@@ -120,6 +125,58 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function snoozeItem(item: InboxActionItem, preset: "tomorrow" | "next_week") {
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/meetings/${item.meeting_id}/action-items/${item.id}/snooze`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preset }),
+        }
+      );
+      if (!res.ok) {
+        toast.error("Não foi possível adiar a tarefa.");
+        return;
+      }
+      router.refresh();
+      toast.success("Tarefa adiada.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearSnooze(item: InboxActionItem) {
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/meetings/${item.meeting_id}/action-items/${item.id}/snooze`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clear: true }),
+        }
+      );
+      if (!res.ok) {
+        toast.error("Não foi possível remover o adiamento.");
+        return;
+      }
+      router.refresh();
+      toast.success("Adiamento removido.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changePriority(
+    item: InboxActionItem,
+    priority: InboxActionItem["priority"]
+  ) {
+    const ok = await patchItem(item, { priority });
+    if (ok) toast.success(`Prioridade ${priority === "high" ? "alta" : priority === "low" ? "baixa" : "média"}.`);
   }
 
   return (
@@ -183,6 +240,9 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
                   onRejectSuggestion={async (target) => {
                     await runSuggestions("reject", [target]);
                   }}
+                  onSnooze={snoozeItem}
+                  onClearSnooze={clearSnooze}
+                  onPriorityChange={changePriority}
                 />
               ))}
             </ul>
