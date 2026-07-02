@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { DownloadSimple, NotionLogo } from "@phosphor-icons/react";
+import { DownloadSimple, NotionLogo, Spinner } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,13 +25,62 @@ import { Switch } from "@/components/ui/switch";
 
 type ExportFormat = "md" | "json" | "pdf";
 
+function parseFilename(contentDisposition: string | null, fallback: string): string {
+  if (!contentDisposition) return fallback;
+
+  const utfMatch = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+  if (utfMatch?.[1]) {
+    try {
+      return decodeURIComponent(utfMatch[1]);
+    } catch {
+      return utfMatch[1];
+    }
+  }
+
+  const plainMatch = /filename="([^"]+)"/i.exec(contentDisposition);
+  if (plainMatch?.[1]) return plainMatch[1];
+
+  return fallback;
+}
+
 export function ExportMeetingButton({ meetingId }: { meetingId: string }) {
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<ExportFormat>("md");
   const [redact, setRedact] = useState(true);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const [notionLoading, setNotionLoading] = useState(false);
 
   const exportUrl = `/api/meetings/${meetingId}/export?format=${format}&redact=${redact ? "1" : "0"}`;
+
+  async function downloadExport() {
+    setDownloadLoading(true);
+    try {
+      const res = await fetch(exportUrl, { credentials: "same-origin" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Falha ao exportar");
+      }
+
+      const blob = await res.blob();
+      const fallback = `reuniao.${format}`;
+      const filename = parseFilename(res.headers.get("Content-Disposition"), fallback);
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+
+      toast.success(
+        format === "pdf" ? "PDF baixado com sucesso" : `Arquivo ${format.toUpperCase()} baixado`
+      );
+      setOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao exportar");
+    } finally {
+      setDownloadLoading(false);
+    }
+  }
 
   async function exportToNotion() {
     setNotionLoading(true);
@@ -55,20 +106,19 @@ export function ExportMeetingButton({ meetingId }: { meetingId: string }) {
           Exportar
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="overflow-hidden border-brand/15 sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Exportar reunião</DialogTitle>
           <DialogDescription>
-            Baixe resumo, atribuições e transcrição. Redação de PII recomendada para compartilhar
-            externamente.
+            Baixe resumo, atribuições e transcrição. O PDF segue a identidade visual do ReuniAI.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-sm font-medium">Formato</p>
+            <Label htmlFor="export-format">Formato</Label>
             <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)}>
-              <SelectTrigger>
+              <SelectTrigger id="export-format">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -79,20 +129,35 @@ export function ExportMeetingButton({ meetingId }: { meetingId: string }) {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium">Redigir dados sensíveis</p>
-              <p className="text-xs text-muted-foreground">
-                Emails, CPF, telefones e similares viram [REDACTED]
-              </p>
-            </div>
+          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border/70 bg-muted/20 px-3 py-3 transition-colors hover:bg-muted/35">
+            <span className="space-y-0.5">
+              <span className="block text-sm font-medium">Esconder dados pessoais</span>
+              <span className="block text-xs text-muted-foreground">
+                E-mails, telefones e documentos sensíveis são redigidos no arquivo.
+              </span>
+            </span>
             <Switch checked={redact} onCheckedChange={setRedact} />
-          </div>
+          </label>
+        </div>
 
-          <Button className="w-full" asChild onClick={() => setOpen(false)}>
-            <a href={exportUrl} download>
-              Baixar {format.toUpperCase()}
-            </a>
+        <DialogFooter className="gap-2 sm:flex-col">
+          <Button
+            className="w-full"
+            variant="brand"
+            disabled={downloadLoading}
+            onClick={() => void downloadExport()}
+          >
+            {downloadLoading ? (
+              <>
+                <Spinner size={16} className="animate-spin" />
+                Gerando arquivo…
+              </>
+            ) : (
+              <>
+                <DownloadSimple size={16} className="mr-1.5" />
+                Baixar {format.toUpperCase()}
+              </>
+            )}
           </Button>
 
           <Button
@@ -104,7 +169,7 @@ export function ExportMeetingButton({ meetingId }: { meetingId: string }) {
             <NotionLogo size={14} className="mr-1.5" />
             {notionLoading ? "Exportando…" : "Exportar para Notion"}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
