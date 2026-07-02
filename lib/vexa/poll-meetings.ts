@@ -12,6 +12,7 @@ import {
 } from "@/lib/vexa/meeting-state";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import { scheduleBotBranding } from "@/lib/vexa/branding";
+import type { VexaMeeting } from "@/lib/vexa/client";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -24,6 +25,25 @@ export type PollMeetingsSummary = {
 
 function meetingKey(platform: string, nativeMeetingId: string): string {
   return `${platform}:${nativeMeetingId}`;
+}
+
+function resolvePollFailureReason(
+  vexaMeeting: VexaMeeting | null | undefined,
+  vexaStatus: string
+): string | null {
+  if (vexaStatus !== "failed") return null;
+
+  const data = vexaMeeting?.data;
+  if (data && typeof data === "object") {
+    for (const key of ["reason", "error", "failure_reason", "message"] as const) {
+      const value = data[key];
+      if (typeof value === "string" && value.trim()) {
+        return value.trim();
+      }
+    }
+  }
+
+  return "O bot encerrou com falha no provedor de transcrição.";
 }
 
 /**
@@ -109,6 +129,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       vexaStatus,
       endTime: vexaMeeting?.end_time,
       startTime: vexaMeeting?.start_time ?? meeting.started_at,
+      reason: resolvePollFailureReason(vexaMeeting, vexaStatus),
     });
     if (result.updated) updated += 1;
 
