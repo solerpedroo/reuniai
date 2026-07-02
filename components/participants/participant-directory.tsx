@@ -116,9 +116,17 @@ export function ParticipantDirectory({ participants, search, sort }: Participant
                       className="block font-medium text-foreground hover:text-brand"
                     >
                       {participant.displayName}
+                      {participant.hasNotes && (
+                        <span className="ml-2 text-xs font-normal text-brand">· notas</span>
+                      )}
                     </Link>
                     {participant.email && (
                       <p className="truncate text-xs text-muted-foreground">{participant.email}</p>
+                    )}
+                    {participant.notePreview && (
+                      <p className="mt-1 line-clamp-1 text-xs text-muted-foreground italic">
+                        {participant.notePreview}
+                      </p>
                     )}
                   </td>
                   <td className="hidden px-4 py-3 sm:table-cell">{participant.meetingCount}</td>
