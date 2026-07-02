@@ -1,4 +1,5 @@
 import type { SharePermissions } from "@/lib/meetings/share-permissions";
+import type { NotificationKind } from "@/lib/notifications/kinds";
 
 export type ShareScope = "summary_only" | "full_transcript";
 
@@ -60,6 +61,8 @@ export type NotificationPrefs = {
   prep: boolean;
   completed: boolean;
   digest: boolean;
+  bot_failed: boolean;
+  tasks_due: boolean;
 };
 
 export type AppNotification = {
@@ -68,6 +71,7 @@ export type AppNotification = {
   title: string;
   body: string;
   href: string | null;
+  kind: NotificationKind | null;
   read_at: string | null;
   created_at: string;
 };
