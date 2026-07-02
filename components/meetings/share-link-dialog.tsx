@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Copy, Globe, LinkSimple, ShieldCheck, Trash } from "@phosphor-icons/react";
+import { useCallback, useMemo, useState } from "react";
+import { Copy, Globe, LinkSimple, ShieldCheck, Sparkle, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -20,12 +21,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { ShareScope } from "@/lib/workflow/types";
+import {
+  DEFAULT_SHARE_PERMISSIONS,
+  formatSharePermissionsSummary,
+  hasShareableContent,
+  normalizeSharePermissions,
+  SHARE_PERMISSION_FIELDS,
+  SHARE_PERMISSION_PRESETS,
+  type SharePermissions,
+} from "@/lib/meetings/share-permissions";
+import { cn } from "@/lib/utils";
 
 type ShareTokenRow = {
   id: string;
   token: string;
-  scope: ShareScope;
+  permissions: SharePermissions;
   expires_at: string;
   created_at: string;
 };
@@ -37,13 +47,34 @@ const EXPIRY_OPTIONS = [
   { value: "30", label: "30 dias" },
 ] as const;
 
+type PresetKey = keyof typeof SHARE_PERMISSION_PRESETS;
+
+function permissionsMatchPreset(
+  permissions: SharePermissions,
+  preset: SharePermissions
+): boolean {
+  return SHARE_PERMISSION_FIELDS.every(({ key }) => permissions[key] === preset[key]);
+}
+
 export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
   const [open, setOpen] = useState(false);
-  const [scope, setScope] = useState<ShareScope>("summary_only");
+  const [permissions, setPermissions] = useState<SharePermissions>({
+    ...DEFAULT_SHARE_PERMISSIONS,
+  });
   const [days, setDays] = useState("7");
   const [redactPii, setRedactPii] = useState(true);
   const [tokens, setTokens] = useState<ShareTokenRow[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const activePreset = useMemo((): PresetKey | null => {
+    for (const [key, preset] of Object.entries(SHARE_PERMISSION_PRESETS) as [
+      PresetKey,
+      (typeof SHARE_PERMISSION_PRESETS)[PresetKey],
+    ][]) {
+      if (permissionsMatchPreset(permissions, preset.permissions)) return key;
+    }
+    return null;
+  }, [permissions]);
 
   const loadTokens = useCallback(async () => {
     const res = await fetch(`/api/meetings/${meetingId}/share`);
@@ -51,14 +82,33 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
     if (res.ok) setTokens(data.tokens ?? []);
   }, [meetingId]);
 
+  const setPermission = useCallback((key: keyof SharePermissions, checked: boolean) => {
+    setPermissions((current) =>
+      normalizeSharePermissions({
+        ...current,
+        [key]: checked,
+      })
+    );
+  }, []);
+
+  const applyPreset = useCallback((preset: PresetKey) => {
+    setPermissions({ ...SHARE_PERMISSION_PRESETS[preset].permissions });
+  }, []);
+
   const createLink = useCallback(async () => {
+    const normalized = normalizeSharePermissions(permissions);
+    if (!hasShareableContent(normalized)) {
+      toast.error("Selecione ao menos um conteúdo para compartilhar");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`/api/meetings/${meetingId}/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scope,
+          permissions: normalized,
           days: Number.parseInt(days, 10),
           redact_pii: redactPii,
         }),
@@ -73,7 +123,7 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [meetingId, scope, days, redactPii, loadTokens]);
+  }, [meetingId, permissions, days, redactPii, loadTokens]);
 
   const revoke = useCallback(
     async (tokenId: string) => {
@@ -110,57 +160,103 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
           Compartilhar
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Link público de compartilhamento</DialogTitle>
           <DialogDescription>
-            Qualquer pessoa com o link pode ver o resumo e a transcrição (conforme o escopo),
-            sem precisar de conta. Recursos de IA exigem cadastro no ReuniAI.
+            Escolha exatamente o que quem receber o link poderá ver. Recursos de IA continuam
+            disponíveis apenas para quem criar conta.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
             <Globe size={18} className="mt-0.5 shrink-0 text-brand" />
             <p className="text-xs text-muted-foreground">
-              Links públicos permitem visualizar resumo, tópicos, decisões e atribuições.
-              Chat com IA, gravação e exportações ficam disponíveis apenas para usuários
-              cadastrados.
+              O link é público e não exige login. Chat com IA, gravação, busca semântica e
+              exportações avançadas ficam reservados para usuários cadastrados.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">O que compartilhar</p>
-              <Select value={scope} onValueChange={(v) => setScope(v as ShareScope)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="summary_only">Resumo e atribuições</SelectItem>
-                  <SelectItem value="full_transcript">Resumo + transcrição completa</SelectItem>
-                </SelectContent>
-              </Select>
+          <section className="space-y-3">
+            <div>
+              <p className="text-sm font-medium">O que incluir no link</p>
+              <p className="text-xs text-muted-foreground">
+                Use um atalho ou marque seção por seção
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">Validade do link</p>
-              <Select value={days} onValueChange={setDays}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EXPIRY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap gap-2">
+              {(Object.entries(SHARE_PERMISSION_PRESETS) as [
+                PresetKey,
+                (typeof SHARE_PERMISSION_PRESETS)[PresetKey],
+              ][]).map(([key, preset]) => (
+                <Button
+                  key={key}
+                  type="button"
+                  size="sm"
+                  variant={activePreset === key ? "default" : "outline"}
+                  className="h-8"
+                  onClick={() => applyPreset(key)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
             </div>
+
+            <ul className="space-y-2 rounded-lg border border-border/60 p-3">
+              {SHARE_PERMISSION_FIELDS.map(({ key, label, description, requiresTranscript }) => {
+                const disabled = requiresTranscript && !permissions.transcript;
+                const checked = permissions[key];
+
+                return (
+                  <li key={key}>
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-md px-1 py-1.5 transition-colors",
+                        disabled ? "cursor-not-allowed opacity-50" : "hover:bg-muted/40"
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={disabled}
+                        onCheckedChange={(value) => setPermission(key, value === true)}
+                        className="mt-0.5"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium leading-tight">{label}</span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {description}
+                        </span>
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Validade do link</p>
+            <Select value={days} onValueChange={setDays}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPIRY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <Button onClick={createLink} disabled={loading} className="w-full">
+          <Button
+            onClick={createLink}
+            disabled={loading || !hasShareableContent(permissions)}
+            className="w-full"
+          >
             Gerar link público
           </Button>
 
@@ -177,6 +273,14 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
             <Switch checked={redactPii} onCheckedChange={setRedactPii} />
           </div>
 
+          <div className="flex items-start gap-2 rounded-lg border border-brand/20 bg-brand/5 px-3 py-2">
+            <Sparkle size={18} className="mt-0.5 shrink-0 text-brand" />
+            <p className="text-xs text-muted-foreground">
+              Quem abrir o link verá um convite para criar conta e usar IA — chat, follow-up e
+              busca inteligente não são liberados no link público.
+            </p>
+          </div>
+
           {tokens.length > 0 && (
             <ul className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Links ativos</p>
@@ -187,7 +291,7 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">
-                      {token.scope === "full_transcript" ? "Completo" : "Resumo"} · Público
+                      {formatSharePermissionsSummary(token.permissions)} · Público
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Expira{" "}
