@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   isNavActive,
   NAV_ACCOUNT_ITEMS,
+  NAV_LIBRARY_ITEMS,
   NAV_PRIMARY_ITEMS,
   type NavItem,
 } from "@/components/shell/nav-config";
@@ -38,6 +39,14 @@ export function AppSidebar({
           items={NAV_PRIMARY_ITEMS}
           pathname={pathname}
           onNavigate={onNavigate}
+        />
+
+        <SidebarNavSection
+          label="Biblioteca"
+          items={NAV_LIBRARY_ITEMS}
+          pathname={pathname}
+          onNavigate={onNavigate}
+          className="mt-5 border-t border-sidebar-border/80 pt-4"
         />
 
         <SidebarNavSection
