@@ -70,6 +70,7 @@ type MeetingReviewWizardProps = {
   followUp: MeetingFollowUp | null;
   llmEnabled: boolean;
   forceOpen?: boolean;
+  participantEmails?: string[];
 };
 
 export function MeetingReviewWizard({
@@ -79,6 +80,7 @@ export function MeetingReviewWizard({
   followUp,
   llmEnabled,
   forceOpen = false,
+  participantEmails = [],
 }: MeetingReviewWizardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -219,6 +221,7 @@ export function MeetingReviewWizard({
                     meetingId={meeting.id}
                     initialFollowUp={followUp}
                     llmEnabled={llmEnabled}
+                    participantEmails={participantEmails}
                   />
                 )}
 
