@@ -143,7 +143,11 @@ export async function analyzeMeetingById(
         href: completedNotificationHref(meetingId),
         dedupeKey: notificationDedupeKey("completed", [meetingId]),
       });
-      await sendMeetingCompletedEmail(admin, meetingId);
+      try {
+        await sendMeetingCompletedEmail(admin, meetingId);
+      } catch (err) {
+        console.error("Falha ao enviar email de reunião concluída (não bloqueante):", err);
+      }
       await suggestAndApplyTags(admin, meetingId);
       await dispatchMeetingCompleted(admin, meetingId);
     } catch (err) {
