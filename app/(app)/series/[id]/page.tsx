@@ -72,11 +72,11 @@ export default async function SeriesPage({
   return (
     <div>
       <Link
-        href="/"
+        href="/series"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft size={14} />
-        Voltar ao dashboard
+        Todas as séries
       </Link>
 
       <PageHeader
