@@ -3,6 +3,7 @@ import {
   Gear,
   House,
   UserCircle,
+  UsersThree,
   VideoCamera,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
@@ -32,6 +33,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Tarefas",
     description: "Action items de todas as reuniões",
     icon: CheckSquare,
+  },
+  {
+    href: "/participantes",
+    label: "Participantes",
+    description: "Pessoas com quem você se reuniu",
+    icon: UsersThree,
   },
 ];
 
@@ -66,6 +73,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/tarefas" || pathname.startsWith("/tarefas?")) {
     return NAV_ITEMS.find((item) => item.href === "/tarefas") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/participantes" || pathname.startsWith("/participantes/")) {
+    return NAV_ITEMS.find((item) => item.href === "/participantes") ?? NAV_ITEMS[0];
   }
 
   const exact = NAV_ITEMS.find((item) => item.href === pathname);
