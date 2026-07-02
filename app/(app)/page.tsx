@@ -15,6 +15,8 @@ import { getDashboardData, getMeetingsWeeklyChart } from "@/lib/meetings/queries
 import { getMeetingSeriesList } from "@/lib/series/queries";
 import { ReviewQueueHomeCard } from "@/components/review/review-queue-home-card";
 import { WeeklyReviewHomeCard } from "@/components/review/weekly-review-home-card";
+import { HighlightsHomeCard } from "@/components/highlights/highlights-home-card";
+import { getHighlightsLibrary } from "@/lib/meetings/highlights-library";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
 import { getWeeklyReview } from "@/lib/review/weekly-review";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -27,7 +29,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline, reviewCounts, weeklyReview] =
+  const [{ stats, recentMeetings, attentionItems }, chartData, series, prepCard, inboxCounts, dayTimeline, reviewCounts, weeklyReview, highlightsLibrary] =
     await Promise.all([
       getDashboardData(supabase),
       getMeetingsWeeklyChart(supabase),
@@ -37,6 +39,7 @@ export default async function HomePage() {
       getDailyTimeline(supabase),
       getReviewQueueCounts(supabase),
       getWeeklyReview(supabase),
+      getHighlightsLibrary(supabase, { limit: 1 }),
     ]);
 
   const meetingTitleById = new Map(recentMeetings.map((m) => [m.id, m.title]));
@@ -59,6 +62,8 @@ export default async function HomePage() {
           weeklyReview.unreviewedMeetings.length + weeklyReview.overdueTasks.length
         }
       />
+
+      <HighlightsHomeCard count={highlightsLibrary.total} />
 
       <Link
         href="/agenda"
