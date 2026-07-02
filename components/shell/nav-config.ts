@@ -1,5 +1,6 @@
 import {
   CalendarBlank,
+  CalendarCheck,
   ChartLineUp,
   CheckSquare,
   ClipboardText,
@@ -36,6 +37,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Revisar",
     description: "Fila de reuniões pendentes de fechamento",
     icon: ClipboardText,
+  },
+  {
+    href: "/semana",
+    label: "Semana",
+    description: "Revisão semanal e plano da próxima semana",
+    icon: CalendarCheck,
   },
   {
     href: "/reunioes",
@@ -106,6 +113,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/revisar" || pathname.startsWith("/revisar?")) {
     return NAV_ITEMS.find((item) => item.href === "/revisar") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/semana" || pathname.startsWith("/semana?")) {
+    return NAV_ITEMS.find((item) => item.href === "/semana") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
