@@ -69,6 +69,11 @@ export function InsightsDashboard({ insights }: { insights: PeriodInsights }) {
             {option.label}
           </Button>
         ))}
+        {insights.period === "7d" && (
+          <Button variant="outline" size="sm" asChild className="ml-auto">
+            <Link href="/semana">Ver revisão completa</Link>
+          </Button>
+        )}
       </div>
 
       {empty ? (
