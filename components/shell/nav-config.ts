@@ -128,6 +128,24 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/series" || pathname.startsWith("/series/")) {
+    return {
+      href: "/series",
+      label: "Séries",
+      description: "Reuniões recorrentes e comparador",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
+  if (pathname === "/compare" || pathname.startsWith("/compare?")) {
+    return {
+      href: "/compare",
+      label: "Comparar reuniões",
+      description: "Diff entre duas ocorrências",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
