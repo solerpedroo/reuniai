@@ -20,6 +20,7 @@ export type Database = {
           notification_prefs: Json;
           saved_views: Json;
           last_weekly_digest_at: string | null;
+          last_tasks_due_reminder_at: string | null;
           locale: string;
           default_analysis_template: string;
           created_at: string;
@@ -35,6 +36,7 @@ export type Database = {
           notification_prefs?: Json;
           saved_views?: Json;
           last_weekly_digest_at?: string | null;
+          last_tasks_due_reminder_at?: string | null;
           locale?: string;
           default_analysis_template?: string;
           created_at?: string;
@@ -50,6 +52,7 @@ export type Database = {
           notification_prefs?: Json;
           saved_views?: Json;
           last_weekly_digest_at?: string | null;
+          last_tasks_due_reminder_at?: string | null;
           locale?: string;
           default_analysis_template?: string;
           created_at?: string;
@@ -814,6 +817,8 @@ export type Database = {
           title: string;
           body: string;
           href: string | null;
+          kind: string | null;
+          dedupe_key: string | null;
           read_at: string | null;
           created_at: string;
         };
@@ -823,6 +828,8 @@ export type Database = {
           title: string;
           body: string;
           href?: string | null;
+          kind?: string | null;
+          dedupe_key?: string | null;
           read_at?: string | null;
           created_at?: string;
         };
@@ -832,6 +839,8 @@ export type Database = {
           title?: string;
           body?: string;
           href?: string | null;
+          kind?: string | null;
+          dedupe_key?: string | null;
           read_at?: string | null;
           created_at?: string;
         };
