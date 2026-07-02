@@ -508,6 +508,7 @@ export type Database = {
           user_id: string;
           token: string;
           scope: Database["public"]["Enums"]["share_scope"];
+          permissions: Json;
           expires_at: string;
           revoked_at: string | null;
           redact_pii: boolean;
@@ -519,6 +520,7 @@ export type Database = {
           user_id: string;
           token?: string;
           scope?: Database["public"]["Enums"]["share_scope"];
+          permissions?: Json;
           expires_at: string;
           revoked_at?: string | null;
           redact_pii?: boolean;
@@ -530,6 +532,7 @@ export type Database = {
           user_id?: string;
           token?: string;
           scope?: Database["public"]["Enums"]["share_scope"];
+          permissions?: Json;
           expires_at?: string;
           revoked_at?: string | null;
           redact_pii?: boolean;
