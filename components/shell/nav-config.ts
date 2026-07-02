@@ -1,4 +1,10 @@
-import { CheckSquare, Gear, House, UserCircle, VideoCamera } from "@phosphor-icons/react/dist/ssr";
+import {
+  CheckSquare,
+  Gear,
+  House,
+  UserCircle,
+  VideoCamera,
+} from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
 export type NavItem = {
@@ -8,7 +14,7 @@ export type NavItem = {
   icon: Icon;
 };
 
-export const NAV_ITEMS: NavItem[] = [
+export const NAV_PRIMARY_ITEMS: NavItem[] = [
   {
     href: "/",
     label: "Visão geral",
@@ -27,6 +33,9 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Action items de todas as reuniões",
     icon: CheckSquare,
   },
+];
+
+export const NAV_ACCOUNT_ITEMS: NavItem[] = [
   {
     href: "/perfil",
     label: "Meu perfil",
@@ -40,6 +49,8 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Gear,
   },
 ];
+
+export const NAV_ITEMS: NavItem[] = [...NAV_PRIMARY_ITEMS, ...NAV_ACCOUNT_ITEMS];
 
 export { PRODUCT } from "@/lib/brand/config";
 
@@ -64,4 +75,9 @@ export function getNavItem(pathname: string): NavItem {
     (item) => item.href !== "/" && pathname.startsWith(`${item.href}/`)
   );
   return nested ?? NAV_ITEMS[0];
+}
+
+export function isNavActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
