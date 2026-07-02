@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   ChartLineUp,
   ChatCircleDots,
+  ChatsCircle,
   CheckSquare,
   ClipboardText,
   EnvelopeSimple,
@@ -129,6 +130,12 @@ export const NAV_LIBRARY_ITEMS: NavItem[] = [
     icon: MagnifyingGlass,
   },
   {
+    href: "/assistente",
+    label: "Assistente",
+    description: "Perguntas em linguagem natural cross-meeting",
+    icon: ChatsCircle,
+  },
+  {
     href: "/follow-ups",
     label: "Follow-ups",
     description: "Rascunhos e envios pendentes",
@@ -230,12 +237,7 @@ export function getNavItem(pathname: string): NavItem {
   }
 
   if (pathname === "/assistente" || pathname.startsWith("/assistente?")) {
-    return {
-      href: "/assistente",
-      label: "Assistente",
-      description: "Chat cross-meeting com citações",
-      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
-    };
+    return findLibraryNav("/assistente") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/notificacoes" || pathname.startsWith("/notificacoes?")) {
