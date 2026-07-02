@@ -41,11 +41,11 @@
 | **28** | **Fila de revisão em batch** | ✅ Concluída |
 | **29** | **Revisão semanal in-app** | ✅ Concluída |
 | **30** | **Contexto relacional e notas** | ✅ Concluída |
-| **31** | **Command palette inteligente** | 📋 Próxima |
-| **32** | **Follow-up transacional por email** | 📋 |
-| **33** | **Hub global de speakers** | 📋 |
-| **34** | **Séries recorrentes acionáveis** | 📋 |
-| **35** | **Biblioteca de highlights** | 📋 |
+| **31** | **Command palette inteligente** | ✅ Concluída |
+| **32** | **Follow-up transacional por email** | ✅ Concluída |
+| **33** | **Hub global de speakers** | ✅ Concluída |
+| **34** | **Séries recorrentes acionáveis** | ✅ Concluída |
+| **35** | **Biblioteca de highlights** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
