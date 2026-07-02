@@ -46,11 +46,11 @@
 | **33** | **Hub global de speakers** | ✅ Concluída |
 | **34** | **Séries recorrentes acionáveis** | ✅ Concluída |
 | **35** | **Biblioteca de highlights** | ✅ Concluída |
-| **36** | **Assistente global** | 📋 Próxima |
-| **37** | **Centro de notificações** | 📋 |
-| **38** | **Participação e talk-time** | 📋 |
-| **39** | **Hub de integrações** | 📋 |
-| **40** | **Templates de análise** | 📋 |
+| **36** | **Assistente global** | ✅ Concluída |
+| **37** | **Centro de notificações** | ✅ Concluída |
+| **38** | **Participação e talk-time** | ✅ Concluída |
+| **39** | **Hub de integrações** | ✅ Concluída |
+| **40** | **Templates de análise** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -888,11 +888,11 @@ flowchart LR
 | **33** | **Valor pessoal** | **Hub de speakers** | **✅** |
 | **34** | **Valor pessoal** | **Séries acionáveis** | **✅** |
 | **35** | **Valor pessoal** | **Biblioteca de highlights** | **✅** |
-| **36** | **Valor pessoal** | **Assistente global** | **📋 Próxima** |
-| **37** | **Valor pessoal** | **Centro de notificações** | **📋** |
-| **38** | **Valor pessoal** | **Participação / talk-time** | **📋** |
-| **39** | **Valor pessoal** | **Hub de integrações** | **📋** |
-| **40** | **Valor pessoal** | **Templates de análise** | **📋** |
+| **36** | **Valor pessoal** | **Assistente global** | **✅** |
+| **37** | **Valor pessoal** | **Centro de notificações** | **✅** |
+| **38** | **Valor pessoal** | **Participação / talk-time** | **✅** |
+| **39** | **Valor pessoal** | **Hub de integrações** | **✅** |
+| **40** | **Valor pessoal** | **Templates de análise** | **✅** |
 | 18 | Plataforma | Stripe + API REST + MCP | ⏸️ Postergada |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
 
