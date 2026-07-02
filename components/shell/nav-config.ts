@@ -1,15 +1,19 @@
 import {
   BookmarkSimple,
+  Books,
   CalendarBlank,
   CalendarCheck,
   ChartLineUp,
   ChatCircleDots,
   CheckSquare,
   ClipboardText,
+  EnvelopeSimple,
   Gavel,
   Gear,
   House,
   LinkSimple,
+  MagnifyingGlass,
+  NotePencil,
   UserCircle,
   UsersThree,
   VideoCamera,
@@ -74,8 +78,14 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
   },
 ];
 
-/** Ondas 41–45 — bibliotecas e hubs cross-meeting. */
+/** Ondas 41–50 — bibliotecas e hubs cross-meeting. */
 export const NAV_LIBRARY_ITEMS: NavItem[] = [
+  {
+    href: "/biblioteca",
+    label: "Biblioteca",
+    description: "Porta de entrada para prep, notas e busca",
+    icon: Books,
+  },
   {
     href: "/prep",
     label: "Prep",
@@ -101,10 +111,28 @@ export const NAV_LIBRARY_ITEMS: NavItem[] = [
     icon: ChatCircleDots,
   },
   {
+    href: "/notas",
+    label: "Notas",
+    description: "Diário pessoal por reunião",
+    icon: NotePencil,
+  },
+  {
     href: "/compartilhar",
     label: "Compartilhar",
     description: "Links read-only ativos e revogados",
     icon: LinkSimple,
+  },
+  {
+    href: "/busca",
+    label: "Busca",
+    description: "Pesquisar título e transcrições",
+    icon: MagnifyingGlass,
+  },
+  {
+    href: "/follow-ups",
+    label: "Follow-ups",
+    description: "Rascunhos e envios pendentes",
+    icon: EnvelopeSimple,
   },
 ];
 
@@ -255,6 +283,22 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/comentarios" || pathname.startsWith("/comentarios?")) {
     return findLibraryNav("/comentarios") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/notas" || pathname.startsWith("/notas?")) {
+    return findLibraryNav("/notas") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/biblioteca" || pathname.startsWith("/biblioteca")) {
+    return findLibraryNav("/biblioteca") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/follow-ups" || pathname.startsWith("/follow-ups?")) {
+    return findLibraryNav("/follow-ups") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/busca" || pathname.startsWith("/busca?")) {
+    return findLibraryNav("/busca") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/templates" || pathname.startsWith("/templates/")) {

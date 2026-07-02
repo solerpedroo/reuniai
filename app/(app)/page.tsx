@@ -66,6 +66,8 @@ export default async function HomePage() {
 
       <HighlightsHomeCard count={highlightsLibrary.total} />
 
+      <LibraryHomeCard />
+
       <Link
         href="/prep"
         className="surface-card mt-4 flex items-center justify-between gap-3 p-4 transition-colors hover:border-brand/30"
