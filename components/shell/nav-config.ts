@@ -1,4 +1,5 @@
 import {
+  CalendarBlank,
   ChartLineUp,
   CheckSquare,
   Gear,
@@ -22,6 +23,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Visão geral",
     description: "Resumo e indicadores das suas reuniões",
     icon: House,
+  },
+  {
+    href: "/agenda",
+    label: "Agenda",
+    description: "Seu dia em ordem cronológica",
+    icon: CalendarBlank,
   },
   {
     href: "/reunioes",
@@ -84,6 +91,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/participantes" || pathname.startsWith("/participantes/")) {
     return NAV_ITEMS.find((item) => item.href === "/participantes") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/agenda" || pathname.startsWith("/agenda?")) {
+    return NAV_ITEMS.find((item) => item.href === "/agenda") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
