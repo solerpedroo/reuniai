@@ -6,7 +6,7 @@
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
 **Última atualização:** julho 2026  
-**Foco atual:** uso pessoal — valor de produto antes de monetização (Onda 18 postergada).
+**Foco atual:** uso pessoal — lote 7 (Ondas 46–50): bibliotecas, descoberta e fechamento do loop pós-call. Monetização (Onda 18) postergada.
 
 ### Andamento das fases
 
@@ -56,6 +56,11 @@
 | **43** | **Links compartilhados** | ✅ Concluída |
 | **44** | **Vistas salvas** | ✅ Concluída |
 | **45** | **Biblioteca de comentários** | ✅ Concluída |
+| **46** | **Biblioteca de notas pessoais** | ✅ Concluída |
+| **47** | **Comparador acionável** | ✅ Concluída |
+| **48** | **Hub de biblioteca** | ✅ Concluída |
+| **49** | **Busca semântica avançada** | ✅ Concluída |
+| **50** | **Hub de follow-ups** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -112,8 +117,13 @@
 47. [Onda 43 — Links compartilhados](#onda-43--links-compartilhados)
 48. [Onda 44 — Vistas salvas](#onda-44--vistas-salvas)
 49. [Onda 45 — Biblioteca de comentários](#onda-45--biblioteca-de-comentários)
-50. [Variáveis de ambiente](#variáveis-de-ambiente)
-51. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+50. [Onda 46 — Biblioteca de notas pessoais](#onda-46--biblioteca-de-notas-pessoais)
+51. [Onda 47 — Comparador acionável](#onda-47--comparador-acionável)
+52. [Onda 48 — Hub de biblioteca](#onda-48--hub-de-biblioteca)
+53. [Onda 49 — Busca semântica avançada](#onda-49--busca-semântica-avançada)
+54. [Onda 50 — Hub de follow-ups](#onda-50--hub-de-follow-ups)
+55. [Variáveis de ambiente](#variáveis-de-ambiente)
+56. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -160,6 +170,11 @@ flowchart TD
     O14 --> O43[Onda 43: Share hub]
     O12 --> O44[Onda 44: Vistas]
     O14 --> O45[Onda 45: Comentários]
+    O30 --> O46[Onda 46: Notas pessoais]
+    O34 --> O47[Onda 47: Compare]
+    O45 --> O48[Onda 48: Hub biblioteca]
+    O12 --> O49[Onda 49: Busca avançada]
+    O32 --> O50[Onda 50: Follow-ups hub]
     O30 -.-> O18[Onda 18: Monetização]
 ```
 
@@ -184,7 +199,8 @@ flowchart TD
 | **28–30** | **Valor pessoal (lote 3)** | **2–3 sem** | **21, 23, 27** | **Fila de revisão, revisão semanal, notas** |
 | **31–35** | **Valor pessoal (lote 4)** | **2–3 sem** | **28–30** | **Navegação, email, speakers, séries, highlights** |
 | **36–40** | **Valor pessoal (lote 5)** | **✅ Concluído** | **31–35** | **Assistente, alertas, talk-time, integrações, templates** |
-| **41–45** | **Valor pessoal (lote 6)** | **3–4 sem** | **13–14, 25, 30** | **Prep hub, decisões, share, vistas, comentários** |
+| **41–45** | **Valor pessoal (lote 6)** | **✅ Concluído** | **13–14, 25, 30** | **Prep hub, decisões, share, vistas, comentários** |
+| **46–50** | **Valor pessoal (lote 7)** | **✅ Concluído** | **30–34, 12, 32** | **Notas, compare, descoberta, busca, follow-ups** |
 | 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 30+ | ⏸️ Postergada — uso pessoal |
 | 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
@@ -2400,6 +2416,206 @@ flowchart LR
 
 ---
 
+## Onda 46 — Biblioteca de notas pessoais
+
+**Objetivo:** Timeline **cross-meeting** das notas privadas por reunião (Onda 30) — hoje só acessíveis na aba do detalhe. Complementa `/comentarios` (notas na timeline) com o diário pessoal do usuário.
+
+**Estimativa:** 2–3 dias  
+**Depende de:** Onda 30 (`meetings.personal_notes`), 45 (padrão de biblioteca)  
+**Branch sugerida:** `feat/onda-46-notas`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/notas` | Biblioteca de reuniões com nota pessoal preenchida |
+| `/notas?q=…` | Busca client-side no texto da nota |
+
+### Features
+
+#### 46.1 Data layer (`lib/meetings/personal-notes-library.ts`)
+
+- [x] `getPersonalNotesLibrary()` — reuniões com `personal_notes` não vazio
+- [x] Preview truncado (primeiras ~120 chars) + título e data
+- [x] Ordenação por `updated_at` da reunião (mais recentes primeiro)
+- [x] Limit 100
+
+#### 46.2 UI (`components/notes/`)
+
+- [x] Lista estilo `/comentarios`: preview · reunião · data
+- [x] Link → `/reunioes/[id]?tab=notas` (ou anchor da aba)
+- [x] Busca local por texto
+- [x] Empty state com link para `/reunioes`
+- [x] Link "Ver todas as notas" na aba de notas pessoais do detalhe
+
+### Critérios de aceite
+
+- Só reuniões do usuário com nota não vazia
+- Preview não exibe nota completa na listagem (clique abre detalhe)
+- RLS via `meetings.user_id`
+- Notas nunca aparecem em share links (já garantido por permissions Onda 14)
+
+---
+
+## Onda 47 — Comparador acionável
+
+**Objetivo:** Tornar `/compare` **utilizável sem URLs manuais** — seletor de duas reuniões, atalho desde séries, diff legível de decisões e action items.
+
+**Estimativa:** 3–4 dias  
+**Depende de:** Onda 34 (séries), 17 (`lib/series/compare.ts`, `/api/compare`)  
+**Branch sugerida:** `feat/onda-47-compare`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/compare` | Seletor A/B + resultado side-by-side |
+| `/compare?a=…&b=…` | Deep link (mantém compatibilidade atual) |
+| `/series/[id]` | CTA "Comparar últimas duas ocorrências" |
+
+### Features
+
+#### 47.1 Data layer
+
+- [x] `lib/meetings/compare-picker.ts` — listar reuniões elegíveis (completed, mesma série opcional)
+- [x] Reutilizar `compareMeetings()` existente em `lib/series/compare.ts`
+
+#### 47.2 UI (`components/compare/`)
+
+- [x] Dois selects/combobox com busca por título
+- [x] Atalho "últimas 2 da série" quando `?series=…`
+- [x] Cards diff: decisões adicionadas/removidas · action items novos/concluídos · participantes
+- [x] Empty state quando A ou B ausente — instruções + picker
+- [x] Link desde `/series/[id]` e card em `/series`
+
+### Critérios de aceite
+
+- Comparar duas reuniões completed sem editar URL manualmente
+- Diff renderiza em < 2s para reuniões típicas
+- Links profundos `?a=&b=` continuam funcionando
+- RLS: só reuniões do usuário
+
+---
+
+## Onda 48 — Hub de biblioteca
+
+**Objetivo:** Página **porta de entrada** para todas as bibliotecas cross-meeting — hoje espalhadas e só descobertas via ⌘K ou links contextuais. Secção "Biblioteca" na sidebar.
+
+**Estimativa:** 2–3 dias  
+**Depende de:** Ondas 35–45, 40–41 (páginas já existentes)  
+**Branch sugerida:** `feat/onda-48-biblioteca`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/biblioteca` | Grid de cards: destaques, comentários, decisões, notas, vistas, templates, assistente… |
+| Sidebar | Grupo `NAV_LIBRARY_ITEMS` abaixo dos itens primários |
+
+### Features
+
+#### 48.1 Config (`components/shell/nav-config.ts`)
+
+- [x] `NAV_LIBRARY_ITEMS` — href, label, description, icon, badge opcional (contagem)
+- [x] `getNavItem()` para `/biblioteca` e rotas filhas
+- [x] Sidebar renderiza grupo colapsável "Biblioteca"
+
+#### 48.2 UI (`components/library/`)
+
+- [x] `LibraryHubView` — cards com contagem (ex.: "12 destaques", "3 vistas")
+- [x] Agregar contagens leves server-side (`Promise.all` de counts)
+- [x] Ordem: Prep · Decisões · Destaques · Comentários · Notas · Vistas · Templates · Assistente · Compartilhar
+- [x] Link desde home (card "Explorar biblioteca")
+
+### Critérios de aceite
+
+- Todas as rotas de biblioteca acessíveis em ≤ 2 cliques a partir da sidebar
+- Contagens refletem dados reais (ou "—" se zero)
+- Mobile: grupo biblioteca colapsável sem poluir nav primária
+- Nenhuma duplicação de lógica de fetch — só counts + links
+
+---
+
+## Onda 49 — Busca semântica avançada
+
+**Objetivo:** Evoluir `/busca` de resultados brutos para **ferramenta de descoberta** — filtros temporais, pasta, série, modo semântico vs textual, indicador quando embeddings indisponíveis.
+
+**Estimativa:** 3–4 dias  
+**Depende de:** Onda 12 (`transcript_embeddings`, RPC `match_transcript_embeddings`), 44 (padrão de filtros)  
+**Branch sugerida:** `feat/onda-49-busca`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/busca?q=…` | Resultados com filtros aplicados |
+| `/busca?q=…&period=30d&pasta=…&modo=semantico` | Query params de filtro |
+
+### Features
+
+#### 49.1 Data layer (`lib/search/global-search.ts`)
+
+- [x] Estender `searchMeetings()` com `period`, `folderId`, `seriesId`, `mode: semantic | text`
+- [x] Fallback gracioso para busca textual quando embeddings ausentes
+- [x] Highlight do trecho matched (snippet com `…`)
+
+#### 49.2 UI (`components/search/`)
+
+- [x] Barra de filtros: período · pasta · série · toggle semântico/textual
+- [x] Badge "busca semântica indisponível" quando sem `EMBEDDINGS_API_KEY`
+- [x] Resultados agrupados por reunião; link com `?t=` quando segmento encontrado
+- [x] Empty state com sugestões (ex.: "tente modo textual")
+- [x] Entrada na sidebar (grupo Biblioteca) e destaque no `/biblioteca`
+
+### Critérios de aceite
+
+- Filtro de período restringe resultados corretamente
+- Modo semântico usa RPC quando configurado; textual sempre funciona
+- Latência p95 ≤ 3s com 100 reuniões indexadas
+- RLS: só transcrições do usuário
+
+---
+
+## Onda 50 — Hub de follow-ups
+
+**Objetivo:** Fila **cross-meeting** de follow-ups pendentes — rascunho pronto mas não enviado, enviado mas ritual incompleto, ou marcado na fila de revisão (Ondas 28/32).
+
+**Estimativa:** 3–4 dias  
+**Depende de:** Onda 32 (`meeting_follow_ups`, Resend), 28 (`follow_up_done_at`, review queue)  
+**Branch sugerida:** `feat/onda-50-follow-ups`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/follow-ups` | Lista de pendências com status e ações |
+| `/follow-ups?status=pendente` | Filtro: rascunho · enviado · concluído |
+
+### Features
+
+#### 50.1 Data layer (`lib/follow-ups/hub.ts`)
+
+- [x] `getFollowUpsHub()` — join `meeting_follow_ups` + `meetings`
+- [x] Status derivado: `draft` · `sent` · `done` (via `sent_at`, `follow_up_done_at`)
+- [x] KPIs: total pendente · enviados esta semana · taxa de conclusão
+
+#### 50.2 UI (`components/follow-ups/`)
+
+- [x] Cards: reunião · assunto · preview do body · badges de status
+- [x] Ações: abrir reunião (aba follow-up) · reenviar · marcar concluído
+- [x] Empty state celebratório quando fila zerada
+- [x] Link desde `/revisar` e KPI na home
+- [x] Respeitar `RESEND_API_KEY` ausente — CTA copiar/`mailto:` como fallback
+
+### Critérios de aceite
+
+- Pendências ordenadas por urgência (revisão queue primeiro, depois mais antigas)
+- Marcar concluído sincroniza com `follow_up_done_at` da reunião
+- Envio reutiliza API existente `POST /api/meetings/[id]/follow-up/send`
+- RLS: só follow-ups de reuniões do usuário
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -2466,6 +2682,11 @@ flowchart LR
 | 59 | Links compartilhados (`/compartilhar`) | 43 |
 | 60 | Galeria de vistas salvas (`/vistas`) | 44 |
 | 61 | Biblioteca de comentários (`/comentarios`) | 45 |
+| 62 | Biblioteca de notas pessoais (`/notas`) | 46 |
+| 63 | Comparador acionável (`/compare`) | 47 |
+| 64 | Hub de biblioteca + nav secundária (`/biblioteca`) | 48 |
+| 65 | Busca semântica avançada (`/busca`) | 49 |
+| 66 | Hub de follow-ups (`/follow-ups`) | 50 |
 
 ---
 
