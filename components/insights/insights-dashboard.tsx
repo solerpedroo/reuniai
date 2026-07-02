@@ -79,6 +79,9 @@ export function InsightsDashboard({ insights }: { insights: PeriodInsights }) {
             <Link href="/participacao">Ver participação</Link>
           </Button>
         )}
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/decisoes">Ver decisões</Link>
+        </Button>
       </div>
 
       {empty ? (
