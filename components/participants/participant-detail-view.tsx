@@ -69,6 +69,15 @@ export function ParticipantDetailView({ participant, initialNoteBody }: Particip
         </Card>
       </div>
 
+      {participant.email && (
+        <p className="mb-6 text-sm text-muted-foreground">
+          <a href="/speakers" className="text-brand hover:underline">
+            Gerenciar mapeamento de speaker
+          </a>{" "}
+          para melhorar transcrições com este participante.
+        </p>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="surface-card">
           <CardHeader>
