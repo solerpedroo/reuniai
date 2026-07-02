@@ -1,19 +1,25 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarBlank, CheckSquare } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, CalendarBlank, CheckSquare, Microphone } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/meetings/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ParticipantNotesEditor } from "@/components/participants/participant-notes-editor";
+import type { ParticipantTalkTimeSummary } from "@/lib/insights/talk-time-types";
 import type { ParticipantDetail } from "@/lib/participants/directory";
 import { formatMeetingDate } from "@/lib/meetings/types";
 
 type ParticipantDetailViewProps = {
   participant: ParticipantDetail;
   initialNoteBody: string;
+  talkTimeSummary: ParticipantTalkTimeSummary | null;
 };
 
-export function ParticipantDetailView({ participant, initialNoteBody }: ParticipantDetailViewProps) {
+export function ParticipantDetailView({
+  participant,
+  initialNoteBody,
+  talkTimeSummary,
+}: ParticipantDetailViewProps) {
   return (
     <div>
       <div className="mb-6">
@@ -50,6 +56,27 @@ export function ParticipantDetailView({ participant, initialNoteBody }: Particip
             </div>
             <Button size="sm" asChild>
               <Link href={`/reunioes/${participant.nextScheduledMeeting.id}`}>Ver reunião</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {talkTimeSummary && (
+        <Card className="surface-card mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Microphone size={18} className="text-brand" aria-hidden />
+              Participação em reuniões
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              ~{talkTimeSummary.avgPercent}% do tempo de fala em{" "}
+              {talkTimeSummary.meetingCount} reunião
+              {talkTimeSummary.meetingCount === 1 ? "" : "ões"} (90 dias)
+            </p>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/participacao">Ver dashboard</Link>
             </Button>
           </CardContent>
         </Card>
