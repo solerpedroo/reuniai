@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import type { NotificationPrefs } from "@/lib/workflow/types";
+import { MAX_SAVED_VIEWS } from "@/lib/meetings/saved-views-types";
 import { ANALYSIS_TEMPLATE_IDS } from "@/lib/analysis/template-types";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/profile/notification-prefs";
 import { USER_LOCALES } from "@/lib/profile/locale";
@@ -79,6 +80,12 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (parsed.data.saved_views) {
+    if (parsed.data.saved_views.length > MAX_SAVED_VIEWS) {
+      return NextResponse.json(
+        { error: `Máximo de ${MAX_SAVED_VIEWS} vistas salvas` },
+        { status: 400 }
+      );
+    }
     updates.saved_views = parsed.data.saved_views as Database["public"]["Tables"]["profiles"]["Update"]["saved_views"];
   }
 
