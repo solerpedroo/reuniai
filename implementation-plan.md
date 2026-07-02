@@ -37,7 +37,7 @@
 | **24** | **Pastas e organização** | ✅ Concluída |
 | **25** | **Insights e tendências in-app** | ✅ Concluída |
 | **26** | **Prioridade e snooze na inbox** | ✅ Concluída |
-| **27** | **Agenda do dia unificada** | 📋 Planejada |
+| **27** | **Agenda do dia unificada** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
