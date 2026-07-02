@@ -38,9 +38,14 @@
 | **25** | **Insights e tendências in-app** | ✅ Concluída |
 | **26** | **Prioridade e snooze na inbox** | ✅ Concluída |
 | **27** | **Agenda do dia unificada** | ✅ Concluída |
-| **28** | **Fila de revisão em batch** | 📋 Próxima |
-| **29** | **Revisão semanal in-app** | 📋 |
-| **30** | **Contexto relacional e notas** | 📋 |
+| **28** | **Fila de revisão em batch** | ✅ Concluída |
+| **29** | **Revisão semanal in-app** | ✅ Concluída |
+| **30** | **Contexto relacional e notas** | ✅ Concluída |
+| **31** | **Command palette inteligente** | 📋 Próxima |
+| **32** | **Follow-up transacional por email** | 📋 |
+| **33** | **Hub global de speakers** | 📋 |
+| **34** | **Séries recorrentes acionáveis** | 📋 |
+| **35** | **Biblioteca de highlights** | 📋 |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -82,8 +87,13 @@
 32. [Onda 28 — Fila de revisão em batch](#onda-28--fila-de-revisão-em-batch)
 33. [Onda 29 — Revisão semanal in-app](#onda-29--revisão-semanal-in-app)
 34. [Onda 30 — Contexto relacional e notas](#onda-30--contexto-relacional-e-notas)
-35. [Variáveis de ambiente](#variáveis-de-ambiente)
-36. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
+35. [Onda 31 — Command palette inteligente](#onda-31--command-palette-inteligente)
+36. [Onda 32 — Follow-up transacional por email](#onda-32--follow-up-transacional-por-email)
+37. [Onda 33 — Hub global de speakers](#onda-33--hub-global-de-speakers)
+38. [Onda 34 — Séries recorrentes acionáveis](#onda-34--séries-recorrentes-acionáveis)
+39. [Onda 35 — Biblioteca de highlights](#onda-35--biblioteca-de-highlights)
+40. [Variáveis de ambiente](#variáveis-de-ambiente)
+41. [Critérios de aceite do MVP](#critérios-de-aceite-do-mvp)
 
 ---
 
@@ -114,6 +124,12 @@ flowchart TD
     O27 --> O28[Onda 28: Fila de revisão]
     O28 --> O29[Onda 29: Revisão semanal]
     O29 --> O30[Onda 30: Contexto relacional]
+    O30 --> O31[Onda 31: Command palette]
+    O31 --> O32[Onda 32: Follow-up email]
+    O30 --> O33[Onda 33: Speakers hub]
+    O29 --> O34[Onda 34: Séries acionáveis]
+    O33 --> O34
+    O34 --> O35[Onda 35: Highlights]
     O30 -.-> O18[Onda 18: Monetização]
 ```
 
@@ -136,6 +152,7 @@ flowchart TD
 | **23–25** | **Valor pessoal (lote 1)** | **2–3 sem** | **20–22** | **Participantes, pastas, insights** |
 | **26–27** | **Valor pessoal (lote 2)** | **1–2 sem** | **20, 25** | **Snooze, agenda do dia** |
 | **28–30** | **Valor pessoal (lote 3)** | **2–3 sem** | **21, 23, 27** | **Fila de revisão, revisão semanal, notas** |
+| **31–35** | **Valor pessoal (lote 4)** | **2–3 sem** | **28–30** | **Navegação, email, speakers, séries, highlights** |
 | 18 | Monetização (Stripe, API, MCP) | 2–3 sem | 30+ | ⏸️ Postergada — uso pessoal |
 | 19 | Escala / infra | 3–6 meses | 18 | Self-hosted, orgs, SSO |
 
@@ -1739,6 +1756,185 @@ flowchart LR
 
 ---
 
+## Onda 31 — Command palette inteligente
+
+**Objetivo:** Transformar `Ctrl+K` de lista estática de páginas em **hub de navegação e ação** — encontrar reuniões, tarefas, participantes e atalhos operacionais sem trocar de contexto.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Ondas 20 (tarefas), 23 (participantes), 28 (fila `/revisar`), 27 (agenda)  
+**Branch sugerida:** `feat/onda-31-command-palette`
+
+### Features
+
+#### 31.1 Data layer (`lib/command/search.ts`)
+
+- [ ] `searchCommandPalette()` — busca paralela em reuniões (título), action items abertos, participantes (nome/email)
+- [ ] Atalhos contextuais quando query vazia ou match por keyword: "revisar", "agenda", "tarefas"
+- [ ] Limite 5 resultados por categoria; dedupe por `href`
+
+#### 31.2 API
+
+- [ ] `GET /api/command-search?q=` — autenticado; resposta `{ results: CommandSearchHit[] }`
+- [ ] Debounce no client (300ms); abort de requests anteriores
+
+#### 31.3 UI (`components/shell/command-palette.tsx`)
+
+- [ ] Grupos dinâmicos: Reuniões · Tarefas · Participantes · Ações · Navegação
+- [ ] Ícones por tipo (VideoCamera, CheckSquare, UsersThree, etc.)
+- [ ] Fallback para busca global (`/busca?q=`) quando termo longo sem hits
+- [ ] Loading skeleton inline durante fetch
+
+### Critérios de aceite
+
+- Buscar título de reunião abre detalhe em ≤2 teclas após `Ctrl+K`
+- Tarefa aberta aparece nos resultados e linka para `/tarefas` ou reunião
+- Participante linka para `/participantes/[key]`
+- Atalho "Revisar pendências" aparece quando fila > 0
+- Sem vazamento cross-user (RLS)
+
+---
+
+## Onda 32 — Follow-up transacional por email
+
+**Objetivo:** Fechar o loop pós-reunião com **envio de follow-up via Resend** — além de copiar/`mailto:` (Onda 28), permitir enviar direto pelo app com confirmação de destinatários.
+
+**Estimativa:** 1 semana  
+**Depende de:** Ondas 13 (draft), 21 (wizard), 28 (`follow_up_done_at`, mailto)  
+**Branch sugerida:** `feat/onda-32-follow-up-email`
+
+### Features
+
+#### 32.1 Schema
+
+- [ ] Colunas `sent_at` timestamptz nullable e `sent_to` text[] em `meeting_follow_ups`
+- [ ] RLS inalterada
+
+#### 32.2 Backend
+
+- [ ] `lib/meetings/follow-up-send.ts` — monta HTML/texto, valida destinatários, chama `sendEmail`
+- [ ] `POST /api/meetings/[id]/follow-up/send` — body `{ to: string[], subject, body }`; ownership + draft existente
+- [ ] Graceful degrade quando `RESEND_API_KEY` ausente (400 com mensagem clara)
+
+#### 32.3 UI
+
+- [ ] `FollowUpSendDialog` — seleção de destinatários (checkboxes a partir de participantes + manual)
+- [ ] Botão **Enviar por email** em `FollowUpTab` e passo inline da fila `/revisar`
+- [ ] Badge **Enviado em {data}** quando `sent_at` preenchido
+- [ ] Confirmação antes de enviar; toast de sucesso/erro
+
+### Critérios de aceite
+
+- Email enviado registra `sent_at` e `sent_to`
+- Reenvio permitido (atualiza `sent_at`)
+- Sem envio para emails fora da allowlist de dev (`lib/email/config`)
+- RLS + ownership verificados
+
+---
+
+## Onda 33 — Hub global de speakers
+
+**Objetivo:** Gerenciar mapeamentos **Speaker 1 → nome real** fora do wizard pós-call — hub dedicado + vínculo com participantes conhecidos.
+
+**Estimativa:** 1 semana  
+**Depende de:** Ondas 15 (schema `speaker_mappings`), 23 (participantes), 30 (contexto relacional)  
+**Branch sugerida:** `feat/onda-33-speakers-hub`
+
+### Features
+
+#### 33.1 API global
+
+- [ ] `GET /api/speaker-mappings` — lista mappings do usuário
+- [ ] `POST /api/speaker-mappings` — upsert mapping
+- [ ] `DELETE /api/speaker-mappings/[pattern]` — remove mapping
+
+#### 33.2 Página `/speakers`
+
+- [ ] Lista de mappings: padrão (ex. "Speaker 1") → nome exibido + email vinculado opcional
+- [ ] Formulário inline para adicionar/editar
+- [ ] Botão **Reaplicar em reuniões recentes** (últimas 20 completed)
+
+#### 33.3 Integrações
+
+- [ ] Link "Gerenciar speakers" no detalhe do participante quando houver email
+- [ ] Entrada no command palette (`Ctrl+K`)
+
+### Critérios de aceite
+
+- Mapping global persiste e reaplica em nova reunião no ingest
+- Reaplicar atualiza `transcript_segments` das reuniões selecionadas
+- UI consistente com design system (`surface-card`, Phosphor)
+
+---
+
+## Onda 34 — Séries recorrentes acionáveis
+
+**Objetivo:** Tornar standups/syncs **visíveis e acionáveis** — hub de séries, diff de tópicos e comparador integrados ao ritual semanal.
+
+**Estimativa:** 1 semana  
+**Depende de:** Ondas 12 (séries), 17 (compare), 29 (revisão semanal)  
+**Branch sugerida:** `feat/onda-34-series-hub`
+
+### Features
+
+#### 34.1 Página `/series`
+
+- [ ] Lista séries com 2+ ocorrências (`getMeetingSeriesList`)
+- [ ] Card: título, contagem, última ocorrência, link para `/series/[id]`
+- [ ] Atalho **Comparar últimas duas** → `/compare?a=&b=`
+
+#### 34.2 Integrações
+
+- [ ] Card **Séries recorrentes** na home (top 3 por recência)
+- [ ] Seção na `/semana`: séries com pendências ou diff recente
+- [ ] Melhorar `/series/[id]`: CTA compare + link para hub
+
+#### 34.3 Navegação
+
+- [ ] Entrada em nav secundária ou command palette
+- [ ] `getNavItem` para `/series` e `/compare`
+
+### Critérios de aceite
+
+- Usuário encontra série recorrente sem URL manual
+- Compare abre com parâmetros corretos
+- Diff de tópicos visível na página da série
+
+---
+
+## Onda 35 — Biblioteca de highlights
+
+**Objetivo:** View cross-meeting de **momentos marcados** — bookmarks de timestamp reunidos em uma biblioteca navegável.
+
+**Estimativa:** 3–5 dias  
+**Depende de:** Onda 15 (`meeting_highlights`), Onda 9 (detalhe)  
+**Branch sugerida:** `feat/onda-35-highlights-library`
+
+### Features
+
+#### 35.1 Data layer (`lib/meetings/highlights-library.ts`)
+
+- [ ] `getHighlightsLibrary()` — highlights do usuário com join meeting (título, data)
+- [ ] Ordenação default: mais recente primeiro; filtro opcional por reunião
+
+#### 35.2 Página `/destaques`
+
+- [ ] Lista/card por highlight: trecho, speaker, timestamp, reunião de origem
+- [ ] Click → `/reunioes/[id]?t={ms}` (seek na transcrição)
+- [ ] Empty state quando nenhum highlight
+
+#### 35.3 Integrações
+
+- [ ] Entrada no command palette e link na home quando count > 0
+- [ ] Contagem no card da home
+
+### Critérios de aceite
+
+- Highlight criado no detalhe aparece em `/destaques` em ≤5s (refresh)
+- Deep link abre reunião no timestamp correto
+- RLS: apenas highlights de reuniões do usuário
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -1790,6 +1986,11 @@ flowchart LR
 | 44 | Notas de participante | 30 |
 | 45 | Notas pessoais por reunião | 30 |
 | 46 | Contexto relacional na agenda/prep | 30 |
+| 47 | Command palette inteligente | 31 |
+| 48 | Follow-up transacional (Resend) | 32 |
+| 49 | Hub global de speakers | 33 |
+| 50 | Hub de séries + compare integrado | 34 |
+| 51 | Biblioteca de highlights cross-meeting | 35 |
 
 ---
 
