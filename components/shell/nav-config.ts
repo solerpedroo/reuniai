@@ -164,6 +164,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/notificacoes" || pathname.startsWith("/notificacoes?")) {
+    return {
+      href: "/notificacoes",
+      label: "Notificações",
+      description: "Inbox de alertas e histórico",
+      icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
