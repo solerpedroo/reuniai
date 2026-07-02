@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, MagnifyingGlass, VideoCamera } from "@phosphor-icons/react";
 import { BotActions } from "@/components/meetings/bot-actions";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
@@ -39,6 +39,11 @@ export function MeetingsDataTable({
 }) {
   const [search, setSearch] = useState(initialQuery);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const router = useRouter();
+
+  function openMeeting(meetingId: string) {
+    router.push(`/reunioes/${meetingId}`);
+  }
 
   const filtered = useMemo(() => {
     if (searchMode || serverFiltered) {
@@ -128,16 +133,23 @@ export function MeetingsDataTable({
               filtered.map((meeting) => (
                 <TableRow
                   key={meeting.id}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Abrir reunião ${meeting.title}`}
                   className="group cursor-pointer transition-colors hover:bg-brand/5"
+                  onClick={() => openMeeting(meeting.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openMeeting(meeting.id);
+                    }
+                  }}
                 >
                   <TableCell className="font-medium">
-                    <Link
-                      href={`/reunioes/${meeting.id}`}
-                      className="block max-w-[28ch] transition-colors group-hover:text-brand"
-                    >
+                    <div className="block max-w-[28ch] transition-colors group-hover:text-brand">
                       <span className="truncate">{meeting.title}</span>
                       <MeetingTagBadges tags={meeting.tags} />
-                    </Link>
+                    </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatMeetingDate(meeting.started_at)}
@@ -151,7 +163,10 @@ export function MeetingsDataTable({
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-muted-foreground">
                     {formatDuration(getMeetingDurationMs(meeting))}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell
+                    className="text-right"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <BotActions meetingId={meeting.id} status={meeting.status} />
                   </TableCell>
                 </TableRow>
