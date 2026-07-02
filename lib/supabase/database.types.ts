@@ -268,6 +268,8 @@ export type Database = {
           due_date: string | null;
           status: Database["public"]["Enums"]["action_item_status"];
           source: Database["public"]["Enums"]["action_item_source"];
+          priority: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -280,6 +282,8 @@ export type Database = {
           due_date?: string | null;
           status?: Database["public"]["Enums"]["action_item_status"];
           source?: Database["public"]["Enums"]["action_item_source"];
+          priority?: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -292,6 +296,8 @@ export type Database = {
           due_date?: string | null;
           status?: Database["public"]["Enums"]["action_item_status"];
           source?: Database["public"]["Enums"]["action_item_source"];
+          priority?: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -953,6 +959,7 @@ export type Database = {
         | "partial";
       action_item_status: "open" | "done" | "cancelled" | "suggested";
       action_item_source: "ai" | "manual";
+      action_item_priority: "low" | "medium" | "high";
       calendar_provider: "google" | "outlook";
       transcript_source: "vexa" | "teams_native" | "meet_native";
       chat_message_role: "user" | "assistant";
