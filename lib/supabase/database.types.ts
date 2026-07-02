@@ -113,6 +113,7 @@ export type Database = {
           native_artifact_id: string | null;
           prefer_native_transcript: boolean;
           analysis_template: string | null;
+          meeting_reviewed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -135,6 +136,7 @@ export type Database = {
           native_artifact_id?: string | null;
           prefer_native_transcript?: boolean;
           analysis_template?: string | null;
+          meeting_reviewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -157,6 +159,7 @@ export type Database = {
           native_artifact_id?: string | null;
           prefer_native_transcript?: boolean;
           analysis_template?: string | null;
+          meeting_reviewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
