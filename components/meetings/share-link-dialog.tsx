@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { Copy, LinkSimple, ShieldCheck, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -390,7 +391,10 @@ export function ShareLinkDialog({ meetingId }: { meetingId: string }) {
           )}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/70 bg-muted/15 px-6 py-4">
+        <DialogFooter className="shrink-0 flex-col gap-2 border-t border-border/70 bg-muted/15 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="link" size="sm" className="h-auto px-0 text-muted-foreground" asChild>
+            <Link href="/compartilhar">Gerenciar links</Link>
+          </Button>
           <Button
             onClick={createLink}
             disabled={loading || !hasShareableContent(permissions)}
