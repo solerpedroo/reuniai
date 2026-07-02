@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { getNavItem } from "@/components/shell/nav-config";
 import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
+import { AssistantFab } from "@/components/shell/assistant-fab";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -118,6 +119,7 @@ export function AppShell({
           </footer>
         </div>
       </div>
+      <AssistantFab />
     </CommandPaletteProvider>
   );
 }
