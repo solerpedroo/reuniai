@@ -54,7 +54,10 @@ export async function persistMeetingSegments(
   segments: NormalizedSegment[],
   transcriptSource: Database["public"]["Enums"]["transcript_source"]
 ): Promise<IngestResult> {
-  await admin.from("meetings").update({ status: "processing" }).eq("id", meetingId);
+  await admin
+    .from("meetings")
+    .update({ status: "processing", meeting_reviewed_at: null })
+    .eq("id", meetingId);
 
   const rows = toSegmentRows(meetingId, segments);
 
