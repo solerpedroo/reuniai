@@ -6,7 +6,7 @@ import type { NotificationPrefs } from "@/lib/workflow/types";
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
-  email: false,
+  email: true,
   push: false,
   prep: true,
   completed: true,
