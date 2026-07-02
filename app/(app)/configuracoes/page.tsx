@@ -17,6 +17,7 @@ import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/profile/notification-prefs";
+import { getEmailDeliveryStatus } from "@/lib/email/config";
 import type { NotificationPrefs } from "@/lib/workflow/types";
 
 const STATUS_MESSAGES: Record<string, { tone: "ok" | "error"; text: string }> = {
@@ -186,7 +187,10 @@ export default async function ConfiguracoesPage({
           </CardContent>
         </Card>
 
-        <NotificationSettings initialPrefs={notificationPrefs} />
+        <NotificationSettings
+          initialPrefs={notificationPrefs}
+          emailStatus={getEmailDeliveryStatus()}
+        />
 
         <LocaleAndTemplateSettings
           initialLocale={locale}
