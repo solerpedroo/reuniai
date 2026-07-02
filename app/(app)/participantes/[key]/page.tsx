@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ParticipantDetailView } from "@/components/participants/participant-detail-view";
+import { getParticipantTalkTimeSummary } from "@/lib/insights/talk-time-stats";
 import { getParticipantDetail } from "@/lib/participants/directory";
 import { getParticipantNote, parseParticipantKeyParam } from "@/lib/participants/notes";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +24,16 @@ export default async function ParticipantDetailPage({ params }: ParticipantDetai
       ? await getParticipantNote(supabase, user.id, parseParticipantKeyParam(key))
       : null;
 
+  const talkTimeSummary = await getParticipantTalkTimeSummary(
+    supabase,
+    participant.displayName
+  );
+
   return (
-    <ParticipantDetailView participant={participant} initialNoteBody={note?.body ?? ""} />
+    <ParticipantDetailView
+      participant={participant}
+      initialNoteBody={note?.body ?? ""}
+      talkTimeSummary={talkTimeSummary}
+    />
   );
 }
