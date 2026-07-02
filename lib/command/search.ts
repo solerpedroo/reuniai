@@ -83,6 +83,16 @@ const KEYWORD_ACTIONS: { keywords: string[]; hit: CommandSearchHit }[] = [
       href: "/series",
     },
   },
+  {
+    keywords: ["destaque", "destaques", "bookmark", "momento"],
+    hit: {
+      id: "action-destaques",
+      type: "action",
+      label: "Biblioteca de destaques",
+      description: "Momentos marcados nas reuniões",
+      href: "/destaques",
+    },
+  },
 ];
 
 function matchKeywordActions(term: string): CommandSearchHit[] {
