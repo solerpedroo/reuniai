@@ -12,7 +12,8 @@ import {
 import { SummaryView } from "@/components/meetings/summary-view";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/meetings/transcript";
-import { computeTalkTime } from "@/lib/meetings/talk-time";
+import type { SpeakerTalkTime } from "@/lib/meetings/talk-time";
+import type { SharePermissions } from "@/lib/meetings/share-permissions";
 import {
   formatDuration,
   formatMeetingDate,
@@ -25,7 +26,6 @@ import type {
   TranscriptSegment,
 } from "@/lib/supabase/types";
 import type { ShareParticipant } from "@/lib/meetings/share";
-import type { ShareScope } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
 import { PRODUCT_NAME } from "@/lib/brand/config";
 
@@ -36,21 +36,28 @@ export function PublicMeetingView({
   summary,
   actionItems,
   segments,
+  talkTime,
   participants,
-  scope,
+  permissions,
   redactPii,
 }: {
   meeting: Meeting;
   summary: MeetingSummary | null;
   actionItems: ActionItem[];
   segments: TranscriptSegment[];
+  talkTime: SpeakerTalkTime[];
   participants: ShareParticipant[];
-  scope: ShareScope;
+  permissions: SharePermissions;
   redactPii: boolean;
 }) {
-  const hasTranscript = scope === "full_transcript" && segments.length > 0;
-  const [tab, setTab] = useState<Tab>("overview");
-  const talkTime = hasTranscript ? computeTalkTime(segments) : [];
+  const hasTranscript = permissions.transcript && segments.length > 0;
+  const showOverview =
+    permissions.executive_summary ||
+    permissions.topics ||
+    permissions.decisions ||
+    permissions.action_items ||
+    permissions.talk_time;
+  const [tab, setTab] = useState<Tab>(hasTranscript && !showOverview ? "transcript" : "overview");
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,7 +86,7 @@ export function PublicMeetingView({
           </p>
         )}
 
-        {participants.length > 0 && (
+        {permissions.participants && participants.length > 0 && (
           <section className="mb-6 flex flex-wrap items-center gap-2">
             <Users size={16} className="text-muted-foreground" aria-hidden />
             {participants.map((participant, i) => (
@@ -93,22 +100,35 @@ export function PublicMeetingView({
           </section>
         )}
 
-        <nav className="mb-8 flex gap-1 border-b border-border/70">
-          <TabButton active={tab === "overview"} onClick={() => setTab("overview")}>
-            Visão geral
-          </TabButton>
-          {hasTranscript && (
-            <TabButton active={tab === "transcript"} onClick={() => setTab("transcript")}>
-              Transcrição
-            </TabButton>
-          )}
-        </nav>
+        {(showOverview || hasTranscript) && (
+          <nav className="mb-8 flex gap-1 border-b border-border/70">
+            {showOverview && (
+              <TabButton active={tab === "overview"} onClick={() => setTab("overview")}>
+                Visão geral
+              </TabButton>
+            )}
+            {hasTranscript && (
+              <TabButton active={tab === "transcript"} onClick={() => setTab("transcript")}>
+                Transcrição
+              </TabButton>
+            )}
+          </nav>
+        )}
 
-        {tab === "overview" && (
+        {tab === "overview" && showOverview && (
           <div className="space-y-8">
-            <SummaryView summary={summary} talkTime={talkTime} />
+            <SummaryView
+              summary={summary}
+              talkTime={talkTime}
+              visibility={{
+                executive_summary: permissions.executive_summary,
+                topics: permissions.topics,
+                decisions: permissions.decisions,
+                talk_time: permissions.talk_time,
+              }}
+            />
 
-            {actionItems.length > 0 && (
+            {permissions.action_items && actionItems.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-brand" aria-hidden />
