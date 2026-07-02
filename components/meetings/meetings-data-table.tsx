@@ -23,6 +23,8 @@ import {
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { MeetingTagBadges } from "@/components/meetings/meeting-tag-badges";
+import { ReviewBadge } from "@/components/meetings/review-badge";
+import { needsPostCallReview } from "@/lib/meetings/post-call-review";
 
 type SortDir = "asc" | "desc";
 
@@ -147,7 +149,10 @@ export function MeetingsDataTable({
                 >
                   <TableCell className="font-medium">
                     <div className="block max-w-[28ch] transition-colors group-hover:text-brand">
-                      <span className="truncate">{meeting.title}</span>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate">{meeting.title}</span>
+                        {needsPostCallReview(meeting) && <ReviewBadge />}
+                      </div>
                       <MeetingTagBadges tags={meeting.tags} />
                     </div>
                   </TableCell>

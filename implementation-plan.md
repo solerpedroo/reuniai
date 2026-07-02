@@ -32,7 +32,7 @@
 | 18 | Monetização e API | 📋 Planejada |
 | 19 | Escala e infra própria | 📋 Planejada |
 | **20** | **Inbox de compromissos** | ✅ Concluída |
-| 21 | Ritual pós-reunião | 📋 Planejada |
+| **21** | **Ritual pós-reunião** | ✅ Concluída |
 | 22 | Centro de alertas | 📋 Planejada |
 
 ---
@@ -807,7 +807,7 @@ flowchart LR
 | 16 | Plataforma | Multi-plataforma enterprise | 🟡 Parcial |
 | 17 | Plataforma | Integrações | ✅ |
 | **20** | **Dia a dia** | **Inbox de compromissos** | **✅** |
-| **21** | **Dia a dia** | **Ritual pós-reunião** | 📋 Próxima |
+| **21** | **Dia a dia** | **Ritual pós-reunião** | **✅** |
 | **22** | **Dia a dia** | **Centro de alertas** | 📋 Planejada |
 | 18 | Plataforma | Monetização e API | 📋 Após 20–22 |
 | 19 | Escala | Infra própria | 📋 Baixa prioridade |
@@ -1232,10 +1232,12 @@ flowchart LR
 
 #### 21.1 Wizard "Revisar reunião"
 
-- [ ] Modal ou página guiada disparada ao concluir processamento
-- [ ] Passos: atribuições → resumo (opcional) → follow-up → compartilhar/exportar
-- [ ] Campo `meeting_reviewed_at` para não reaparecer
-- [ ] Badge "Revisar" na lista de reuniões
+- [x] Modal guiado disparado ao concluir processamento (`status = completed`)
+- [x] Passos: atribuições → resumo (opcional) → follow-up → compartilhar/exportar
+- [x] Campo `meeting_reviewed_at` para não reaparecer
+- [x] Badge "Revisar" na lista de reuniões e dashboard
+- [x] API `POST /api/meetings/[id]/review` para persistir revisão
+- [x] Banner "Fechar a call" na página de detalhe quando pendente
 
 ### Critérios de aceite
 

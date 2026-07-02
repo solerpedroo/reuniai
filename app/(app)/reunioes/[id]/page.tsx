@@ -7,6 +7,7 @@ import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button
 import { AnalysisTemplateSelect } from "@/components/meetings/analysis-template-select";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
 import { MeetingReview } from "@/components/meetings/meeting-review";
+import { MeetingReviewWizard } from "@/components/meetings/meeting-review-wizard";
 import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
 import { ShareLinkDialog } from "@/components/meetings/share-link-dialog";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
@@ -37,10 +38,10 @@ export default async function MeetingDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ t?: string }>;
+  searchParams: Promise<{ t?: string; revisar?: string }>;
 }) {
   const { id } = await params;
-  const { t } = await searchParams;
+  const { t, revisar } = await searchParams;
   const supabase = await createClient();
 
   const { data: meeting } = await supabase
@@ -129,6 +130,15 @@ export default async function MeetingDetailPage({
       <div className="mb-6">
         <MeetingTagsEditor meetingId={meeting.id} initialTags={tags} />
       </div>
+
+      <MeetingReviewWizard
+        meeting={meeting}
+        summary={summary}
+        actionItems={actionItems}
+        followUp={followUp}
+        llmEnabled={isLlmConfigured()}
+        forceOpen={revisar === "1"}
+      />
 
       <MeetingReview
         meeting={meeting}
