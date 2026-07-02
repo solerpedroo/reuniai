@@ -189,6 +189,7 @@ export default async function MeetingDetailPage({
         highlights={highlights}
         speakerMappings={speakerMappings}
         participantEmails={participantEmails}
+        personalNotes={meeting.personal_notes ?? ""}
       />
     </div>
   );
