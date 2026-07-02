@@ -218,6 +218,24 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/vistas" || pathname.startsWith("/vistas")) {
+    return {
+      href: "/vistas",
+      label: "Vistas",
+      description: "Filtros salvos da lista de reuniões",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
+  if (pathname === "/comentarios" || pathname.startsWith("/comentarios?")) {
+    return {
+      href: "/comentarios",
+      label: "Comentários",
+      description: "Anotações na timeline cross-meeting",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
   if (pathname === "/templates" || pathname.startsWith("/templates/")) {
     return {
       href: "/templates",
