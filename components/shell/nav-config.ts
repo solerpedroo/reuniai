@@ -182,6 +182,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/integracoes" || pathname.startsWith("/integracoes/")) {
+    return {
+      href: "/integracoes",
+      label: "Integrações",
+      description: "Slack, Notion e webhooks",
+      icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
