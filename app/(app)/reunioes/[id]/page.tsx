@@ -6,6 +6,7 @@ import { BotActions } from "@/components/meetings/bot-actions";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { AnalysisTemplateSelect } from "@/components/meetings/analysis-template-select";
 import { ExportMeetingButton } from "@/components/meetings/export-meeting-button";
+import { PrepCard } from "@/components/dashboard/prep-card";
 import { MeetingReview } from "@/components/meetings/meeting-review";
 import { MeetingReviewWizard } from "@/components/meetings/meeting-review-wizard";
 import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
@@ -28,6 +29,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getMeetingComments } from "@/lib/meetings/comments";
 import { getMeetingHighlights } from "@/lib/meetings/highlights";
 import { getFollowUpForMeeting } from "@/lib/meetings/follow-up";
+import { getPrepCardForMeeting } from "@/lib/meetings/prep";
 import { getSpeakerMappings } from "@/lib/speakers/mappings";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { getTagsForMeeting } from "@/lib/tags/queries";
@@ -38,10 +40,10 @@ export default async function MeetingDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ t?: string; revisar?: string }>;
+  searchParams: Promise<{ t?: string; revisar?: string; prep?: string }>;
 }) {
   const { id } = await params;
-  const { t, revisar } = await searchParams;
+  const { t, revisar, prep } = await searchParams;
   const supabase = await createClient();
 
   const { data: meeting } = await supabase
@@ -57,7 +59,7 @@ export default async function MeetingDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings] =
+  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings, prepCard] =
     await Promise.all([
       getTranscriptSegments(supabase, meeting.id),
       getMeetingSummary(supabase, meeting.id),
@@ -68,6 +70,9 @@ export default async function MeetingDetailPage({
       getMeetingComments(supabase, meeting.id),
       getMeetingHighlights(supabase, meeting.id),
       user ? getSpeakerMappings(admin, user.id) : Promise.resolve([]),
+      prep === "1" && user
+        ? getPrepCardForMeeting(admin, user.id, meeting.id)
+        : Promise.resolve(null),
     ]);
 
   const meetingWithTemplate = meeting as Meeting & { analysis_template?: string | null };
@@ -130,6 +135,12 @@ export default async function MeetingDetailPage({
       <div className="mb-6">
         <MeetingTagsEditor meetingId={meeting.id} initialTags={tags} />
       </div>
+
+      {prepCard && (
+        <div className="mb-6">
+          <PrepCard prep={prepCard} meeting={prepCard.meeting} />
+        </div>
+      )}
 
       <MeetingReviewWizard
         meeting={meeting}
