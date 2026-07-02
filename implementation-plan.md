@@ -2343,15 +2343,15 @@ flowchart LR
 
 #### 44.1 Backend
 
-- [ ] `lib/meetings/saved-views-hub.ts` — CRUD sobre `profiles.saved_views`
-- [ ] `PATCH /api/account` já suporta `saved_views` — estender validação se necessário
+- [x] `lib/meetings/saved-views-hub.ts` — CRUD sobre `profiles.saved_views`
+- [x] `PATCH /api/account` já suporta `saved_views` — estender validação se necessário
 
 #### 44.2 UI
 
-- [ ] Cards: nome · chips de filtros (status, tag, pasta, texto)
-- [ ] Ações: abrir em `/reunioes?…` · renomear · excluir
-- [ ] Empty state com link para `/reunioes`
-- [ ] Atalho "Gerenciar vistas" na filter bar
+- [x] Cards: nome · chips de filtros (status, tag, pasta, texto)
+- [x] Ações: abrir em `/reunioes?…` · renomear · excluir
+- [x] Empty state com link para `/reunioes`
+- [x] Atalho "Gerenciar vistas" na filter bar
 
 ### Critérios de aceite
 
@@ -2381,16 +2381,16 @@ flowchart LR
 
 #### 45.1 Data layer (`lib/meetings/comments-library.ts`)
 
-- [ ] `getCommentsLibrary()` — join comments + meetings, ordenado por `created_at`
-- [ ] Filtro opcional por `meeting_id`
-- [ ] Paginação/limit 100
+- [x] `getCommentsLibrary()` — join comments + meetings, ordenado por `created_at`
+- [x] Filtro opcional por `meeting_id`
+- [x] Paginação/limit 100
 
 #### 45.2 UI (`components/comments/`)
 
-- [ ] Lista estilo `/destaques`: label · reunião · timestamp formatado
-- [ ] Link → `/reunioes/[id]?t={start_ms}`
-- [ ] Empty state ilustrado
-- [ ] Link desde detalhe da reunião ("Ver todos os comentários")
+- [x] Lista estilo `/destaques`: label · reunião · timestamp formatado
+- [x] Link → `/reunioes/[id]?t={start_ms}`
+- [x] Empty state ilustrado
+- [x] Link desde detalhe da reunião ("Ver todos os comentários")
 
 ### Critérios de aceite
 
