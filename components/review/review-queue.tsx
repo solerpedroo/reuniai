@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { buildFollowUpMailto } from "@/lib/meetings/follow-up-mailto";
+import { FollowUpSendDialog } from "@/components/meetings/follow-up-send-dialog";
 import type { ReviewQueueCounts, ReviewQueueItem } from "@/lib/review/review-queue";
 import type { ActionItem } from "@/lib/supabase/types";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
@@ -263,6 +264,17 @@ function InlineFollowUp({
                 </a>
               </Button>
             )}
+            <FollowUpSendDialog
+              meetingId={meetingId}
+              subject={subject}
+              body={body}
+              participantEmails={participantEmails}
+              disabled={!subject || !body}
+              onSent={(updated) => {
+                setFollowUp(updated);
+                onUpdate(updated);
+              }}
+            />
             {!followUp.follow_up_done_at && (
               <Button variant="ghost" size="sm" onClick={markDone}>
                 Marcar follow-up feito
@@ -271,6 +283,13 @@ function InlineFollowUp({
           </>
         )}
       </div>
+
+      {followUp?.sent_at && (
+        <Badge variant="outline" className="gap-1">
+          <EnvelopeSimple size={12} />
+          Enviado em {formatMeetingDate(followUp.sent_at)}
+        </Badge>
+      )}
 
       {followUp?.follow_up_done_at && (
         <Badge variant="secondary" className="gap-1">
