@@ -1,18 +1,29 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { ActionItem } from "@/lib/supabase/types";
+import { compareByPriorityAndDue } from "@/lib/action-items/priority";
 import { getMeetingIdsByTag, getTagsForUser } from "@/lib/tags/queries";
 import type { Tag } from "@/lib/workflow/types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
-export const INBOX_FILTERS = ["today", "overdue", "week", "all", "suggested"] as const;
+export const INBOX_FILTERS = [
+  "focus",
+  "today",
+  "overdue",
+  "week",
+  "all",
+  "snoozed",
+  "suggested",
+] as const;
 export type InboxFilter = (typeof INBOX_FILTERS)[number];
 
 export const INBOX_FILTER_LABELS: Record<InboxFilter, string> = {
+  focus: "Foco",
   today: "Hoje",
   overdue: "Atrasados",
   week: "Esta semana",
   all: "Todos abertos",
+  snoozed: "Adiadas",
   suggested: "Sugestões IA",
 };
 
@@ -71,6 +82,8 @@ function mapRow(row: ActionItemRow): InboxActionItem {
     due_date: row.due_date,
     status: row.status,
     source: row.source,
+    priority: row.priority,
+    snoozed_until: row.snoozed_until,
     created_at: row.created_at,
     updated_at: row.updated_at,
     meeting_title: meeting?.title ?? "Reunião",
@@ -99,26 +112,47 @@ async function fetchActionItemsWithMeetings(
   return ((data ?? []) as ActionItemRow[]).map(mapRow);
 }
 
+function isSnoozed(item: InboxActionItem, now = new Date()): boolean {
+  if (!item.snoozed_until) return false;
+  return new Date(item.snoozed_until) > now;
+}
+
+function excludeSnoozed(items: InboxActionItem[], now = new Date()): InboxActionItem[] {
+  return items.filter((item) => !isSnoozed(item, now));
+}
+
+function sortInboxItems(items: InboxActionItem[]): InboxActionItem[] {
+  return [...items].sort(compareByPriorityAndDue);
+}
+
 function filterOpenByView(items: InboxActionItem[], filter: InboxFilter): InboxActionItem[] {
   const today = localDateIso();
+  const activeItems = excludeSnoozed(items);
 
   switch (filter) {
     case "suggested":
       return items;
+    case "snoozed":
+      return items.filter((item) => isSnoozed(item));
+    case "focus":
+      return activeItems.filter(
+        (item) =>
+          item.priority === "high" && item.due_date != null && item.due_date <= today
+      );
     case "overdue":
-      return items.filter((item) => item.due_date != null && item.due_date < today);
+      return activeItems.filter((item) => item.due_date != null && item.due_date < today);
     case "today":
-      return items.filter((item) => item.due_date != null && item.due_date <= today);
+      return activeItems.filter((item) => item.due_date != null && item.due_date <= today);
     case "week": {
       const weekEnd = addDaysIso(today, 7);
-      return items.filter(
+      return activeItems.filter(
         (item) =>
           item.due_date != null && item.due_date >= today && item.due_date <= weekEnd
       );
     }
     case "all":
     default:
-      return items;
+      return activeItems;
   }
 }
 
@@ -236,7 +270,7 @@ export async function getInboxActionItems(
     items = items.filter((item) => allowed.has(item.meeting_id));
   }
 
-  return items;
+  return sortInboxItems(items);
 }
 
 export async function getInboxCounts(supabase: Client): Promise<InboxCounts> {
@@ -246,10 +280,12 @@ export async function getInboxCounts(supabase: Client): Promise<InboxCounts> {
   ]);
 
   return {
+    focus: filterOpenByView(openItems, "focus").length,
     today: filterOpenByView(openItems, "today").length,
     overdue: filterOpenByView(openItems, "overdue").length,
     week: filterOpenByView(openItems, "week").length,
-    all: openItems.length,
+    all: filterOpenByView(openItems, "all").length,
+    snoozed: filterOpenByView(openItems, "snoozed").length,
     suggested: suggestedItems.length,
   };
 }
