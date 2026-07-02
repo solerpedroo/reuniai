@@ -10,7 +10,6 @@ import {
   scopeFromPermissions,
   type SharePermissions,
 } from "@/lib/meetings/share-permissions";
-import type { TablesInsert } from "@/lib/supabase/database.types";
 import type { ShareScope } from "@/lib/workflow/types";
 
 type ShareTokenListRow = {
@@ -35,7 +34,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("share_tokens")
-    .select("id, token, scope, permissions, expires_at, revoked_at, created_at")
+    .select("id, token, scope, expires_at, revoked_at, created_at")
     .eq("meeting_id", id)
     .is("revoked_at", null)
     .gt("expires_at", new Date().toISOString())
@@ -107,21 +106,28 @@ export async function POST(
   const expiresAt = new Date(Date.now() + days * 86_400_000).toISOString();
   const redactPii = body.redact_pii !== false;
 
-  const row: TablesInsert<"share_tokens"> = {
+  const admin = createAdminClient();
+  const insertBase = {
     meeting_id: id,
     user_id: user.id,
     scope,
-    permissions,
     expires_at: expiresAt,
     redact_pii: redactPii,
   };
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from("share_tokens")
-    .insert(row)
-    .select("id, token, scope, permissions, expires_at, created_at")
+    .insert({ ...insertBase, permissions })
+    .select("id, token, scope, expires_at, created_at")
     .single();
+
+  if (error?.code === "42703") {
+    ({ data, error } = await admin
+      .from("share_tokens")
+      .insert(insertBase)
+      .select("id, token, scope, expires_at, created_at")
+      .single());
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -133,7 +139,9 @@ export async function POST(
   return NextResponse.json({
     token: {
       ...data,
-      permissions: parseSharePermissions(data.permissions),
+      permissions: parseSharePermissions(
+        (data as ShareTokenListRow).permissions ?? permissionsFromScope(scope)
+      ),
     },
     url,
   });
