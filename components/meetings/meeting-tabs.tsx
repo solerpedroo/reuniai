@@ -58,6 +58,7 @@ export function MeetingTabs({
   onSeek,
   onCitationClick,
   followUp,
+  participantEmails = [],
 }: {
   meetingId: string;
   summary: ReactNode;
@@ -71,6 +72,7 @@ export function MeetingTabs({
   onSeek?: (ms: number) => void;
   onCitationClick?: (citation: Citation) => void;
   followUp?: MeetingFollowUp | null;
+  participantEmails?: string[];
 }) {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabValue>(() =>
@@ -160,6 +162,7 @@ export function MeetingTabs({
                 meetingId={meetingId}
                 initialFollowUp={followUp ?? null}
                 llmEnabled={llmEnabled}
+                participantEmails={participantEmails}
               />
             )}
             {activeTab === "transcricao" && (
