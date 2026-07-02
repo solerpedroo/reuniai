@@ -32,6 +32,7 @@ export function MeetingReview({
   comments,
   highlights,
   speakerMappings,
+  participantEmails = [],
 }: {
   meeting: Meeting;
   hasRecording: boolean;
@@ -45,6 +46,7 @@ export function MeetingReview({
   comments: MeetingComment[];
   highlights: MeetingHighlight[];
   speakerMappings: SpeakerMapping[];
+  participantEmails?: string[];
 }) {
   const [currentTimeMs, setCurrentTimeMs] = useState(initialSeekMs ?? 0);
   const [highlightMs, setHighlightMs] = useState<number | null>(initialSeekMs ?? null);
@@ -120,6 +122,7 @@ export function MeetingReview({
         onSeek={seek}
         onCitationClick={handleCitation}
         followUp={followUp}
+        participantEmails={participantEmails}
       />
     </div>
   );
