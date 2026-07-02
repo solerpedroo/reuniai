@@ -63,6 +63,16 @@ const KEYWORD_ACTIONS: { keywords: string[]; hit: CommandSearchHit }[] = [
       href: "/participantes",
     },
   },
+  {
+    keywords: ["speaker", "speakers", "voz", "transcrição"],
+    hit: {
+      id: "action-speakers",
+      type: "action",
+      label: "Hub de speakers",
+      description: "Mapear Speaker 1 → nome real",
+      href: "/speakers",
+    },
+  },
 ];
 
 function matchKeywordActions(term: string): CommandSearchHit[] {
