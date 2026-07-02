@@ -117,6 +117,7 @@ export type Database = {
           prefer_native_transcript: boolean;
           analysis_template: string | null;
           meeting_reviewed_at: string | null;
+          review_snoozed_until: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -140,6 +141,7 @@ export type Database = {
           prefer_native_transcript?: boolean;
           analysis_template?: string | null;
           meeting_reviewed_at?: string | null;
+          review_snoozed_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -163,6 +165,7 @@ export type Database = {
           prefer_native_transcript?: boolean;
           analysis_template?: string | null;
           meeting_reviewed_at?: string | null;
+          review_snoozed_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -808,6 +811,7 @@ export type Database = {
           user_id: string;
           subject: string;
           body: string;
+          follow_up_done_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -817,6 +821,7 @@ export type Database = {
           user_id: string;
           subject: string;
           body: string;
+          follow_up_done_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -826,6 +831,7 @@ export type Database = {
           user_id?: string;
           subject?: string;
           body?: string;
+          follow_up_done_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
