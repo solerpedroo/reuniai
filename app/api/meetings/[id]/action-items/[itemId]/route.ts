@@ -14,6 +14,8 @@ const UpdateSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve ser YYYY-MM-DD")
       .nullish(),
     status: z.enum(["open", "done", "cancelled"]).optional(),
+    priority: z.enum(["low", "medium", "high"]).optional(),
+    snoozed_until: z.string().datetime().nullish(),
   })
   .refine((v) => Object.keys(v).length > 0, "Nada para atualizar");
 
