@@ -73,6 +73,16 @@ const KEYWORD_ACTIONS: { keywords: string[]; hit: CommandSearchHit }[] = [
       href: "/speakers",
     },
   },
+  {
+    keywords: ["série", "series", "standup", "recorrente"],
+    hit: {
+      id: "action-series",
+      type: "action",
+      label: "Séries recorrentes",
+      description: "Hub de standups e syncs",
+      href: "/series",
+    },
+  },
 ];
 
 function matchKeywordActions(term: string): CommandSearchHit[] {
