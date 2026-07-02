@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatNotificationRelativeTime } from "@/lib/notifications/format-relative-time";
+import { formatNotificationTimestamp } from "@/lib/notifications/format-relative-time";
 import type { AppNotification } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
 
@@ -220,57 +220,55 @@ export function NotificationPanel() {
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-border/60">
+            <ul>
               {visibleNotifications.map((notification) => {
                 const unread = !notification.read_at;
 
                 return (
-                  <li key={notification.id} className="group relative">
+                  <li
+                    key={notification.id}
+                    className={cn(
+                      "group flex items-start gap-3 border-b border-border/50 px-3 py-3 last:border-b-0",
+                      unread ? "bg-brand/[0.03]" : "bg-transparent"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-2 size-1.5 shrink-0 rounded-full",
+                        unread ? "bg-brand" : "bg-border"
+                      )}
+                      aria-hidden
+                    />
+
                     <button
                       type="button"
                       onClick={() => openNotification(notification)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-4 py-3 pr-10 text-left transition-colors hover:bg-muted/40",
-                        unread && "bg-brand/[0.04]"
-                      )}
+                      className="min-w-0 flex-1 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/30"
                     >
-                      <span
+                      <p
                         className={cn(
-                          "mt-1.5 size-2 shrink-0 rounded-full",
-                          unread ? "bg-brand" : "bg-transparent"
+                          "text-[13px] leading-snug",
+                          unread ? "font-semibold text-foreground" : "font-medium text-foreground/90"
                         )}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-start justify-between gap-2">
-                          <span
-                            className={cn(
-                              "text-sm leading-snug",
-                              unread ? "font-semibold text-foreground" : "font-medium text-foreground/90"
-                            )}
-                          >
-                            {notification.title}
-                          </span>
-                          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                            {formatNotificationRelativeTime(notification.created_at)}
-                          </span>
-                        </span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                          {notification.body}
-                        </span>
-                      </span>
+                      >
+                        {notification.title}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                        {notification.body}
+                      </p>
+                      <p className="mt-2 text-[11px] text-muted-foreground/70">
+                        {formatNotificationTimestamp(notification.created_at)}
+                      </p>
                     </button>
 
                     <button
                       type="button"
                       aria-label="Remover notificação"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        void dismiss(notification.id);
-                      }}
+                      onClick={() => void dismiss(notification.id)}
                       className={cn(
-                        "absolute right-2 top-2 flex size-7 items-center justify-center rounded-md text-muted-foreground",
-                        "opacity-70 transition-opacity hover:bg-muted hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60",
+                        "transition-colors hover:bg-muted hover:text-foreground",
+                        "sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                       )}
                     >
                       <X size={14} />
