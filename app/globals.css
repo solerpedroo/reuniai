@@ -213,6 +213,10 @@ html {
     @apply text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground;
   }
 
+  .sidebar-section-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/90;
+  }
+
   /* Frosted chrome (header/overlays) — neutral translucency. */
   .glass {
     background-color: color-mix(in oklab, var(--background) 72%, transparent);
@@ -237,8 +241,25 @@ html {
       0 8px 22px -6px color-mix(in oklab, var(--brand) 30%, transparent);
   }
 
-  /* Active sidebar row — neutral raised surface + a brand left-rail marker.
-     Exactly one row is active, so the blue rail is a deliberate wayfinding cue. */
+  /* Sidebar canvas — faint brand bloom at the top, neutral body. */
+  .sidebar-chrome {
+    background-color: var(--sidebar);
+    background-image: radial-gradient(
+      ellipse 120% 55% at 50% -18%,
+      color-mix(in oklab, var(--brand) 7%, transparent),
+      transparent 68%
+    );
+  }
+
+  [data-theme="dark"] .sidebar-chrome {
+    background-image: radial-gradient(
+      ellipse 120% 55% at 50% -18%,
+      color-mix(in oklab, var(--brand) 14%, transparent),
+      transparent 68%
+    );
+  }
+
+  /* Active sidebar row — raised neutral surface + brand left-rail glow. */
   .nav-active {
     position: relative;
     background-image: linear-gradient(
