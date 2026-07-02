@@ -191,6 +191,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/decisoes" || pathname.startsWith("/decisoes?")) {
+    return {
+      href: "/decisoes",
+      label: "Decisões",
+      description: "Registro de decisões cross-meeting",
+      icon: NAV_ITEMS.find((item) => item.href === "/insights")!.icon,
+    };
+  }
+
   if (pathname === "/prep" || pathname.startsWith("/prep?")) {
     return {
       href: "/prep",
