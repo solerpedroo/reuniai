@@ -84,6 +84,16 @@ const KEYWORD_ACTIONS: { keywords: string[]; hit: CommandSearchHit }[] = [
     },
   },
   {
+    keywords: ["assistente", "ia", "perguntar", "chat"],
+    hit: {
+      id: "action-assistente",
+      type: "action",
+      label: "Assistente global",
+      description: "Perguntas sobre todas as reuniões",
+      href: "/assistente",
+    },
+  },
+  {
     keywords: ["destaque", "destaques", "bookmark", "momento"],
     hit: {
       id: "action-destaques",
