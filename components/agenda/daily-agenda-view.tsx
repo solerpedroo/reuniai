@@ -37,7 +37,7 @@ const KIND_META: Record<
   review_pending: {
     icon: CalendarBlank,
     accent: "border-amber-500/25 bg-amber-500/5",
-    action: "Revisar call",
+    action: "Ver fila",
   },
   task_due: {
     icon: CheckSquare,
