@@ -155,6 +155,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/assistente" || pathname.startsWith("/assistente?")) {
+    return {
+      href: "/assistente",
+      label: "Assistente",
+      description: "Chat cross-meeting com citações",
+      icon: NAV_ITEMS.find((item) => item.href === "/reunioes")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
