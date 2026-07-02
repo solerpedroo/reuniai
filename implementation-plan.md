@@ -33,8 +33,8 @@
 | **20** | **Inbox de compromissos** | ✅ Concluída |
 | **21** | **Ritual pós-reunião** | ✅ Concluída |
 | **22** | **Centro de alertas** | ✅ Concluída |
-| **23** | **Diretório de participantes** | 📋 Próxima |
-| **24** | **Pastas e organização** | 📋 Planejada |
+| **23** | **Diretório de participantes** | ✅ Concluída |
+| **24** | **Pastas e organização** | ✅ Concluída |
 | **25** | **Insights e tendências in-app** | 📋 Planejada |
 | **26** | **Prioridade e snooze na inbox** | 📋 Planejada |
 | **27** | **Agenda do dia unificada** | 📋 Planejada |
@@ -1366,29 +1366,29 @@ flowchart LR
 
 #### 24.1 Schema
 
-- [ ] Tabela `folders`: `id`, `user_id`, `name`, `color`, `parent_id` (nullable), `created_at`
-- [ ] Tabela `meeting_folders`: `meeting_id`, `folder_id` (unique por par)
-- [ ] RLS: `user_id = auth.uid()`
-- [ ] Índices: `folders(user_id)`, `meeting_folders(folder_id)`
+- [x] Tabela `folders`: `id`, `user_id`, `name`, `color`, `parent_id` (nullable), `created_at`
+- [x] Tabela `meeting_folders`: `meeting_id`, `folder_id` (unique por par)
+- [x] RLS: `user_id = auth.uid()`
+- [x] Índices: `folders(user_id)`, `meeting_folders(folder_id)`
 
 #### 24.2 API
 
-- [ ] `GET/POST /api/folders` — listar e criar
-- [ ] `PATCH/DELETE /api/folders/[id]` — renomear, cor, excluir (cascade meeting_folders)
-- [ ] `PUT /api/meetings/[id]/folder` — mover reunião para pasta (ou remover)
+- [x] `GET/POST /api/folders` — listar e criar
+- [x] `PATCH/DELETE /api/folders/[id]` — renomear, cor, excluir (cascade meeting_folders)
+- [x] `PUT /api/meetings/[id]/folder` — mover reunião para pasta (ou remover)
 
 #### 24.3 UI em `/reunioes`
 
-- [ ] Sidebar ou dropdown "Pastas" com lista + contagem por pasta
-- [ ] Filtro ativo: `?pasta={folderId}`
-- [ ] Dialog criar/renomear pasta
-- [ ] Ação "Mover para pasta" na data table (single + bulk opcional)
-- [ ] Pasta "Sem pasta" para reuniões não classificadas
+- [x] Sidebar ou dropdown "Pastas" com lista + contagem por pasta
+- [x] Filtro ativo: `?pasta={folderId}`
+- [x] Dialog criar/renomear pasta
+- [x] Ação "Mover para pasta" na data table (single + bulk opcional)
+- [x] Pasta "Sem pasta" para reuniões não classificadas
 
 #### 24.4 Vistas salvas + pastas
 
-- [ ] Estender `saved_views` para incluir `folder_id` opcional
-- [ ] Salvar combinação filtro + pasta como vista nomeada
+- [x] Estender `saved_views` para incluir `folder_id` opcional
+- [x] Salvar combinação filtro + pasta como vista nomeada
 
 ### Critérios de aceite
 
