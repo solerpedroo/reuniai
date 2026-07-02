@@ -173,6 +173,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/participacao" || pathname.startsWith("/participacao?")) {
+    return {
+      href: "/participacao",
+      label: "Participação",
+      description: "Talk-time e equilíbrio de fala",
+      icon: NAV_ITEMS.find((item) => item.href === "/insights")!.icon,
+    };
+  }
+
   if (pathname === "/insights" || pathname.startsWith("/insights?")) {
     return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
