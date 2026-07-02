@@ -1,4 +1,5 @@
 import {
+  ChartLineUp,
   CheckSquare,
   Gear,
   House,
@@ -40,6 +41,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     description: "Pessoas com quem você se reuniu",
     icon: UsersThree,
   },
+  {
+    href: "/insights",
+    label: "Insights",
+    description: "Tendências e métricas das suas reuniões",
+    icon: ChartLineUp,
+  },
 ];
 
 export const NAV_ACCOUNT_ITEMS: NavItem[] = [
@@ -77,6 +84,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/participantes" || pathname.startsWith("/participantes/")) {
     return NAV_ITEMS.find((item) => item.href === "/participantes") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/insights" || pathname.startsWith("/insights?")) {
+    return NAV_ITEMS.find((item) => item.href === "/insights") ?? NAV_ITEMS[0];
   }
 
   const exact = NAV_ITEMS.find((item) => item.href === pathname);
