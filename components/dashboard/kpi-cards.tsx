@@ -52,6 +52,7 @@ function buildKpis(stats: DashboardStats, inboxCounts: InboxCounts): Kpi[] {
       value: stats.nextMeeting ? formatMeetingTime(stats.nextMeeting.started_at) : "—",
       detail: stats.nextMeeting?.title ?? "Nenhuma agendada",
       icon: VideoCamera,
+      href: stats.nextMeeting ? "/agenda" : undefined,
     },
   ];
 }
