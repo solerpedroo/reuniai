@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { buildFollowUpMailto } from "@/lib/meetings/follow-up-mailto";
+import { FollowUpSendDialog } from "@/components/meetings/follow-up-send-dialog";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
+import { formatMeetingDate } from "@/lib/meetings/types";
 
 export function FollowUpTab({
   meetingId,
@@ -126,6 +128,14 @@ export function FollowUpTab({
                   </a>
                 </Button>
               )}
+              <FollowUpSendDialog
+                meetingId={meetingId}
+                subject={subject}
+                body={body}
+                participantEmails={participantEmails}
+                disabled={!subject || !body}
+                onSent={(updated) => setFollowUp(updated)}
+              />
               {!followUp.follow_up_done_at && (
                 <Button variant="ghost" size="sm" onClick={markDone}>
                   Marcar follow-up feito
@@ -135,6 +145,13 @@ export function FollowUpTab({
           )}
         </div>
       </div>
+
+      {followUp?.sent_at && (
+        <Badge variant="outline" className="gap-1">
+          <EnvelopeSimple size={12} />
+          Enviado em {formatMeetingDate(followUp.sent_at)}
+        </Badge>
+      )}
 
       {followUp?.follow_up_done_at && (
         <Badge variant="secondary" className="gap-1">
