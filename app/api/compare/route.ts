@@ -38,13 +38,14 @@ export async function GET(request: NextRequest) {
   const meetingA = rows.find((m) => m.id === a)!;
   const meetingB = rows.find((m) => m.id === b)!;
 
+  // Só bloqueia se ambas pertencem a séries diferentes explicitamente.
   if (
     meetingA.calendar_recurring_event_id &&
     meetingB.calendar_recurring_event_id &&
     meetingA.calendar_recurring_event_id !== meetingB.calendar_recurring_event_id
   ) {
     return NextResponse.json(
-      { error: "As reuniões devem pertencer à mesma série recorrente." },
+      { error: "As reuniões pertencem a séries recorrentes diferentes." },
       { status: 400 }
     );
   }
