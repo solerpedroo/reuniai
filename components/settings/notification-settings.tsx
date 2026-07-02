@@ -40,8 +40,14 @@ const IN_APP_TOGGLES: Array<{
 
 export function NotificationSettings({
   initialPrefs,
+  emailStatus,
 }: {
   initialPrefs: NotificationPrefs;
+  emailStatus?: {
+    configured: boolean;
+    sandbox: boolean;
+    sandboxRecipient: string | null;
+  };
 }) {
   const [prefs, setPrefs] = useState(initialPrefs);
   const [pushLoading, setPushLoading] = useState(false);
@@ -109,6 +115,26 @@ export function NotificationSettings({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!emailStatus?.configured ? (
+          <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+            Email desativado no servidor: configure <code className="font-mono">RESEND_API_KEY</code>{" "}
+            (e no Vercel, se estiver em produção).
+          </p>
+        ) : emailStatus.sandbox ? (
+          <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+            Resend em modo teste (<code className="font-mono">onboarding@resend.dev</code>): emails só
+            chegam em{" "}
+            <strong>{emailStatus.sandboxRecipient ?? "o email da conta Resend"}</strong>. Para enviar
+            a qualquer usuário logado, verifique <strong>reuniai.app</strong> em resend.com/domains e
+            use <code className="font-mono">RESEND_FROM=&quot;ReuniAI &lt;notifications@reuniai.app&gt;&quot;</code>{" "}
+            no Vercel e no <code className="font-mono">.env.local</code>.
+          </p>
+        ) : (
+          <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-100">
+            Email transacional ativo: qualquer conta com notificações por email habilitadas recebe
+            os envios no endereço de login.
+          </p>
+        )}
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium">Email de resumo</p>
@@ -119,6 +145,7 @@ export function NotificationSettings({
           <Switch
             checked={prefs.email}
             onCheckedChange={(email) => void savePrefs({ ...prefs, email })}
+            disabled={!emailStatus?.configured}
           />
         </div>
         <div className="flex items-center justify-between gap-4">
@@ -131,6 +158,7 @@ export function NotificationSettings({
           <Switch
             checked={prefs.digest ?? true}
             onCheckedChange={(digest) => void savePrefs({ ...prefs, digest })}
+            disabled={!emailStatus?.configured}
           />
         </div>
 
