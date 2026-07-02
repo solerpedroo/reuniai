@@ -51,11 +51,11 @@
 | **38** | **Participação e talk-time** | ✅ Concluída |
 | **39** | **Hub de integrações** | ✅ Concluída |
 | **40** | **Templates de análise** | ✅ Concluída |
-| **41** | **Hub de prep** | 📋 Próxima |
-| **42** | **Registro de decisões** | 📋 |
-| **43** | **Links compartilhados** | 📋 |
-| **44** | **Vistas salvas** | 📋 |
-| **45** | **Biblioteca de comentários** | 📋 |
+| **41** | **Hub de prep** | ✅ Concluída |
+| **42** | **Registro de decisões** | ✅ Concluída |
+| **43** | **Links compartilhados** | ✅ Concluída |
+| **44** | **Vistas salvas** | ✅ Concluída |
+| **45** | **Biblioteca de comentários** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -2220,18 +2220,18 @@ flowchart LR
 
 #### 41.1 Data layer (`lib/prep/hub.ts`)
 
-- [ ] `getPrepHub()` — reuniões `scheduled`/`bot_joining` nos próximos N dias
-- [ ] Anexar `MeetingPrepCard` quando existir; flag `hasPrep`
-- [ ] Contagem de participantes com notas (`participant_notes`)
-- [ ] Última ocorrência da mesma série (título + link)
+- [x] `getPrepHub()` — reuniões `scheduled`/`bot_joining` nos próximos N dias
+- [x] Anexar `MeetingPrepCard` quando existir; flag `hasPrep`
+- [x] Contagem de participantes com notas (`participant_notes`)
+- [x] Última ocorrência da mesma série (título + link)
 
 #### 41.2 UI (`components/prep/`)
 
-- [ ] Cards por reunião: horário · título · badge prep · participantes com contexto
-- [ ] Expandir briefing IA quando disponível
-- [ ] CTA: abrir reunião · ver série · ir para participante
-- [ ] Empty state quando sem reuniões futuras
-- [ ] Link desde `/agenda` e card na home
+- [x] Cards por reunião: horário · título · badge prep · participantes com contexto
+- [x] Expandir briefing IA quando disponível
+- [x] CTA: abrir reunião · ver série · ir para participante
+- [x] Empty state quando sem reuniões futuras
+- [x] Link desde `/agenda` e card na home
 
 ### Critérios de aceite
 
@@ -2261,16 +2261,16 @@ flowchart LR
 
 #### 42.1 Data layer (`lib/decisions/registry.ts`)
 
-- [ ] Agregar `decisions` de `meeting_summaries` no período
-- [ ] Dedupe por texto normalizado; contagem de ocorrências
-- [ ] Metadados: meeting_id, title, started_at, série
+- [x] Agregar `decisions` de `meeting_summaries` no período
+- [x] Dedupe por texto normalizado; contagem de ocorrências
+- [x] Metadados: meeting_id, title, started_at, série
 
 #### 42.2 UI (`components/decisions/`)
 
-- [ ] KPI: total de decisões · reuniões com decisão · mais recorrente
-- [ ] Busca client-side por texto
-- [ ] Lista agrupada por semana; link → `/reunioes/[id]`
-- [ ] Link desde `/insights`
+- [x] KPI: total de decisões · reuniões com decisão · mais recorrente
+- [x] Busca client-side por texto
+- [x] Lista agrupada por semana; link → `/reunioes/[id]`
+- [x] Link desde `/insights`
 
 ### Critérios de aceite
 
@@ -2300,20 +2300,20 @@ flowchart LR
 
 #### 43.1 Data layer (`lib/meetings/share-hub.ts`)
 
-- [ ] `getShareLinksHub()` — tokens do usuário + título da reunião
-- [ ] Status: ativo · expirado · revogado
-- [ ] Mascarar token na UI (últimos 6 chars)
+- [x] `getShareLinksHub()` — tokens do usuário + título da reunião
+- [x] Status: ativo · expirado · revogado
+- [x] Mascarar token na UI (últimos 6 chars)
 
 #### 43.2 API
 
-- [ ] `GET /api/share-links` — lista paginada
-- [ ] Reutilizar `DELETE` existente por meeting ou `PATCH` revoke em batch
+- [x] `GET /api/share-links` — lista paginada
+- [x] Reutilizar `DELETE` existente por meeting ou `PATCH` revoke em batch
 
 #### 43.3 UI
 
-- [ ] Tabela/cards: reunião · expira em · permissões resumidas · copiar link
-- [ ] Botão revogar com confirmação
-- [ ] Link "Gerenciar links" no dialog de share e em `/configuracoes`
+- [x] Tabela/cards: reunião · expira em · permissões resumidas · copiar link
+- [x] Botão revogar com confirmação
+- [x] Link "Gerenciar links" no dialog de share e em `/configuracoes`
 
 ### Critérios de aceite
 
