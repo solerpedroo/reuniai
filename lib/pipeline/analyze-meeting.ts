@@ -16,7 +16,7 @@ import {
   notificationDedupeKey,
 } from "@/lib/notifications/hrefs";
 import { runPlaybooksForMeeting } from "@/lib/playbooks/executor";
-import { syncMeetingActionItems } from "@/lib/task-sync/hooks";
+import { syncMeetingActionItems } from "@/lib/tasks/hub-sync";
 import { upsertKnowledgeFromMeeting } from "@/lib/knowledge/entries";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
@@ -181,7 +181,7 @@ export async function analyzeMeetingById(
       try {
         await syncMeetingActionItems(admin, meetingId);
       } catch (err) {
-        console.error("Falha ao sincronizar tarefas externas (não bloqueante):", err);
+        console.error("Falha ao sincronizar tarefas no hub (não bloqueante):", err);
       }
       try {
         await upsertKnowledgeFromMeeting(admin, meetingId);
