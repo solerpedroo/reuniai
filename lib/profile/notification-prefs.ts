@@ -13,6 +13,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   digest: true,
   bot_failed: true,
   tasks_due: true,
+  review_queue: true,
 };
 
 export async function getUserNotificationPrefs(

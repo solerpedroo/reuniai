@@ -66,6 +66,7 @@ export type NotificationPrefs = {
   digest: boolean;
   bot_failed: boolean;
   tasks_due: boolean;
+  review_queue: boolean;
 };
 
 export type AppNotification = {
