@@ -13,6 +13,7 @@ import { AssistantFab } from "@/components/shell/assistant-fab";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
 import { UserMenu } from "@/components/shell/user-menu";
+import { PRODUCT_TAGLINE } from "@/lib/brand/config";
 import { cn } from "@/lib/utils";
 
 type SessionUser = { name?: string | null; email?: string | null };
@@ -115,7 +116,7 @@ export function AppShell({
           </PageTransition>
 
           <footer className="mt-auto border-t border-border/70 px-4 py-4 lg:px-8">
-            <p className="text-xs text-muted-foreground">ReuniAI · Inteligência de reuniões</p>
+            <p className="text-xs text-muted-foreground">ReuniAI · {PRODUCT_TAGLINE}</p>
           </footer>
         </div>
       </div>
