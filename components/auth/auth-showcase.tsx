@@ -6,7 +6,7 @@ export function AuthShowcase() {
   return (
     <div className="relative flex h-full min-h-screen flex-col justify-between p-10 xl:p-14">
       <div className="relative">
-        <ReuniaiLogo />
+        <ReuniaiLogo markSize={52} wordmarkSize="lg" fillCutouts />
       </div>
 
       <div className="relative max-w-md space-y-8">
