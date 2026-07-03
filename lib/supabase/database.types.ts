@@ -657,6 +657,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      meeting_minutes: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          content_md: string;
+          content_json: Json;
+          generated_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          content_md: string;
+          content_json?: Json;
+          generated_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          content_md?: string;
+          content_json?: Json;
+          generated_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       user_tasks: {
         Row: {
           id: string;
