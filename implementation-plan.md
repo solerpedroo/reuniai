@@ -2725,6 +2725,21 @@ flowchart LR
 
 ---
 
+## Onda 54 — Base de conhecimento viva
+
+**Objetivo:** Wiki acumulativa com proveniência das reuniões.
+
+**Branch:** `feat/onda-54-conhecimento`
+
+### Features
+
+- [x] Schema `knowledge_entries`
+- [x] Upsert automático pós-análise
+- [x] Hub `/conhecimento` + detalhe por slug
+- [x] Tags e links para reuniões fonte
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
