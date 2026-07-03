@@ -597,6 +597,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      playbooks: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          enabled: boolean;
+          conditions: Json;
+          actions: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          enabled?: boolean;
+          conditions?: Json;
+          actions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          enabled?: boolean;
+          conditions?: Json;
+          actions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      playbook_runs: {
+        Row: {
+          id: string;
+          playbook_id: string;
+          meeting_id: string;
+          status: string;
+          log: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          playbook_id: string;
+          meeting_id: string;
+          status: string;
+          log?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          playbook_id?: string;
+          meeting_id?: string;
+          status?: string;
+          log?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       speaker_mappings: {
         Row: {
           id: string;
