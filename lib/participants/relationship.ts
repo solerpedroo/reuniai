@@ -3,27 +3,13 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
+import type { ParticipantRelationship } from "@/lib/participants/relationship-types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-export type ParticipantRelationship = {
-  participant_key: string;
-  relationship_type: string;
-  talking_points: string[];
-  open_loops: string[];
-  updated_at: string;
-};
-
-export const RELATIONSHIP_TYPES = [
-  { value: "colega", label: "Colega" },
-  { value: "gestor", label: "Gestor" },
-  { value: "cliente", label: "Cliente" },
-  { value: "parceiro", label: "Parceiro" },
-  { value: "investidor", label: "Investidor" },
-  { value: "candidato", label: "Candidato" },
-  { value: "outro", label: "Outro" },
-] as const;
+export type { ParticipantRelationship } from "@/lib/participants/relationship-types";
+export { RELATIONSHIP_TYPES } from "@/lib/participants/relationship-types";
 
 function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
