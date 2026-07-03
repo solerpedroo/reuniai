@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { IntegrationEvent } from "@/lib/integrations/types";
+import { TaskSyncSettings } from "@/components/settings/task-sync-settings";
 
 type SlackState = {
   connected: boolean;
@@ -307,6 +308,8 @@ export function IntegrationSettings() {
           </p>
         </CardContent>
       </Card>
+
+      <TaskSyncSettings />
     </>
   );
 }
