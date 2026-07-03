@@ -17,6 +17,21 @@ export async function finalizeStoppedMeeting(
   nativeMeetingId: string,
   options?: { endTime?: string; startTime?: string | null }
 ): Promise<void> {
+  const { data: meeting } = await admin
+    .from("meetings")
+    .select("id, status")
+    .eq("recall_bot_id", nativeMeetingId)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string; status: string }>();
+
+  if (
+    meeting &&
+    ["processing", "completed", "partial", "failed"].includes(meeting.status)
+  ) {
+    return;
+  }
+
   await applyMeetingStatus(admin, {
     nativeMeetingId,
     vexaStatus: "completed",
