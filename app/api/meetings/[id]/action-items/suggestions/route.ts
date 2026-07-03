@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncActionItemById } from "@/lib/task-sync/hooks";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,14 @@ export async function POST(
 
     if (error) {
       return NextResponse.json({ error: "Falha ao aceitar sugestões" }, { status: 500 });
+    }
+
+    for (const item of data ?? []) {
+      try {
+        await syncActionItemById(admin, (item as { id: string }).id);
+      } catch (err) {
+        console.error("Falha sync pós-aceite (não bloqueante):", err);
+      }
     }
 
     return NextResponse.json({ ok: true, items: data });

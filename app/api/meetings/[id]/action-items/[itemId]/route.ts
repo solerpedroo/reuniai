@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncActionItemById } from "@/lib/task-sync/hooks";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,12 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: "Falha ao atualizar item" }, { status: 500 });
+  }
+
+  try {
+    await syncActionItemById(admin, itemId);
+  } catch (err) {
+    console.error("Falha ao sincronizar tarefa externa (não bloqueante):", err);
   }
 
   return NextResponse.json({ ok: true, item: data });

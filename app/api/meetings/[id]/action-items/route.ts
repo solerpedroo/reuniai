@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { dispatchActionItemCreated } from "@/lib/integrations/dispatch";
+import { syncActionItemById } from "@/lib/task-sync/hooks";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ActionItem } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/server";
@@ -71,6 +72,12 @@ export async function POST(
     await dispatchActionItemCreated(admin, meetingId, data as ActionItem);
   } catch (err) {
     console.error("Falha ao disparar webhook (não bloqueante):", err);
+  }
+
+  try {
+    await syncActionItemById(admin, (data as ActionItem).id);
+  } catch (err) {
+    console.error("Falha ao sincronizar tarefa externa (não bloqueante):", err);
   }
 
   return NextResponse.json({ ok: true, item: data });
