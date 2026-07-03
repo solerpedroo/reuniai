@@ -120,6 +120,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     description: "Tendências e métricas das suas reuniões",
     icon: ChartLineUp,
   },
+  {
+    href: "/impacto",
+    label: "Impacto",
+    description: "Retrospectiva pessoal e valor do produto",
+    icon: ChartLineUp,
+  },
 ];
 
 /** Ondas 41–50 — bibliotecas e hubs cross-meeting. */

@@ -230,8 +230,8 @@ export function DailyBriefingView({ briefing }: { briefing: DailyBriefing }) {
           Planejar semana
         </Link>
         <span className="text-muted-foreground">·</span>
-        <Link href="/insights" className="text-brand hover:underline">
-          Insights
+        <Link href="/impacto" className="text-brand hover:underline">
+          Impacto
         </Link>
       </div>
     </div>
