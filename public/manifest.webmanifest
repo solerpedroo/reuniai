@@ -1,13 +1,25 @@
 {
   "name": "ReuniAI",
   "short_name": "ReuniAI",
-  "description": "Inteligência de reuniões com transcrição, resumo e action items",
+  "description": "Ouve. Transcreve. Analisa. Potencializa.",
   "start_url": "/agenda",
   "display": "standalone",
-  "background_color": "#0a0a0a",
+  "background_color": "#ffffff",
   "theme_color": "#0064F5",
   "lang": "pt-BR",
   "icons": [
+    {
+      "src": "/brand/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
@@ -19,12 +31,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ]
 }
