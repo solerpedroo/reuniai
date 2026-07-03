@@ -62,8 +62,8 @@
 | **49** | **Busca semântica avançada** | ✅ Concluída |
 | **50** | **Hub de follow-ups** | ✅ Concluída |
 | **51** | **Copiloto ao vivo (in-call)** | ✅ Concluída |
-| **52** | **Playbooks pós-reunião** | 📋 Planejada |
-| **53** | **Sync bidirecional de tarefas** | 📋 Planejada |
+| **52** | **Playbooks pós-reunião** | ✅ Concluída |
+| **53** | **Sync bidirecional de tarefas** | 🔄 Em andamento |
 | **54** | **Base de conhecimento viva** | 📋 Planejada |
 | **55** | **PWA mobile + revisão express** | 📋 Planejada |
 | **56** | **Ledger de compromissos** | 📋 Planejada |
@@ -2677,6 +2677,29 @@ flowchart LR
 - [x] Atribuição `source=live` sobrevive à re-análise IA
 - [x] APIs exigem ownership; 409 quando reunião não está ao vivo
 - [x] Rate limit em transcript e capturas
+
+---
+
+## Onda 52 — Playbooks pós-reunião
+
+**Objetivo:** Automatizar fluxo pós-call com regras SE/ENTÃO reutilizáveis.
+
+**Branch:** `feat/onda-52-playbooks`
+
+### Features
+
+- [x] Schema `playbooks` + `playbook_runs` com RLS
+- [x] Matcher por título, série, template, plataforma
+- [x] Ações: `generate_follow_up`, `apply_tags`, `set_folder`
+- [x] Executor pós-análise (`runPlaybooksForMeeting`)
+- [x] API CRUD `/api/playbooks`
+- [x] UI `/automacoes`
+
+### Critérios de aceite
+
+- [x] Playbook com `title_contains` dispara após `status = completed`
+- [x] Log de execução em `playbook_runs`
+- [x] Tags/pastas validadas por ownership
 
 ---
 
