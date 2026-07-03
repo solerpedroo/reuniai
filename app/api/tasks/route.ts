@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { pullHubTaskToActionItem } from "@/lib/tasks/hub-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
