@@ -687,6 +687,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      participant_digests: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          recipient_email: string;
+          subject: string;
+          body: string;
+          share_token_id: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          recipient_email: string;
+          subject: string;
+          body: string;
+          share_token_id?: string | null;
+          sent_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          recipient_email?: string;
+          subject?: string;
+          body?: string;
+          share_token_id?: string | null;
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
       user_tasks: {
         Row: {
           id: string;
