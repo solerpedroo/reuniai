@@ -690,6 +690,78 @@ export type Database = {
         };
         Relationships: [];
       };
+      decision_outcome_events: {
+        Row: {
+          id: string;
+          outcome_id: string;
+          meeting_id: string | null;
+          event_type: string;
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          outcome_id: string;
+          meeting_id?: string | null;
+          event_type: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          outcome_id?: string;
+          meeting_id?: string | null;
+          event_type?: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      decision_outcomes: {
+        Row: {
+          id: string;
+          user_id: string;
+          decision_key: string;
+          decision_text: string;
+          status: Database["public"]["Enums"]["decision_outcome_status"];
+          first_meeting_id: string | null;
+          last_meeting_id: string | null;
+          suggested_status: Database["public"]["Enums"]["decision_outcome_status"] | null;
+          suggested_at: string | null;
+          suggested_meeting_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          decision_key: string;
+          decision_text: string;
+          status?: Database["public"]["Enums"]["decision_outcome_status"];
+          first_meeting_id?: string | null;
+          last_meeting_id?: string | null;
+          suggested_status?: Database["public"]["Enums"]["decision_outcome_status"] | null;
+          suggested_at?: string | null;
+          suggested_meeting_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          decision_key?: string;
+          decision_text?: string;
+          status?: Database["public"]["Enums"]["decision_outcome_status"];
+          first_meeting_id?: string | null;
+          last_meeting_id?: string | null;
+          suggested_status?: Database["public"]["Enums"]["decision_outcome_status"] | null;
+          suggested_at?: string | null;
+          suggested_meeting_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       participant_digests: {
         Row: {
           id: string;
@@ -1528,6 +1600,7 @@ export type Database = {
       share_scope: "summary_only" | "full_transcript";
       commitment_direction: "i_owe" | "they_owe" | "mutual";
       verbal_commitment_status: "pending" | "fulfilled" | "overdue" | "disputed";
+      decision_outcome_status: "pending" | "in_progress" | "done" | "reversed";
     };
     CompositeTypes: {
       [_ in never]: never;
