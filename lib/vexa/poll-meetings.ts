@@ -2,11 +2,12 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
-import { stopBot } from "@/lib/vexa/client";
+import { stopBot, getTranscript } from "@/lib/vexa/client";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import {
   getRunningBotsByNativeId,
   getVexaMeetingsByNativeId,
+  refineVexaMeetingStatus,
   resolveVexaMeetingStatus,
   shouldAutoLeaveEmptyMeeting,
 } from "@/lib/vexa/meeting-state";
@@ -81,12 +82,25 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     const vexaMeeting = vexaMeetingsByNative.get(key) ?? null;
     const container = runningBotsByNative.get(key) ?? null;
 
-    const vexaStatus = resolveVexaMeetingStatus({
+    let hasTranscriptSegments = false;
+    if (!vexaMeeting || meeting.status === "bot_joining") {
+      try {
+        const transcript = await getTranscript(parsed.platform, nativeId);
+        hasTranscriptSegments = (transcript.segments?.length ?? 0) > 0;
+      } catch {
+        hasTranscriptSegments = false;
+      }
+    }
+
+    let vexaStatus = resolveVexaMeetingStatus({
       vexaMeeting,
       container,
       dbStatus: meeting.status,
       meetingStartedAt: meeting.started_at,
+      hasTranscriptSegments,
     });
+
+    vexaStatus = await refineVexaMeetingStatus(parsed.platform, nativeId, vexaStatus);
 
     // Bot ainda na call enquanto DB já está em processamento → força saída.
     if (meeting.status === "processing" && container?.containerUp) {
@@ -101,7 +115,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
 
     // Sala vazia: encerra o bot proativamente.
     if (
-      meeting.status === "recording" &&
+      (meeting.status === "recording" || meeting.status === "bot_joining") &&
       container?.containerUp &&
       (await shouldAutoLeaveEmptyMeeting(
         parsed.platform,
@@ -129,13 +143,26 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       vexaStatus,
       endTime: vexaMeeting?.end_time,
       startTime: vexaMeeting?.start_time ?? meeting.started_at,
-      reason: resolvePollFailureReason(vexaMeeting, vexaStatus),
+      reason:
+        vexaStatus === "failed" && meeting.status === "bot_joining"
+          ? resolvePollFailureReason(vexaMeeting, vexaStatus) ??
+            "O bot não conseguiu entrar na reunião a tempo."
+          : resolvePollFailureReason(vexaMeeting, vexaStatus),
     });
     if (result.updated) updated += 1;
 
     // Reaplica câmera enquanto gravando — virtual camera no Meet é intermitente.
-    if (vexaStatus === "active" && meeting.status === "recording") {
+    if (vexaStatus === "active" && (meeting.status === "recording" || meeting.status === "bot_joining")) {
       scheduleBotBranding(parsed.platform, nativeId, { skipWait: true, quickRetry: true });
+    }
+
+    if (vexaStatus === "failed" && container?.containerUp) {
+      try {
+        await stopBot(parsed.platform, nativeId);
+        autoLeft += 1;
+      } catch (err) {
+        console.error("Falha ao remover bot após falha de entrada:", err);
+      }
     }
 
     const mappedStatus = mapVexaStatus(vexaStatus);

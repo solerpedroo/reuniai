@@ -5,6 +5,7 @@ import {
   getMeetingParticipants,
   getRunningBots,
   getTranscript,
+  getVexaMeeting,
   listVexaMeetings,
   type VexaMeeting,
   type VexaTranscriptSegment,
@@ -16,6 +17,13 @@ export const EMPTY_ROOM_SILENCE_MS = 90_000;
 export const EMPTY_ROOM_MIN_ACTIVE_MS = 120_000;
 /** Janela de tolerância enquanto o bot ainda está entrando (evita falso "completed"). */
 export const JOINING_GRACE_MS = 3 * 60_000;
+/** Tempo máximo em lobby/entrada antes de marcar falha. */
+export const JOINING_TIMEOUT_MS = 15 * 60_000;
+/** Tempo mínimo no lobby vazio antes de desistir da entrada. */
+export const EMPTY_LOBBY_MIN_MS = 60_000;
+
+const JOINING_STATUSES = new Set(["requested", "joining", "awaiting_admission"]);
+const CAPTURING_STATUSES = new Set(["active", "stopping"]);
 
 export type VexaMeetingState = {
   status: string;
@@ -69,6 +77,14 @@ export function getLastTranscriptActivityMs(segments: VexaTranscriptSegment[]): 
   return null;
 }
 
+export function isJoiningVexaStatus(status: string): boolean {
+  return JOINING_STATUSES.has(status);
+}
+
+export function isCapturingVexaStatus(status: string): boolean {
+  return CAPTURING_STATUSES.has(status);
+}
+
 /**
  * Resolve o status real da reunião no Vexa.
  * `/bots/status` retorna uptime do container ("Up 4 seconds"), não o ciclo de vida
@@ -79,17 +95,29 @@ export function resolveVexaMeetingStatus(input: {
   container?: RunningBotRef | null;
   dbStatus: string;
   meetingStartedAt: string;
+  hasTranscriptSegments?: boolean;
 }): string {
+  const elapsedMs = Date.now() - new Date(input.meetingStartedAt).getTime();
+
+  if (input.dbStatus === "bot_joining" && elapsedMs >= JOINING_TIMEOUT_MS) {
+    return "failed";
+  }
+
   if (input.vexaMeeting?.status) {
     return input.vexaMeeting.status;
   }
 
+  if (input.hasTranscriptSegments) {
+    return "active";
+  }
+
   if (input.container?.containerUp) {
     if (input.dbStatus === "recording") return "active";
+    if (elapsedMs < JOINING_GRACE_MS) return "joining";
+    // Container up além da grace sem registro em /meetings — provável lobby ou sync atrasado.
     return "joining";
   }
 
-  const elapsedMs = Date.now() - new Date(input.meetingStartedAt).getTime();
   if (input.dbStatus === "bot_joining" && elapsedMs < JOINING_GRACE_MS) {
     return "joining";
   }
@@ -98,7 +126,41 @@ export function resolveVexaMeetingStatus(input: {
 }
 
 /**
- * Detecta reunião vazia: bot ainda ativo, mas sem fala recente na transcrição.
+ * Refina o status inferido consultando /meetings diretamente e a transcrição.
+ * Usado pelo poll e pela API de sessão quando a listagem agregada não tem a reunião.
+ */
+export async function refineVexaMeetingStatus(
+  platform: BotPlatform,
+  nativeMeetingId: string,
+  coarseStatus: string
+): Promise<string> {
+  if (isCapturingVexaStatus(coarseStatus) || coarseStatus === "failed" || coarseStatus === "completed") {
+    return coarseStatus;
+  }
+
+  try {
+    const direct = await getVexaMeeting(platform, nativeMeetingId);
+    if (direct?.status) return direct.status;
+  } catch {
+    // segue para fallback de transcrição
+  }
+
+  if (isJoiningVexaStatus(coarseStatus) || coarseStatus === "joining") {
+    try {
+      const transcript = await getTranscript(platform, nativeMeetingId);
+      if ((transcript.segments?.length ?? 0) > 0) {
+        return "active";
+      }
+    } catch {
+      // mantém status coarse
+    }
+  }
+
+  return coarseStatus;
+}
+
+/**
+ * Detecta reunião vazia: bot ainda ativo ou no lobby, mas sem participantes.
  * Fallback quando o Vexa não dispara auto-leave sozinho.
  */
 export async function shouldAutoLeaveEmptyMeeting(
@@ -107,12 +169,21 @@ export async function shouldAutoLeaveEmptyMeeting(
   vexaStatus: string,
   meetingStartedAt: string
 ): Promise<boolean> {
-  if (vexaStatus !== "active") return false;
+  const inLobby = isJoiningVexaStatus(vexaStatus);
+  if (!isCapturingVexaStatus(vexaStatus) && !inLobby) return false;
 
   const activeForMs = Date.now() - new Date(meetingStartedAt).getTime();
-  if (activeForMs < EMPTY_ROOM_MIN_ACTIVE_MS) return false;
+  const minWaitMs = inLobby ? EMPTY_LOBBY_MIN_MS : EMPTY_ROOM_MIN_ACTIVE_MS;
+  if (activeForMs < minWaitMs) return false;
 
   try {
+    const participants = await getMeetingParticipants(platform, nativeMeetingId);
+    if (participants.participant_count > 0) return false;
+
+    if (inLobby) {
+      return true;
+    }
+
     const transcript = await getTranscript(platform, nativeMeetingId);
     const segments = transcript.segments ?? [];
     const lastActivityMs = getLastTranscriptActivityMs(segments);
@@ -121,12 +192,7 @@ export async function shouldAutoLeaveEmptyMeeting(
       return activeForMs >= EMPTY_ROOM_MIN_ACTIVE_MS;
     }
 
-    if (Date.now() - lastActivityMs < EMPTY_ROOM_SILENCE_MS) {
-      return false;
-    }
-
-    const participants = await getMeetingParticipants(platform, nativeMeetingId);
-    return participants.participant_count === 0;
+    return Date.now() - lastActivityMs >= EMPTY_ROOM_SILENCE_MS;
   } catch {
     return false;
   }

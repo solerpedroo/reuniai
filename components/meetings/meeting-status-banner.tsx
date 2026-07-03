@@ -10,8 +10,16 @@ const LIVE_STEPS = [
   { key: "done", label: "Analisando" },
 ] as const;
 
-function getLiveStep(status: Meeting["status"]): number {
-  if (status === "bot_joining") return 0;
+function getLiveStep(
+  status: Meeting["status"],
+  session?: MeetingSessionResponse["session"]
+): number {
+  const vexaActive =
+    session?.vexaStatus === "active" ||
+    session?.vexaStatus === "stopping" ||
+    (session?.transcription.segmentCount ?? 0) > 0;
+
+  if (status === "bot_joining") return vexaActive ? 1 : 0;
   if (status === "recording") return 1;
   if (status === "processing") return 2;
   return 3;
@@ -31,13 +39,13 @@ export function MeetingStatusBanner({
     const label =
       status === "processing"
         ? "Processando a reunião (transcrição e análise por IA)…"
-        : status === "recording"
+        : status === "recording" || (status === "bot_joining" && liveSession?.transcription.active)
           ? liveSession?.transcription.active
             ? "O bot está gravando e transcrevendo esta reunião."
             : "O bot entrou na reunião. Aguardando confirmação da transcrição…"
           : "O bot está entrando na reunião…";
 
-    const step = getLiveStep(status);
+    const step = getLiveStep(status, liveSession);
 
     return (
       <div className="surface-toolbar mb-6 px-4 py-3">

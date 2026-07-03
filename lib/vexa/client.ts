@@ -178,7 +178,7 @@ export async function getRunningBots(): Promise<VexaRunningBot[]> {
 }
 
 /** Lista reuniões do Vexa com status de ciclo de vida (`active`, `joining`, `completed`, …). */
-export async function listVexaMeetings(limit = 100): Promise<VexaMeeting[]> {
+export async function listVexaMeetings(limit = 250): Promise<VexaMeeting[]> {
   const res = await vexaFetch(`/meetings?limit=${limit}`);
   if (!res.ok) {
     throw new Error(`Vexa listVexaMeetings falhou: ${res.status} ${await res.text()}`);
@@ -186,6 +186,27 @@ export async function listVexaMeetings(limit = 100): Promise<VexaMeeting[]> {
   const data = (await res.json()) as { meetings?: VexaMeeting[] } | VexaMeeting[];
   if (Array.isArray(data)) return data;
   return data.meetings ?? [];
+}
+
+/** Busca reunião por plataforma + ID nativo (endpoint direto, fallback para listagem). */
+export async function getVexaMeeting(
+  platform: BotPlatform,
+  nativeMeetingId: string
+): Promise<VexaMeeting | null> {
+  const direct = await vexaFetch(`/meetings/${platform}/${encodeURIComponent(nativeMeetingId)}`);
+  if (direct.ok) {
+    return (await direct.json()) as VexaMeeting;
+  }
+  if (direct.status !== 404) {
+    throw new Error(`Vexa getVexaMeeting falhou: ${direct.status} ${await direct.text()}`);
+  }
+
+  const meetings = await listVexaMeetings();
+  return (
+    meetings.find(
+      (item) => item.platform === platform && item.native_meeting_id === nativeMeetingId
+    ) ?? null
+  );
 }
 
 /** Participantes detectados na reunião (via transcrição em tempo real). */
