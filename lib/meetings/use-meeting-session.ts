@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { shouldPollBotSession } from "@/lib/meetings/bot-lifecycle";
 import type { MeetingStatus } from "@/lib/supabase/types";
 import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
 
-const LIVE_STATUSES = new Set<MeetingStatus>(["bot_joining", "recording", "processing"]);
+const POLL_MS = 5_000;
 
 export type MeetingSessionResponse = {
   live: boolean;
   session?: MeetingSessionStatus | null;
   message?: string;
   synced?: boolean;
+  phase?: "processing";
 };
 
 export function useMeetingSession(
@@ -23,7 +25,7 @@ export function useMeetingSession(
   const router = useRouter();
 
   useEffect(() => {
-    if (!LIVE_STATUSES.has(status) || !recallBotId) {
+    if (!shouldPollBotSession(status, recallBotId)) {
       setSession(null);
       return;
     }
@@ -36,7 +38,7 @@ export function useMeetingSession(
         const data = (await res.json()) as MeetingSessionResponse;
         if (cancelled) return;
         setSession(data);
-        if (data.synced) {
+        if (data.synced || data.phase === "processing" || data.live === false) {
           router.refresh();
         }
       } catch {
@@ -47,7 +49,7 @@ export function useMeetingSession(
     }
 
     void poll();
-    const interval = window.setInterval(() => void poll(), 10_000);
+    const interval = window.setInterval(() => void poll(), POLL_MS);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
