@@ -762,6 +762,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      meeting_clips: {
+        Row: {
+          id: string;
+          user_id: string;
+          meeting_id: string;
+          highlight_id: string | null;
+          token: string;
+          caption: string;
+          start_ms: number;
+          end_ms: number | null;
+          expires_at: string;
+          revoked_at: string | null;
+          redact_pii: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          meeting_id: string;
+          highlight_id?: string | null;
+          token?: string;
+          caption: string;
+          start_ms: number;
+          end_ms?: number | null;
+          expires_at: string;
+          revoked_at?: string | null;
+          redact_pii?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          meeting_id?: string;
+          highlight_id?: string | null;
+          token?: string;
+          caption?: string;
+          start_ms?: number;
+          end_ms?: number | null;
+          expires_at?: string;
+          revoked_at?: string | null;
+          redact_pii?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       participant_digests: {
         Row: {
           id: string;

@@ -167,6 +167,12 @@ export const NAV_LIBRARY_ITEMS: NavItem[] = [
     icon: LinkSimple,
   },
   {
+    href: "/clips",
+    label: "Clips",
+    description: "Trechos específicos compartilháveis da call",
+    icon: BookmarkSimple,
+  },
+  {
     href: "/conhecimento",
     label: "Conhecimento",
     description: "Wiki viva com proveniência das reuniões",
