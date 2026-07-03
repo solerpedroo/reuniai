@@ -11,7 +11,7 @@ import {
   DIRECTION_LABELS,
   type CommitmentsHub,
   type VerbalCommitmentStatus,
-} from "@/lib/commitments/hub";
+} from "@/lib/commitments/types";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<VerbalCommitmentStatus, string> = {
