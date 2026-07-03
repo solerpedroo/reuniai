@@ -64,8 +64,8 @@
 | **51** | **Copiloto ao vivo (in-call)** | ✅ Concluída |
 | **52** | **Playbooks pós-reunião** | ✅ Concluída |
 | **53** | **Sync bidirecional de tarefas** | ✅ Concluída |
-| **54** | **Base de conhecimento viva** | 🔄 Em andamento |
-| **55** | **PWA mobile + revisão express** | 📋 Planejada |
+| **54** | **Base de conhecimento viva** | ✅ Concluída |
+| **55** | **PWA mobile + revisão express** | 🔄 Em andamento |
 | **56** | **Ledger de compromissos** | 📋 Planejada |
 | **57** | **Participantes++ (CRM relacional)** | 📋 Planejada |
 | **58** | **Planejador semanal unificado** | 📋 Planejada |

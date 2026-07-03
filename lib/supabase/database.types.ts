@@ -732,6 +732,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      knowledge_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          slug: string;
+          summary: string | null;
+          body: string;
+          source_meeting_ids: string[];
+          tags: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          slug: string;
+          summary?: string | null;
+          body?: string;
+          source_meeting_ids?: string[];
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          slug?: string;
+          summary?: string | null;
+          body?: string;
+          source_meeting_ids?: string[];
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       speaker_mappings: {
         Row: {
           id: string;
