@@ -1457,7 +1457,7 @@ export type Database = {
       action_item_priority: "low" | "medium" | "high";
       calendar_provider: "google" | "outlook";
       task_sync_provider: "todoist" | "google_tasks";
-      transcript_source: "vexa" | "teams_native" | "meet_native";
+      transcript_source: "vexa" | "teams_native" | "meet_native" | "upload";
       chat_message_role: "user" | "assistant";
       share_scope: "summary_only" | "full_transcript";
       commitment_direction: "i_owe" | "they_owe" | "mutual";
