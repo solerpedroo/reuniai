@@ -17,6 +17,7 @@ import {
 } from "@/lib/notifications/hrefs";
 import { runPlaybooksForMeeting } from "@/lib/playbooks/executor";
 import { syncMeetingActionItems } from "@/lib/task-sync/hooks";
+import { upsertKnowledgeFromMeeting } from "@/lib/knowledge/entries";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
 import { mergeLiveDecisionsIntoSummary } from "@/lib/meetings/live-decisions";
@@ -167,6 +168,11 @@ export async function analyzeMeetingById(
         await syncMeetingActionItems(admin, meetingId);
       } catch (err) {
         console.error("Falha ao sincronizar tarefas externas (não bloqueante):", err);
+      }
+      try {
+        await upsertKnowledgeFromMeeting(admin, meetingId);
+      } catch (err) {
+        console.error("Falha ao atualizar conhecimento (não bloqueante):", err);
       }
       await dispatchMeetingCompleted(admin, meetingId);
     } catch (err) {

@@ -1,6 +1,7 @@
 import {
   BookmarkSimple,
   Books,
+  BookOpen,
   CalendarBlank,
   CalendarCheck,
   ChartLineUp,
@@ -122,6 +123,12 @@ export const NAV_LIBRARY_ITEMS: NavItem[] = [
     label: "Compartilhar",
     description: "Links read-only ativos e revogados",
     icon: LinkSimple,
+  },
+  {
+    href: "/conhecimento",
+    label: "Conhecimento",
+    description: "Wiki viva com proveniência das reuniões",
+    icon: BookOpen,
   },
   {
     href: "/busca",
@@ -274,6 +281,10 @@ export function getNavItem(pathname: string): NavItem {
       description: "Playbooks pós-reunião",
       icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
     };
+  }
+
+  if (pathname === "/conhecimento" || pathname.startsWith("/conhecimento/")) {
+    return findLibraryNav("/conhecimento") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/decisoes" || pathname.startsWith("/decisoes?")) {
