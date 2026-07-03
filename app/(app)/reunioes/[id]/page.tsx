@@ -196,6 +196,15 @@ export default async function MeetingDetailPage({
 
       <MeetingCoachPanel report={coachReport} />
 
+      {summary && (
+        <div className="mb-6">
+          <TemplateAnalysisPanel
+            templateId={analysisTemplate ?? rawTemplateId}
+            templateFields={templateFields}
+          />
+        </div>
+      )}
+
       <MeetingReviewWizard
         meeting={meeting}
         summary={summary}
