@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { buildFollowUpMailto } from "@/lib/meetings/follow-up-mailto";
 import { FollowUpSendDialog } from "@/components/meetings/follow-up-send-dialog";
 import type { ReviewQueueCounts, ReviewQueueItem } from "@/lib/review/review-queue";
+import { ReviewExpressMode } from "@/components/review/review-express-mode";
 import type { ActionItem } from "@/lib/supabase/types";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
@@ -475,6 +476,7 @@ export function ReviewQueue({
     initialItems[0]?.id ?? null
   );
   const [focusIndex, setFocusIndex] = useState(0);
+  const [expressMode, setExpressMode] = useState(false);
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
@@ -533,38 +535,53 @@ export function ReviewQueue({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-medium">{headerLabel}</p>
-        {counts.snoozed > 0 && (
-          <Badge variant="secondary">{counts.snoozed} adiada(s)</Badge>
-        )}
-        {counts.reviewedToday > 0 && (
-          <Badge variant="outline" className="text-emerald-700 dark:text-emerald-400">
-            {counts.reviewedToday} revisada(s) hoje
-          </Badge>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium">{headerLabel}</p>
+          {counts.snoozed > 0 && (
+            <Badge variant="secondary">{counts.snoozed} adiada(s)</Badge>
+          )}
+          {counts.reviewedToday > 0 && (
+            <Badge variant="outline" className="text-emerald-700 dark:text-emerald-400">
+              {counts.reviewedToday} revisada(s) hoje
+            </Badge>
+          )}
+        </div>
+        <Button
+          variant={expressMode ? "default" : "outline"}
+          size="sm"
+          className="md:hidden"
+          onClick={() => setExpressMode((v) => !v)}
+        >
+          {expressMode ? "Lista" : "Express"}
+        </Button>
       </div>
 
-      <ul className="space-y-3">
-        {items.map((item, index) => (
-          <li
-            key={item.id}
-            className={cn(
-              focusIndex === index && "rounded-xl ring-2 ring-brand/30 ring-offset-2 ring-offset-background"
-            )}
-          >
-            <ReviewQueueCard
-              item={item}
-              expanded={expandedId === item.id}
-              onToggle={() =>
-                setExpandedId((id) => (id === item.id ? null : item.id))
-              }
-              onRemove={() => removeItem(item.id)}
-              llmEnabled={llmEnabled}
-            />
-          </li>
-        ))}
-      </ul>
+      {expressMode ? (
+        <ReviewExpressMode items={items} />
+      ) : (
+        <ul className="space-y-3">
+          {items.map((item, index) => (
+            <li
+              key={item.id}
+              className={cn(
+                focusIndex === index &&
+                  "rounded-xl ring-2 ring-brand/30 ring-offset-2 ring-offset-background"
+              )}
+            >
+              <ReviewQueueCard
+                item={item}
+                expanded={expandedId === item.id}
+                onToggle={() =>
+                  setExpandedId((id) => (id === item.id ? null : item.id))
+                }
+                onRemove={() => removeItem(item.id)}
+                llmEnabled={llmEnabled}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-const CACHE_NAME = "reuniai-shell-v2";
-const SHELL = ["/", "/manifest.webmanifest"];
+const CACHE_NAME = "reuniai-shell-v3";
+const SHELL = ["/", "/manifest.webmanifest", "/revisar"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
