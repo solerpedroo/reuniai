@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { syncActionItemById } from "@/lib/task-sync/hooks";
+import { syncActionItemById } from "@/lib/tasks/hub-sync";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
