@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { snoozeUntilFromPreset } from "@/lib/action-items/priority";
+import { syncActionItemById } from "@/lib/tasks/hub-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -66,6 +67,12 @@ export async function POST(
 
   if (error) {
     return NextResponse.json({ error: "Falha ao adiar item" }, { status: 500 });
+  }
+
+  try {
+    await syncActionItemById(admin, itemId);
+  } catch (err) {
+    console.error("Falha hub sync snooze (não bloqueante):", err);
   }
 
   return NextResponse.json({ ok: true, item: data });
