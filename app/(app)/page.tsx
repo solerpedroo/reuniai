@@ -3,7 +3,9 @@ import {
   CalendarCheck,
   ClipboardText,
   EnvelopeSimple,
+  SunHorizon,
 } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { getDailyTimeline } from "@/lib/agenda/daily-timeline";
 import {
@@ -122,6 +124,22 @@ export default async function HomePage() {
         meta="Dashboard"
         actions={<JoinMeetingDialog />}
       />
+
+      <Link
+        href="/hoje"
+        className="surface-card flex items-center justify-between gap-4 p-4 transition hover:border-brand/40"
+      >
+        <div className="flex items-center gap-3">
+          <SunHorizon size={22} className="text-brand" aria-hidden />
+          <div>
+            <p className="font-medium">Comece por /hoje</p>
+            <p className="text-sm text-muted-foreground">
+              Briefing matinal com próxima call, tarefas e fila de revisão
+            </p>
+          </div>
+        </div>
+        <span className="text-sm text-brand">Abrir →</span>
+      </Link>
 
       <KpiCards stats={stats} inboxCounts={inboxCounts} />
 
