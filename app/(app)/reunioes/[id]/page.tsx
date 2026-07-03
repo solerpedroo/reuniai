@@ -33,6 +33,7 @@ import { getPrepCardForMeeting } from "@/lib/meetings/prep";
 import { getSpeakerMappings } from "@/lib/speakers/mappings";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { ReviewQueueBanner } from "@/components/review/review-queue-banner";
+import { GenerateMinutesButton } from "@/components/minutes/generate-minutes-button";
 import { MeetingCoachPanel } from "@/components/meetings/meeting-coach-panel";
 import { needsPostCallReview } from "@/lib/meetings/post-call-review";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
@@ -129,6 +130,9 @@ export default async function MeetingDetailPage({
           <div className="flex flex-wrap items-center gap-2">
             <BotActions meetingId={meeting.id} status={meeting.status} />
             <ShareLinkDialog meetingId={meeting.id} />
+            {meeting.status === "completed" && (
+              <GenerateMinutesButton meetingId={meeting.id} />
+            )}
             <ExportMeetingButton meetingId={meeting.id} />
             <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
             <TranscriptSyncButton meetingId={meeting.id} />
