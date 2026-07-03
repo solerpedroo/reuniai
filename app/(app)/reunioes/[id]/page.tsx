@@ -33,8 +33,10 @@ import { getPrepCardForMeeting } from "@/lib/meetings/prep";
 import { getSpeakerMappings } from "@/lib/speakers/mappings";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { ReviewQueueBanner } from "@/components/review/review-queue-banner";
+import { MeetingCoachPanel } from "@/components/meetings/meeting-coach-panel";
 import { needsPostCallReview } from "@/lib/meetings/post-call-review";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
+import { getCoachReportForMeeting } from "@/lib/coach/queries";
 import { getTagsForMeeting } from "@/lib/tags/queries";
 import type { Meeting } from "@/lib/supabase/types";
 
@@ -62,7 +64,7 @@ export default async function MeetingDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings, prepCard, reviewCounts] =
+  const [segments, summary, actionItems, chatMessages, tags, followUp, comments, highlights, speakerMappings, prepCard, reviewCounts, coachReport] =
     await Promise.all([
       getTranscriptSegments(supabase, meeting.id),
       getMeetingSummary(supabase, meeting.id),
@@ -77,6 +79,7 @@ export default async function MeetingDetailPage({
         ? getPrepCardForMeeting(admin, user.id, meeting.id)
         : Promise.resolve(null),
       getReviewQueueCounts(supabase),
+      getCoachReportForMeeting(supabase, meeting.id),
     ]);
 
   const { data: participantRows } = await supabase
@@ -164,6 +167,8 @@ export default async function MeetingDetailPage({
       {revisar === "1" && needsPostCallReview(meeting) && (
         <ReviewQueueBanner pendingCount={reviewCounts.pending} />
       )}
+
+      <MeetingCoachPanel report={coachReport} />
 
       <MeetingReviewWizard
         meeting={meeting}
