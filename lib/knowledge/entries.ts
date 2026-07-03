@@ -16,7 +16,7 @@ function slugify(text: string): string {
 }
 
 async function uniqueSlug(admin: AdminClient, userId: string, base: string): Promise<string> {
-  let slug = base || "entrada";
+  const slug = base || "entrada";
   let n = 0;
   while (true) {
     const candidate = n === 0 ? slug : `${slug}-${n}`;
