@@ -570,6 +570,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      meeting_live_decisions: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          text: string;
+          captured_at_ms: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          text: string;
+          captured_at_ms: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          text?: string;
+          captured_at_ms?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       speaker_mappings: {
         Row: {
           id: string;
@@ -1033,7 +1060,7 @@ export type Database = {
         | "cancelled"
         | "partial";
       action_item_status: "open" | "done" | "cancelled" | "suggested";
-      action_item_source: "ai" | "manual";
+      action_item_source: "ai" | "manual" | "live";
       action_item_priority: "low" | "medium" | "high";
       calendar_provider: "google" | "outlook";
       transcript_source: "vexa" | "teams_native" | "meet_native";
