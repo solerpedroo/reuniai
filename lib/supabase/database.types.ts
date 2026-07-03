@@ -657,6 +657,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      task_sync_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: Database["public"]["Enums"]["task_sync_provider"];
+          access_token_encrypted: string | null;
+          refresh_token_encrypted: string | null;
+          external_account_label: string | null;
+          config: Json;
+          enabled: boolean;
+          last_synced_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: Database["public"]["Enums"]["task_sync_provider"];
+          access_token_encrypted?: string | null;
+          refresh_token_encrypted?: string | null;
+          external_account_label?: string | null;
+          config?: Json;
+          enabled?: boolean;
+          last_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: Database["public"]["Enums"]["task_sync_provider"];
+          access_token_encrypted?: string | null;
+          refresh_token_encrypted?: string | null;
+          external_account_label?: string | null;
+          config?: Json;
+          enabled?: boolean;
+          last_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      task_sync_links: {
+        Row: {
+          id: string;
+          action_item_id: string;
+          user_id: string;
+          provider: Database["public"]["Enums"]["task_sync_provider"];
+          external_id: string;
+          last_pushed_at: string | null;
+          last_pulled_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          action_item_id: string;
+          user_id: string;
+          provider: Database["public"]["Enums"]["task_sync_provider"];
+          external_id: string;
+          last_pushed_at?: string | null;
+          last_pulled_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          action_item_id?: string;
+          user_id?: string;
+          provider?: Database["public"]["Enums"]["task_sync_provider"];
+          external_id?: string;
+          last_pushed_at?: string | null;
+          last_pulled_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       speaker_mappings: {
         Row: {
           id: string;
@@ -1123,6 +1198,7 @@ export type Database = {
       action_item_source: "ai" | "manual" | "live";
       action_item_priority: "low" | "medium" | "high";
       calendar_provider: "google" | "outlook";
+      task_sync_provider: "todoist" | "google_tasks";
       transcript_source: "vexa" | "teams_native" | "meet_native";
       chat_message_role: "user" | "assistant";
       share_scope: "summary_only" | "full_transcript";

@@ -63,8 +63,8 @@
 | **50** | **Hub de follow-ups** | ✅ Concluída |
 | **51** | **Copiloto ao vivo (in-call)** | ✅ Concluída |
 | **52** | **Playbooks pós-reunião** | ✅ Concluída |
-| **53** | **Sync bidirecional de tarefas** | 🔄 Em andamento |
-| **54** | **Base de conhecimento viva** | 📋 Planejada |
+| **53** | **Sync bidirecional de tarefas** | ✅ Concluída |
+| **54** | **Base de conhecimento viva** | 🔄 Em andamento |
 | **55** | **PWA mobile + revisão express** | 📋 Planejada |
 | **56** | **Ledger de compromissos** | 📋 Planejada |
 | **57** | **Participantes++ (CRM relacional)** | 📋 Planejada |
@@ -2700,6 +2700,28 @@ flowchart LR
 - [x] Playbook com `title_contains` dispara após `status = completed`
 - [x] Log de execução em `playbook_runs`
 - [x] Tags/pastas validadas por ownership
+
+---
+
+## Onda 53 — Sync bidirecional de tarefas
+
+**Objetivo:** Action items espelhados no Todoist / Google Tasks com status de volta.
+
+**Branch:** `feat/onda-53-task-sync`
+
+### Features
+
+- [x] Schema `task_sync_connections` + `task_sync_links`
+- [x] OAuth Todoist + Google Tasks
+- [x] Push em create/update/aceite + pós-análise
+- [x] Pull manual de status externos
+- [x] UI em `/configuracoes` (Integrações)
+
+### Critérios de aceite
+
+- [x] Item aceito na inbox aparece no provider conectado
+- [x] Marcar done no Todoist/Tasks reflete no ReuniAI (pull)
+- [x] Tokens criptografados com `ENCRYPTION_KEY`
 
 ---
 
