@@ -21,6 +21,7 @@ import {
   UserCircle,
   UsersThree,
   VideoCamera,
+  UploadSimple,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -73,6 +74,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Reuniões",
     description: "Lista completa de reuniões gravadas",
     icon: VideoCamera,
+  },
+  {
+    href: "/importar",
+    label: "Importar",
+    description: "Enviar gravações de áudio ou vídeo",
+    icon: UploadSimple,
   },
   {
     href: "/tarefas",
@@ -237,6 +244,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/ensaiar" || pathname.startsWith("/ensaiar?")) {
     return NAV_ITEMS.find((item) => item.href === "/ensaiar") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/importar" || pathname.startsWith("/importar?")) {
+    return NAV_ITEMS.find((item) => item.href === "/importar") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/speakers" || pathname.startsWith("/speakers/")) {
