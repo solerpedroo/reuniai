@@ -15,6 +15,7 @@ import {
   completedNotificationHref,
   notificationDedupeKey,
 } from "@/lib/notifications/hrefs";
+import { runPlaybooksForMeeting } from "@/lib/playbooks/executor";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
 import { mergeLiveDecisionsIntoSummary } from "@/lib/meetings/live-decisions";
@@ -156,6 +157,11 @@ export async function analyzeMeetingById(
         console.error("Falha ao enviar email de reunião concluída (não bloqueante):", err);
       }
       await suggestAndApplyTags(admin, meetingId);
+      try {
+        await runPlaybooksForMeeting(admin, meetingId);
+      } catch (err) {
+        console.error("Falha ao executar playbooks (não bloqueante):", err);
+      }
       await dispatchMeetingCompleted(admin, meetingId);
     } catch (err) {
       console.error("Falha pós-análise (não bloqueante):", err);
