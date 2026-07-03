@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { stopBot } from "@/lib/vexa/client";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,11 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `bot:${user.id}`, ...RATE_LIMITS.bot })) {
+    const { error, status } = rateLimitResponse("Muitas ações de bot em pouco tempo.");
+    return NextResponse.json({ error }, { status });
   }
 
   let meetingId: string | undefined;

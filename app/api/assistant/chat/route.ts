@@ -7,6 +7,7 @@ import {
   formatGlobalContextForPrompt,
 } from "@/lib/rag/global-context";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -28,18 +29,6 @@ const AnswerSchema = z.object({
   answer: z.string(),
   citations: z.array(z.number()).default([]),
 });
-
-const RATE_LIMIT = 15;
-const RATE_WINDOW_MS = 60_000;
-const hits = new Map<string, number[]>();
-
-function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(userId) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  recent.push(now);
-  hits.set(userId, recent);
-  return recent.length > RATE_LIMIT;
-}
 
 const SYSTEM_PROMPT = [
   "Você é um assistente que responde perguntas sobre MÚLTIPLAS reuniões do usuário, em português do Brasil.",
@@ -63,11 +52,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  if (rateLimited(user.id)) {
-    return NextResponse.json(
-      { error: "Muitas mensagens em pouco tempo. Aguarde um instante." },
-      { status: 429 }
-    );
+  if (isRateLimited({ key: `assistant:${user.id}`, ...RATE_LIMITS.assistant })) {
+    const { error, status } = rateLimitResponse("Muitas mensagens em pouco tempo. Aguarde um instante.");
+    return NextResponse.json({ error }, { status });
   }
 
   const parsed = BodySchema.safeParse(await request.json().catch(() => ({})));

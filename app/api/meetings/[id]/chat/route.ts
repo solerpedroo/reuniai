@@ -6,6 +6,7 @@ import type { Citation } from "@/lib/meetings/chat";
 import { buildMeetingContext } from "@/lib/rag/meeting-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -18,19 +19,6 @@ const AnswerSchema = z.object({
   answer: z.string(),
   citations: z.array(z.number()).default([]),
 });
-
-// Rate limit simples em memória (best-effort; reseta em cold start).
-const RATE_LIMIT = 20;
-const RATE_WINDOW_MS = 60_000;
-const hits = new Map<string, number[]>();
-
-function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(userId) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  recent.push(now);
-  hits.set(userId, recent);
-  return recent.length > RATE_LIMIT;
-}
 
 const SYSTEM_PROMPT = [
   "Você é um assistente que responde perguntas sobre UMA reunião específica, em português do Brasil.",
@@ -61,11 +49,9 @@ export async function POST(
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  if (rateLimited(user.id)) {
-    return NextResponse.json(
-      { error: "Muitas mensagens em pouco tempo. Aguarde um instante." },
-      { status: 429 }
-    );
+  if (isRateLimited({ key: `chat:${user.id}`, ...RATE_LIMITS.chat })) {
+    const { error, status } = rateLimitResponse("Muitas mensagens em pouco tempo. Aguarde um instante.");
+    return NextResponse.json({ error }, { status });
   }
 
   const { data: meeting } = await supabase

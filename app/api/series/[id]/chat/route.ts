@@ -4,6 +4,7 @@ import { generateJson, isLlmConfigured } from "@/lib/llm/client";
 import { buildSeriesContext } from "@/lib/rag/series-context";
 import { getMeetingsInSeries } from "@/lib/series/queries";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -34,6 +35,11 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `chat:${user.id}`, ...RATE_LIMITS.chat })) {
+    const { error, status } = rateLimitResponse("Muitas mensagens em pouco tempo. Aguarde um instante.");
+    return NextResponse.json({ error }, { status });
   }
 
   const parsed = BodySchema.safeParse(await request.json().catch(() => ({})));

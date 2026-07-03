@@ -7,6 +7,7 @@ import {
   notifyBotJoinFailed,
 } from "@/lib/notifications/bot-failed";
 import { startBotForMeeting } from "@/lib/vexa/scheduler";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,6 +20,11 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `bot:${user.id}`, ...RATE_LIMITS.bot })) {
+    const { error, status } = rateLimitResponse("Muitas ações de bot em pouco tempo.");
+    return NextResponse.json({ error }, { status });
   }
 
   let meetingId: string | undefined;

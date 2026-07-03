@@ -4,6 +4,7 @@ import { sendMeetingFollowUpEmail } from "@/lib/meetings/follow-up-send";
 import { ResendDeliveryError } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `follow-up-send:${user.id}`, ...RATE_LIMITS.followUpSend })) {
+    const { error, status } = rateLimitResponse("Muitos envios de follow-up em pouco tempo.");
+    return NextResponse.json({ error }, { status });
   }
 
   const parsed = SendSchema.safeParse(await request.json().catch(() => ({})));
