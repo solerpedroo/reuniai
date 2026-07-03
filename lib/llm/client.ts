@@ -86,6 +86,28 @@ export type GenerateJsonInput = {
   timeoutMs?: number;
 };
 
+export type GenerateTextInput = {
+  system: string;
+  user: string;
+  timeoutMs?: number;
+};
+
+/** Gera texto livre do LLM configurado. */
+export async function generateText(input: GenerateTextInput): Promise<string> {
+  const config = resolveConfig();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), input.timeoutMs ?? 60_000);
+
+  try {
+    if (config.provider === "anthropic") {
+      return await callAnthropicText(config, input, controller.signal);
+    }
+    return await callOpenAiCompatibleText(config, input, controller.signal);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 /** Gera uma resposta JSON do LLM configurado e a retorna já parseada. */
 export async function generateJson(input: GenerateJsonInput): Promise<unknown> {
   const config = resolveConfig();
@@ -100,6 +122,70 @@ export async function generateJson(input: GenerateJsonInput): Promise<unknown> {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function callOpenAiCompatibleText(
+  config: ProviderConfig,
+  input: GenerateTextInput,
+  signal: AbortSignal
+): Promise<string> {
+  const res = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      temperature: 0.4,
+      messages: [
+        { role: "system", content: input.system },
+        { role: "user", content: input.user },
+      ],
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    throw new Error(`LLM (${config.provider}) falhou: ${res.status} ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string") throw new Error("Resposta vazia do LLM.");
+  return content.trim();
+}
+
+async function callAnthropicText(
+  config: ProviderConfig,
+  input: GenerateTextInput,
+  signal: AbortSignal
+): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": config.apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: 4096,
+      temperature: 0.4,
+      system: input.system,
+      messages: [{ role: "user", content: input.user }],
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    throw new Error(`LLM (anthropic) falhou: ${res.status} ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  const content = data?.content?.[0]?.text;
+  if (typeof content !== "string") throw new Error("Resposta vazia do LLM.");
+  return content.trim();
 }
 
 async function callOpenAiCompatible(
