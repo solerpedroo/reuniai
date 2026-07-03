@@ -8,7 +8,7 @@ import { ParticipantNotesEditor } from "@/components/participants/participant-no
 import { ParticipantRelationshipEditor } from "@/components/participants/participant-relationship-editor";
 import type { ParticipantTalkTimeSummary } from "@/lib/insights/talk-time-types";
 import type { ParticipantDetail } from "@/lib/participants/directory";
-import type { ParticipantRelationship } from "@/lib/participants/relationship";
+import type { ParticipantRelationship } from "@/lib/participants/relationship-types";
 import { formatMeetingDate } from "@/lib/meetings/types";
 
 type ParticipantDetailViewProps = {
