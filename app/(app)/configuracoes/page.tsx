@@ -5,6 +5,7 @@ import { AccountActions } from "@/components/settings/account-actions";
 import { AutoJoinToggle } from "@/components/settings/auto-join-toggle";
 import { CalendarConnections } from "@/components/settings/calendar-connections";
 import { RetentionSettings } from "@/components/settings/retention-settings";
+import { ExportDataButton } from "@/components/settings/export-data-button";
 import Link from "next/link";
 import { LinkSimple, Plugs } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
@@ -185,6 +186,7 @@ export default async function ConfiguracoesPage({
           </CardHeader>
           <CardContent className="space-y-6">
             <RetentionSettings initialDays={retentionDays} />
+            <ExportDataButton />
             <ThemeToggle />
           </CardContent>
         </Card>
