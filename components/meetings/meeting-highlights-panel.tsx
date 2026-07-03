@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BookmarkSimple, Trash } from "@phosphor-icons/react";
+import { BookmarkSimple, LinkSimple, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,31 @@ export function MeetingHighlightsPanel({
       setBusy(false);
     }
   }, [base, currentTimeMs, label]);
+
+  const shareClip = useCallback(
+    async (highlightId: string) => {
+      setBusy(true);
+      try {
+        const res = await fetch(`${base}/${highlightId}/clip`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ redact_pii: true }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(data?.error ?? "Falha ao criar clip");
+          return;
+        }
+        if (data.url) {
+          await navigator.clipboard.writeText(String(data.url));
+          toast.success("Link do clip copiado");
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [base]
+  );
 
   const removeHighlight = useCallback(
     async (highlightId: string) => {
@@ -109,6 +134,16 @@ export function MeetingHighlightsPanel({
                 </span>
                 <p className="mt-0.5">{item.label}</p>
               </button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-7 shrink-0"
+                title="Compartilhar clip"
+                disabled={busy}
+                onClick={() => void shareClip(item.id)}
+              >
+                <LinkSimple size={14} />
+              </Button>
               <Button
                 size="icon"
                 variant="ghost"
