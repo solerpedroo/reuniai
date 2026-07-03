@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { MeetingStatus } from "@/lib/supabase/types";
 import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
 
@@ -10,6 +11,7 @@ export type MeetingSessionResponse = {
   live: boolean;
   session?: MeetingSessionStatus | null;
   message?: string;
+  synced?: boolean;
 };
 
 export function useMeetingSession(
@@ -18,6 +20,7 @@ export function useMeetingSession(
   recallBotId: string | null
 ): MeetingSessionResponse | null {
   const [session, setSession] = useState<MeetingSessionResponse | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!LIVE_STATUSES.has(status) || !recallBotId) {
@@ -31,7 +34,11 @@ export function useMeetingSession(
       try {
         const res = await fetch(`/api/meetings/${meetingId}/session`, { cache: "no-store" });
         const data = (await res.json()) as MeetingSessionResponse;
-        if (!cancelled) setSession(data);
+        if (cancelled) return;
+        setSession(data);
+        if (data.synced) {
+          router.refresh();
+        }
       } catch {
         if (!cancelled) {
           setSession({ live: true, session: null, message: "Falha ao consultar o bot." });
@@ -45,7 +52,7 @@ export function useMeetingSession(
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [meetingId, recallBotId, status]);
+  }, [meetingId, recallBotId, router, status]);
 
   return session;
 }
