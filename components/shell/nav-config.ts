@@ -15,6 +15,7 @@ import {
   Gear,
   Handshake,
   House,
+  SunHorizon,
   LinkSimple,
   MagnifyingGlass,
   NotePencil,
@@ -40,6 +41,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Visão geral",
     description: "Resumo e indicadores das suas reuniões",
     icon: House,
+  },
+  {
+    href: "/hoje",
+    label: "Hoje",
+    description: "Briefing matinal do que importa agora",
+    icon: SunHorizon,
   },
   {
     href: "/agenda",
