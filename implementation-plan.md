@@ -6,7 +6,7 @@
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
 **Última atualização:** julho 2026  
-**Foco atual:** uso pessoal — lote 7 (Ondas 46–50): bibliotecas, descoberta e fechamento do loop pós-call. Monetização (Onda 18) postergada.
+**Foco atual:** lote 8 (Ondas 51–60) — copiloto live, automações, sync de tarefas, conhecimento, mobile, compromissos, CRM relacional, planejador semanal, coach e ensaio.
 
 ### Andamento das fases
 
@@ -61,6 +61,16 @@
 | **48** | **Hub de biblioteca** | ✅ Concluída |
 | **49** | **Busca semântica avançada** | ✅ Concluída |
 | **50** | **Hub de follow-ups** | ✅ Concluída |
+| **51** | **Copiloto ao vivo (in-call)** | ✅ Concluída |
+| **52** | **Playbooks pós-reunião** | 📋 Planejada |
+| **53** | **Sync bidirecional de tarefas** | 📋 Planejada |
+| **54** | **Base de conhecimento viva** | 📋 Planejada |
+| **55** | **PWA mobile + revisão express** | 📋 Planejada |
+| **56** | **Ledger de compromissos** | 📋 Planejada |
+| **57** | **Participantes++ (CRM relacional)** | 📋 Planejada |
+| **58** | **Planejador semanal unificado** | 📋 Planejada |
+| **59** | **Coach de reunião** | 📋 Planejada |
+| **60** | **Ensaio de conversa (AI roleplay)** | 📋 Planejada |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -2613,6 +2623,60 @@ flowchart LR
 - Marcar concluído sincroniza com `follow_up_done_at` da reunião
 - Envio reutiliza API existente `POST /api/meetings/[id]/follow-up/send`
 - RLS: só follow-ups de reuniões do usuário
+
+---
+
+## Onda 51 — Copiloto ao vivo (in-call)
+
+**Objetivo:** Gerar valor **durante** a reunião — transcrição live, captura rápida de decisões/atribuições/momentos.
+
+**Estimativa:** 1–1,5 semana  
+**Depende de:** Onda 6 (Vexa), 9 (detalhe), 42 (decisões)  
+**Branch:** `feat/onda-51-copiloto-live`
+
+### Telas
+
+| Rota / local | Descrição |
+|--------------|-----------|
+| `/reunioes/[id]` | Painel “Copiloto ao vivo” quando `status ∈ {bot_joining, recording}` |
+
+### Features
+
+#### 51.1 Schema (`20250703110000_onda51_live_copilot.sql`)
+
+- [x] Tabela `meeting_live_decisions` + RLS (`is_meeting_owner`)
+- [x] Enum `action_item_source` + valor `live`
+
+#### 51.2 API
+
+- [x] `GET /api/meetings/[id]/live-transcript` — poll Vexa, rate limit 30/min
+- [x] `GET/POST/DELETE /api/meetings/[id]/live-decisions` — CRUD decisões ao vivo
+- [x] `POST /api/meetings/[id]/action-items` — aceita `source: live`
+
+#### 51.3 Data layer
+
+- [x] `lib/meetings/live-transcript.ts` — map Vexa → segmentos UI
+- [x] `lib/meetings/live-decisions.ts` — merge no `meeting_summaries` pós-análise
+- [x] `lib/meetings/live-elapsed.ts` — timestamp relativo da call
+
+#### 51.4 UI (`components/meetings/meeting-live-copilot.tsx`)
+
+- [x] Feed de transcrição (poll 5s)
+- [x] Captura: Decisão · Atribuição · Momento (atalhos `D` / `A` / `H`)
+- [x] Lista de decisões capturadas na sessão
+- [x] Integração com `MeetingLiveStatus` (sessão única compartilhada)
+
+#### 51.5 Registro de decisões
+
+- [x] `/decisoes` inclui decisões live de reuniões em andamento
+- [x] Pipeline mescla live → summary após `analyzeMeetingById`
+
+### Critérios de aceite
+
+- [x] Decisão capturada durante `recording` aparece em `/decisoes` antes do fim do pipeline
+- [x] Atribuição `source=live` sobrevive à re-análise IA
+- [x] APIs exigem ownership; 409 quando reunião não está ao vivo
+- [x] Rate limit em transcript e capturas
 
 ---
 
