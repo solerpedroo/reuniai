@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { getMeetingSessionStatus } from "@/lib/vexa/session";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import type { Meeting } from "@/lib/supabase/types";
@@ -55,19 +56,37 @@ export async function GET(
   try {
     const session = await getMeetingSessionStatus(parsed.platform, nativeMeetingId);
 
-    // Sincroniza DB quando o Vexa já está ativo mas o status local ficou em "entrando".
+    const admin = createAdminClient();
     const lifecycleStatus = session.vexaStatus;
+
+    // Sincroniza DB quando o Vexa já está ativo mas o status local ficou em "entrando".
     if (
       meeting.status === "bot_joining" &&
       lifecycleStatus &&
       mapVexaStatus(lifecycleStatus) === "recording"
     ) {
-      const admin = createAdminClient();
       await applyMeetingStatus(admin, {
         nativeMeetingId,
         vexaStatus: lifecycleStatus,
         startTime: meeting.started_at,
       });
+    }
+
+    // Bot saiu (container down) mas a reunião ainda aparece como gravando no app.
+    const botDisconnected =
+      !session.connected ||
+      lifecycleStatus === "completed" ||
+      lifecycleStatus === "failed";
+
+    if (
+      (meeting.status === "recording" || meeting.status === "bot_joining") &&
+      botDisconnected
+    ) {
+      await finalizeStoppedMeeting(admin, parsed.platform, nativeMeetingId, {
+        endTime: new Date().toISOString(),
+        startTime: meeting.started_at,
+      });
+      return NextResponse.json({ live: false, synced: true, session });
     }
 
     return NextResponse.json({ live: true, session });
