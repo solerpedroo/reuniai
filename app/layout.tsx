@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: PRODUCT_NAME,
     template: `%s · ${PRODUCT_NAME}`,
   },
-  description: `${PRODUCT_TAGLINE} com transcrição, resumo e action items.`,
+  description: `${PRODUCT_TAGLINE} — transcrição, resumo e action items.`,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
