@@ -4,6 +4,7 @@ export const ANALYSIS_TEMPLATE_IDS = [
   "sales",
   "one_on_one",
   "retrospective",
+  "interview",
 ] as const;
 
 export type AnalysisTemplateId = (typeof ANALYSIS_TEMPLATE_IDS)[number];
@@ -14,6 +15,7 @@ export const TEMPLATE_LABELS: Record<AnalysisTemplateId, string> = {
   sales: "Vendas / Demo",
   one_on_one: "1:1",
   retrospective: "Retrospectiva",
+  interview: "Entrevista / Triagem",
 };
 
 export function detectTemplateFromTitle(title: string): AnalysisTemplateId | null {
@@ -22,6 +24,7 @@ export function detectTemplateFromTitle(title: string): AnalysisTemplateId | nul
   if (/\b(demo|vendas|sales|pitch)\b/.test(t)) return "sales";
   if (/\b(1:1|1-1|one-on-one|one on one)\b/.test(t)) return "one_on_one";
   if (/\b(retro|retrospectiva|retrospective)\b/.test(t)) return "retrospective";
+  if (/\b(entrevista|interview|triagem|screening)\b/.test(t)) return "interview";
   return null;
 }
 
