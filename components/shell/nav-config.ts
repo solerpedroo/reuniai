@@ -23,6 +23,7 @@ import {
   UsersThree,
   VideoCamera,
   UploadSimple,
+  CalendarX,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -99,6 +100,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Ensaiar",
     description: "Roleplay de conversas difíceis com IA",
     icon: Sparkle,
+  },
+  {
+    href: "/calendario",
+    label: "Calendário",
+    description: "Higiene e carga de reuniões na semana",
+    icon: CalendarX,
   },
   {
     href: "/insights",
@@ -251,6 +258,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/ensaiar" || pathname.startsWith("/ensaiar?")) {
     return NAV_ITEMS.find((item) => item.href === "/ensaiar") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/calendario" || pathname.startsWith("/calendario?")) {
+    return NAV_ITEMS.find((item) => item.href === "/calendario") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/importar" || pathname.startsWith("/importar?")) {
