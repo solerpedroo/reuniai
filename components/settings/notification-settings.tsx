@@ -17,7 +17,10 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 const IN_APP_TOGGLES: Array<{
-  key: keyof Pick<NotificationPrefs, "prep" | "completed" | "bot_failed" | "tasks_due">;
+  key: keyof Pick<
+    NotificationPrefs,
+    "prep" | "completed" | "bot_failed" | "tasks_due" | "review_queue"
+  >;
   description: string;
 }> = [
   {
@@ -36,7 +39,20 @@ const IN_APP_TOGGLES: Array<{
     key: "tasks_due",
     description: "Lembrete matinal de action items vencendo hoje (fuso do perfil)",
   },
+  {
+    key: "review_queue",
+    description: "Digest matinal quando a fila /revisar passa de 3 reuniões pendentes",
+  },
 ];
+
+function isPushConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+}
+
+function isPushSupported(): boolean {
+  if (typeof window === "undefined") return false;
+  return "serviceWorker" in navigator && "PushManager" in window;
+}
 
 export function NotificationSettings({
   initialPrefs,
@@ -184,6 +200,18 @@ export function NotificationSettings({
           </div>
         </div>
 
+        {!isPushConfigured() ? (
+          <p className="rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
+            Push não configurado no servidor. Defina{" "}
+            <code className="font-mono">NEXT_PUBLIC_VAPID_PUBLIC_KEY</code> e{" "}
+            <code className="font-mono">VAPID_PRIVATE_KEY</code> para habilitar.
+          </p>
+        ) : !isPushSupported() ? (
+          <p className="rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
+            Este navegador não suporta notificações push.
+          </p>
+        ) : null}
+
         <div className="flex items-center justify-between gap-4 border-t border-border/70 pt-4">
           <div>
             <p className="text-sm font-medium">Push no navegador</p>
@@ -213,7 +241,12 @@ export function NotificationSettings({
               }}
             />
           ) : (
-            <Button size="sm" variant="outline" onClick={enablePush} disabled={pushLoading}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={enablePush}
+              disabled={pushLoading || !isPushConfigured() || !isPushSupported()}
+            >
               Ativar
             </Button>
           )}
