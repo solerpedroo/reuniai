@@ -27,7 +27,20 @@ export const INBOX_FILTER_LABELS: Record<InboxFilter, string> = {
   suggested: "Sugestões IA",
 };
 
-export type InboxActionItem = ActionItem & {
+export type InboxActionItem = {
+  id: string;
+  action_item_id: string | null;
+  meeting_id: string | null;
+  user_id: string;
+  title: string;
+  assignee: string | null;
+  due_date: string | null;
+  status: ActionItem["status"];
+  source: ActionItem["source"];
+  priority: ActionItem["priority"];
+  snoozed_until: string | null;
+  created_at: string;
+  updated_at: string;
   meeting_title: string;
 };
 
@@ -67,14 +80,28 @@ function addDaysIso(iso: string, days: number): string {
   return localDateIso(base);
 }
 
-type ActionItemRow = ActionItem & {
+type UserTaskRow = {
+  id: string;
+  action_item_id: string | null;
+  meeting_id: string | null;
+  user_id: string;
+  title: string;
+  assignee: string | null;
+  due_date: string | null;
+  status: ActionItem["status"];
+  source: ActionItem["source"];
+  priority: ActionItem["priority"];
+  snoozed_until: string | null;
+  created_at: string;
+  updated_at: string;
   meetings: { title: string } | { title: string }[] | null;
 };
 
-function mapRow(row: ActionItemRow): InboxActionItem {
+function mapRow(row: UserTaskRow): InboxActionItem {
   const meeting = Array.isArray(row.meetings) ? row.meetings[0] : row.meetings;
   return {
     id: row.id,
+    action_item_id: row.action_item_id,
     meeting_id: row.meeting_id,
     user_id: row.user_id,
     title: row.title,
@@ -86,16 +113,16 @@ function mapRow(row: ActionItemRow): InboxActionItem {
     snoozed_until: row.snoozed_until,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    meeting_title: meeting?.title ?? "Reunião",
+    meeting_title: meeting?.title ?? (row.meeting_id ? "Reunião" : "Tarefa avulsa"),
   };
 }
 
-async function fetchActionItemsWithMeetings(
+async function fetchHubTasksWithMeetings(
   supabase: Client,
   status: ActionItem["status"] | ActionItem["status"][]
 ): Promise<InboxActionItem[]> {
   let query = supabase
-    .from("action_items")
+    .from("user_tasks")
     .select("*, meetings(title)")
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
@@ -109,7 +136,7 @@ async function fetchActionItemsWithMeetings(
   const { data, error } = await query;
   if (error) throw error;
 
-  return ((data ?? []) as ActionItemRow[]).map(mapRow);
+  return ((data ?? []) as UserTaskRow[]).map(mapRow);
 }
 
 function isSnoozed(item: InboxActionItem, now = new Date()): boolean {
@@ -220,8 +247,8 @@ export function actionItemsKpiHref(counts: InboxCounts, openTotal: number): stri
 
 export async function getInboxFilterOptions(supabase: Client): Promise<InboxFilterOptions> {
   const [openItems, suggestedItems, tags] = await Promise.all([
-    fetchActionItemsWithMeetings(supabase, "open"),
-    fetchActionItemsWithMeetings(supabase, "suggested"),
+    fetchHubTasksWithMeetings(supabase, "open"),
+    fetchHubTasksWithMeetings(supabase, "suggested"),
     getTagsForUser(supabase),
   ]);
 
@@ -230,11 +257,15 @@ export async function getInboxFilterOptions(supabase: Client): Promise<InboxFilt
   const assigneeSet = new Set<string>();
 
   for (const item of allItems) {
-    meetingMap.set(item.meeting_id, item.meeting_title);
+    if (item.meeting_id) {
+      meetingMap.set(item.meeting_id, item.meeting_title);
+    }
     if (item.assignee?.trim()) assigneeSet.add(item.assignee.trim());
   }
 
-  const meetingIds = new Set(allItems.map((item) => item.meeting_id));
+  const meetingIds = new Set(
+    allItems.map((item) => item.meeting_id).filter((id): id is string => Boolean(id))
+  );
   const relevantTags = tags.filter((tag) => tag.meetingCount > 0);
 
   return {
@@ -256,9 +287,9 @@ export async function getInboxActionItems(
   let items: InboxActionItem[];
 
   if (query.filter === "suggested") {
-    items = await fetchActionItemsWithMeetings(supabase, "suggested");
+    items = await fetchHubTasksWithMeetings(supabase, "suggested");
   } else {
-    const openItems = await fetchActionItemsWithMeetings(supabase, "open");
+    const openItems = await fetchHubTasksWithMeetings(supabase, "open");
     items = filterOpenByView(openItems, query.filter);
   }
 
@@ -267,7 +298,7 @@ export async function getInboxActionItems(
   if (query.tagId) {
     const meetingIds = await getMeetingIdsByTag(supabase, query.tagId);
     const allowed = new Set(meetingIds);
-    items = items.filter((item) => allowed.has(item.meeting_id));
+    items = items.filter((item) => item.meeting_id && allowed.has(item.meeting_id));
   }
 
   return sortInboxItems(items);
@@ -275,8 +306,8 @@ export async function getInboxActionItems(
 
 export async function getInboxCounts(supabase: Client): Promise<InboxCounts> {
   const [openItems, suggestedItems] = await Promise.all([
-    fetchActionItemsWithMeetings(supabase, "open"),
-    fetchActionItemsWithMeetings(supabase, "suggested"),
+    fetchHubTasksWithMeetings(supabase, "open"),
+    fetchHubTasksWithMeetings(supabase, "suggested"),
   ]);
 
   return {
