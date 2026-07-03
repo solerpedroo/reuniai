@@ -14,6 +14,7 @@ const CreateSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve ser YYYY-MM-DD")
     .nullish(),
+  source: z.enum(["manual", "live"]).optional(),
 });
 
 export async function POST(
@@ -57,7 +58,7 @@ export async function POST(
       title: parsed.data.title,
       assignee: parsed.data.assignee ?? null,
       due_date: parsed.data.due_date ?? null,
-      source: "manual",
+      source: parsed.data.source ?? "manual",
     })
     .select("*")
     .single();
