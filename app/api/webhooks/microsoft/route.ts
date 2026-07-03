@@ -40,11 +40,15 @@ export async function POST(request: NextRequest) {
 
   const expectedState = process.env.MICROSOFT_WEBHOOK_CLIENT_STATE;
   const secret = process.env.MICROSOFT_WEBHOOK_SECRET;
-  if (secret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+  const authHeader = request.headers.get("authorization");
+
+  if (!secret || authHeader !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  if (!expectedState) {
+    logStructured("error", "microsoft.webhook.missing_client_state");
+    return NextResponse.json({ error: "Webhook não configurado" }, { status: 503 });
   }
 
   let payload: GraphNotification;
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
 
   for (const notification of payload.value ?? []) {
-    if (expectedState && notification.clientState !== expectedState) {
+    if (notification.clientState !== expectedState) {
       logStructured("warn", "microsoft.webhook.bad_client_state");
       continue;
     }

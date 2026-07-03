@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { generateAndSaveFollowUp, getFollowUpForMeeting } from "@/lib/meetings/follow-up";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,21 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `follow-up-gen:${user.id}`, ...RATE_LIMITS.followUpGenerate })) {
+    const { error, status } = rateLimitResponse("Muitas gerações de follow-up em pouco tempo.");
+    return NextResponse.json({ error }, { status });
+  }
+
+  const { data: meeting } = await supabase
+    .from("meetings")
+    .select("id, user_id")
+    .eq("id", id)
+    .maybeSingle<{ id: string; user_id: string }>();
+
+  if (!meeting || meeting.user_id !== user.id) {
+    return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
   }
 
   const admin = createAdminClient();

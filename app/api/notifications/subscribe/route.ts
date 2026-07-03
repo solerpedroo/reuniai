@@ -58,7 +58,11 @@ export async function DELETE(request: Request) {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin.from("push_subscriptions").delete().eq("endpoint", body.endpoint);
+  const { error } = await admin
+    .from("push_subscriptions")
+    .delete()
+    .eq("endpoint", body.endpoint)
+    .eq("user_id", user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

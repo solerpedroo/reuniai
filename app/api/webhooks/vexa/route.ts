@@ -31,12 +31,11 @@ type VexaWebhookPayload = {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.VEXA_WEBHOOK_SECRET;
-  if (secret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${secret}`) {
-      logStructured("warn", "vexa.webhook.unauthorized");
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+  const authHeader = request.headers.get("authorization");
+
+  if (!secret || authHeader !== `Bearer ${secret}`) {
+    logStructured("warn", "vexa.webhook.unauthorized");
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   let payload: VexaWebhookPayload;

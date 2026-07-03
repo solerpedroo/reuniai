@@ -38,8 +38,31 @@ export async function PUT(
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
+  const { data: meeting } = await supabase
+    .from("meetings")
+    .select("id, user_id")
+    .eq("id", id)
+    .maybeSingle<{ id: string; user_id: string }>();
+
+  if (!meeting || meeting.user_id !== user.id) {
+    return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
+  }
+
   const body = (await request.json()) as { tagIds?: string[] };
   const tagIds = body.tagIds ?? [];
+
+  if (tagIds.length > 0) {
+    const { data: ownedTags } = await supabase
+      .from("tags")
+      .select("id")
+      .eq("user_id", user.id)
+      .in("id", tagIds);
+
+    const ownedIds = new Set(((ownedTags ?? []) as { id: string }[]).map((tag) => tag.id));
+    if (ownedIds.size !== tagIds.length) {
+      return NextResponse.json({ error: "Tag inválida" }, { status: 400 });
+    }
+  }
 
   const admin = createAdminClient();
   const { error: deleteError } = await admin.from("meeting_tags").delete().eq("meeting_id", id);

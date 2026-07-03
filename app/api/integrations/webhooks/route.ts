@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { INTEGRATION_EVENTS } from "@/lib/integrations/types";
+import { assertPublicWebhookUrl } from "@/lib/integrations/url-validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await assertPublicWebhookUrl(parsed.data.url);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "URL não permitida" },
       { status: 400 }
     );
   }
