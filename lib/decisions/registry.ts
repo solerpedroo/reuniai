@@ -1,5 +1,12 @@
 import "server-only";
 
+import { normalizeDecisionKey } from "@/lib/decisions/normalize";
+import {
+  computeCompletionRate,
+  computeStaleDays,
+  getOutcomeMapForUser,
+} from "@/lib/decisions/outcomes";
+import type { DecisionOutcomeRow } from "@/lib/decisions/outcome-types";
 import { periodToRange } from "@/lib/insights/period-stats";
 import { parseDecisions } from "@/lib/meetings/insights";
 import type { DecisionPeriod, DecisionRegistry } from "@/lib/decisions/registry-types";
@@ -10,16 +17,14 @@ type Client = Awaited<ReturnType<typeof createClient>>;
 
 export type { DecisionEntry, DecisionPeriod, DecisionRegistry } from "@/lib/decisions/registry-types";
 export { parseDecisionPeriod, DECISION_PERIODS } from "@/lib/decisions/registry-types";
-
-function normalizeDecision(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, " ");
-}
+export { parseOutcomeStatus, DECISION_OUTCOME_STATUSES } from "@/lib/decisions/outcome-types";
 
 export async function getDecisionRegistry(
   supabase: Client,
   period: DecisionPeriod,
-  now = new Date()
+  options: { statusFilter?: DecisionOutcomeRow["status"] | "all"; now?: Date } = {}
 ): Promise<DecisionRegistry> {
+  const now = options.now ?? new Date();
   const { start, end } = periodToRange(period, now);
 
   const { data: meetings, error: meetingsError } = await supabase
@@ -36,12 +41,17 @@ export async function getDecisionRegistry(
     "id" | "title" | "started_at" | "calendar_recurring_event_id"
   > & { status: string })[];
 
+  const outcomeMap = await getOutcomeMapForUser(supabase);
+
   if (meetingRows.length === 0) {
+    const { rate, staleCount } = computeCompletionRate([...outcomeMap.values()]);
     return {
       period,
       totalDecisions: 0,
       meetingsWithDecisions: 0,
       topRecurring: null,
+      completionRate: rate,
+      staleCount,
       entries: [],
     };
   }
@@ -68,8 +78,13 @@ export async function getDecisionRegistry(
 
   if (summariesError) throw summariesError;
 
-  const occurrenceCounts = new Map<string, number>();
-  const entries: DecisionRegistry["entries"] = [];
+  type RawOccurrence = {
+    key: string;
+    text: string;
+    meeting: Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">;
+  };
+
+  const occurrences: RawOccurrence[] = [];
   const meetingsWithDecisions = new Set<string>();
 
   const pushDecision = (
@@ -79,18 +94,11 @@ export async function getDecisionRegistry(
     const text = decision.trim();
     if (!text) return;
 
-    const key = normalizeDecision(text);
-    occurrenceCounts.set(key, (occurrenceCounts.get(key) ?? 0) + 1);
     meetingsWithDecisions.add(meeting.id);
-
-    entries.push({
-      id: `${meeting.id}:${key.slice(0, 48)}`,
+    occurrences.push({
+      key: normalizeDecisionKey(text),
       text,
-      meetingId: meeting.id,
-      meetingTitle: meeting.title,
-      meetingStartedAt: meeting.started_at,
-      seriesId: meeting.calendar_recurring_event_id,
-      occurrenceCount: 0,
+      meeting,
     });
   };
 
@@ -111,25 +119,68 @@ export async function getDecisionRegistry(
     pushDecision(meeting, live.text);
   }
 
-  for (const entry of entries) {
-    entry.occurrenceCount = occurrenceCounts.get(normalizeDecision(entry.text)) ?? 1;
+  const grouped = new Map<string, RawOccurrence[]>();
+  for (const item of occurrences) {
+    const list = grouped.get(item.key) ?? [];
+    list.push(item);
+    grouped.set(item.key, list);
+  }
+
+  const entries: DecisionRegistry["entries"] = [];
+
+  for (const [key, items] of grouped) {
+    items.sort(
+      (a, b) =>
+        new Date(b.meeting.started_at).getTime() - new Date(a.meeting.started_at).getTime()
+    );
+    const latest = items[0];
+    const outcome = outcomeMap.get(key);
+
+    const entry: DecisionRegistry["entries"][number] = {
+      id: `${latest.meeting.id}:${key.slice(0, 48)}`,
+      decisionKey: key,
+      text: outcome?.decision_text ?? latest.text,
+      meetingId: latest.meeting.id,
+      meetingTitle: latest.meeting.title,
+      meetingStartedAt: latest.meeting.started_at,
+      seriesId: latest.meeting.calendar_recurring_event_id,
+      occurrenceCount: items.length,
+      status: outcome?.status ?? "pending",
+      suggestedStatus: outcome?.suggested_status ?? null,
+      outcomeId: outcome?.id ?? null,
+      staleDays: outcome ? computeStaleDays(outcome.updated_at, now) : 0,
+      timeline: items.map((item) => ({
+        meetingId: item.meeting.id,
+        meetingTitle: item.meeting.title,
+        meetingStartedAt: item.meeting.started_at,
+      })),
+    };
+
+    entries.push(entry);
   }
 
   entries.sort(
     (a, b) => new Date(b.meetingStartedAt).getTime() - new Date(a.meetingStartedAt).getTime()
   );
 
+  const statusFilter = options.statusFilter ?? "all";
+  const filtered =
+    statusFilter === "all" ? entries : entries.filter((entry) => entry.status === statusFilter);
+
   const topRecurring =
-    [...occurrenceCounts.entries()].sort((a, b) => b[1] - a[1]).find(([, count]) => count > 1)?.[0] ??
-    null;
+    [...grouped.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .find(([, list]) => list.length > 1)?.[1][0]?.text ?? null;
+
+  const { rate, staleCount } = computeCompletionRate([...outcomeMap.values()]);
 
   return {
     period,
-    totalDecisions: entries.length,
+    totalDecisions: filtered.length,
     meetingsWithDecisions: meetingsWithDecisions.size,
-    topRecurring: topRecurring
-      ? entries.find((e) => normalizeDecision(e.text) === topRecurring)?.text ?? null
-      : null,
-    entries,
+    topRecurring,
+    completionRate: rate,
+    staleCount,
+    entries: filtered,
   };
 }
