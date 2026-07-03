@@ -10,6 +10,7 @@ import {
   CheckSquare,
   ClipboardText,
   EnvelopeSimple,
+  FileText,
   Gavel,
   Gear,
   Handshake,
@@ -174,6 +175,12 @@ export const NAV_LIBRARY_ITEMS: NavItem[] = [
     label: "Follow-ups",
     description: "Rascunhos e envios pendentes",
     icon: EnvelopeSimple,
+  },
+  {
+    href: "/atas",
+    label: "Atas",
+    description: "Documentos formais das reuniões",
+    icon: FileText,
   },
 ];
 
@@ -360,6 +367,10 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/follow-ups" || pathname.startsWith("/follow-ups?")) {
     return findLibraryNav("/follow-ups") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/atas" || pathname.startsWith("/atas?")) {
+    return findLibraryNav("/atas") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/busca" || pathname.startsWith("/busca?")) {
