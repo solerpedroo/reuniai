@@ -44,7 +44,7 @@ export async function applyMeetingStatus(
   admin: AdminClient,
   input: ApplyStatusInput
 ): Promise<{ updated: boolean }> {
-  const nextStatus = mapVexaStatus(input.vexaStatus);
+  let nextStatus = mapVexaStatus(input.vexaStatus);
   if (!nextStatus) return { updated: false };
 
   const { data: meeting } = await admin
@@ -63,6 +63,18 @@ export async function applyMeetingStatus(
 
   if (!meeting) return { updated: false };
 
+  // Bot encerrou: vai direto para processamento (evita flash "Concluída" na UI).
+  if (
+    nextStatus === "completed" &&
+    (meeting.status === "recording" || meeting.status === "bot_joining")
+  ) {
+    nextStatus = "processing";
+  }
+
+  if (meeting.status === nextStatus) {
+    return { updated: false };
+  }
+
   const patch: MeetingUpdate = { status: nextStatus };
 
   // Não regride de "gravando" para "entrando" por ruído de poll/webhook.
@@ -75,7 +87,11 @@ export async function applyMeetingStatus(
     return { updated: false };
   }
 
-  if (nextStatus === "completed") {
+  const endingLiveBot =
+    (meeting.status === "recording" || meeting.status === "bot_joining") &&
+    (nextStatus === "processing" || nextStatus === "completed");
+
+  if (endingLiveBot || nextStatus === "completed") {
     const endIso = input.endTime ?? new Date().toISOString();
     patch.ended_at = endIso;
     const startMs = new Date(input.startTime ?? meeting.started_at).getTime();
