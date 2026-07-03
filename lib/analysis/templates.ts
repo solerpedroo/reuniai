@@ -21,6 +21,7 @@ export type NormalizedAnalysis = {
   decisions: string[];
   action_items: { title: string; assignee: string | null; due_date: string | null }[];
   template_id: AnalysisTemplateId;
+  template_fields: Record<string, string[] | string>;
 };
 
 const GenericSchema = z.object({
@@ -101,6 +102,23 @@ const RetrospectiveSchema = z.object({
     .default([]),
 });
 
+const InterviewSchema = z.object({
+  executive_summary: z.string().max(2000),
+  candidate_strengths: z.array(z.string()).default([]),
+  concerns: z.array(z.string()).default([]),
+  culture_fit: z.array(z.string()).default([]),
+  recommendation: z.string().nullable().default(null),
+  action_items: z
+    .array(
+      z.object({
+        title: z.string(),
+        assignee: z.string().nullable().default(null),
+        due_date: z.string().nullable().default(null),
+      })
+    )
+    .default([]),
+});
+
 const MAX_TRANSCRIPT_CHARS = 100_000;
 
 function localeLanguage(locale: string): string {
@@ -156,6 +174,11 @@ export async function analyzeWithTemplate(
       decisions: [],
       action_items: parsed.action_items,
       template_id: "standup",
+      template_fields: {
+        yesterday: parsed.yesterday,
+        today: parsed.today,
+        blockers: parsed.blockers,
+      },
     };
   }
 
@@ -182,6 +205,11 @@ export async function analyzeWithTemplate(
       decisions: parsed.next_steps,
       action_items: parsed.action_items,
       template_id: "sales",
+      template_fields: {
+        customer_pain_points: parsed.customer_pain_points,
+        objections: parsed.objections,
+        next_steps: parsed.next_steps,
+      },
     };
   }
 
@@ -204,6 +232,11 @@ export async function analyzeWithTemplate(
       decisions: parsed.commitments,
       action_items: parsed.action_items,
       template_id: "one_on_one",
+      template_fields: {
+        discussion_topics: parsed.discussion_topics,
+        feedback: parsed.feedback,
+        commitments: parsed.commitments,
+      },
     };
   }
 
@@ -229,6 +262,42 @@ export async function analyzeWithTemplate(
       decisions: [],
       action_items: parsed.action_items,
       template_id: "retrospective",
+      template_fields: {
+        went_well: parsed.went_well,
+        to_improve: parsed.to_improve,
+      },
+    };
+  }
+
+  if (resolvedId === "interview") {
+    const system = `Você analisa entrevistas de emprego/triagens. ${baseRules}`;
+    const user = [
+      titleLine,
+      'Retorne JSON: { "executive_summary", "candidate_strengths": [], "concerns": [], "culture_fit": [], "recommendation": null, "action_items": [] }',
+      "",
+      "Transcrição:",
+      trimmed,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const raw = await generateJson({ system, user });
+    const parsed = InterviewSchema.parse(raw);
+    return {
+      executive_summary: parsed.executive_summary,
+      topics: [
+        { title: "Pontos fortes", summary: parsed.candidate_strengths.join("; ") || "—" },
+        { title: "Preocupações", summary: parsed.concerns.join("; ") || "—" },
+        { title: "Fit cultural", summary: parsed.culture_fit.join("; ") || "—" },
+      ],
+      decisions: parsed.recommendation ? [parsed.recommendation] : [],
+      action_items: parsed.action_items,
+      template_id: "interview",
+      template_fields: {
+        candidate_strengths: parsed.candidate_strengths,
+        concerns: parsed.concerns,
+        culture_fit: parsed.culture_fit,
+        recommendation: parsed.recommendation ?? "",
+      },
     };
   }
 
@@ -250,5 +319,6 @@ export async function analyzeWithTemplate(
     decisions: parsed.decisions,
     action_items: parsed.action_items,
     template_id: "generic",
+    template_fields: {},
   };
 }
