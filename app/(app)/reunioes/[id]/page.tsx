@@ -12,7 +12,8 @@ import { MeetingReviewWizard } from "@/components/meetings/meeting-review-wizard
 import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
 import { ShareLinkDialog } from "@/components/meetings/share-link-dialog";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
-import { StatusBadge } from "@/components/meetings/status-badge";
+import { LiveStatusBadge } from "@/components/meetings/live-status-badge";
+import { MeetingSessionProvider } from "@/lib/meetings/meeting-session-context";
 import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
@@ -132,6 +133,11 @@ export default async function MeetingDetailPage({
   const initialSeekMs = t ? Number.parseInt(t, 10) : undefined;
 
   return (
+    <MeetingSessionProvider
+      meetingId={meeting.id}
+      status={meeting.status}
+      recallBotId={meeting.recall_bot_id}
+    >
     <div>
       <Link
         href="/reunioes"
@@ -147,7 +153,12 @@ export default async function MeetingDetailPage({
         description={`Duração: ${formatDuration(getMeetingDurationMs(meeting))}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <BotActions meetingId={meeting.id} status={meeting.status} />
+            <BotActions
+              meetingId={meeting.id}
+              status={meeting.status}
+              recallBotId={meeting.recall_bot_id}
+              preferNativeTranscript={meeting.prefer_native_transcript}
+            />
             <ShareLinkDialog meetingId={meeting.id} />
             {meeting.status === "completed" && (
               <>
@@ -163,7 +174,7 @@ export default async function MeetingDetailPage({
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <StatusBadge status={meeting.status} />
+        <LiveStatusBadge status={meeting.status} />
         <PlatformBadge platform={meeting.platform} />
         {isLlmConfigured() && (
           <AnalysisTemplateSelect meetingId={meeting.id} initialTemplate={analysisTemplate} />
@@ -232,5 +243,6 @@ export default async function MeetingDetailPage({
         personalNotes={meeting.personal_notes ?? ""}
       />
     </div>
+    </MeetingSessionProvider>
   );
 }
