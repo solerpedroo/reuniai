@@ -17,6 +17,7 @@ import {
 } from "@/lib/notifications/hrefs";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
+import { mergeLiveDecisionsIntoSummary } from "@/lib/meetings/live-decisions";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -93,7 +94,13 @@ export async function analyzeMeetingById(
       { onConflict: "meeting_id" }
     );
 
-    // Recria os action items gerados por IA (preserva os manuais).
+    try {
+      await mergeLiveDecisionsIntoSummary(admin, meetingId);
+    } catch (err) {
+      console.error("Falha ao mesclar decisões ao vivo (não bloqueante):", err);
+    }
+
+    // Recria os action items gerados por IA (preserva manuais e ao vivo).
     await admin
       .from("action_items")
       .delete()
