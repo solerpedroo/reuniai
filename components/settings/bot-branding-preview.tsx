@@ -34,9 +34,8 @@ export function BotBrandingPreview({ botDisplayName }: BotBrandingPreviewProps) 
         <Image
           src={BRAND_ASSETS.logoMark}
           alt=""
-          width={20}
-          height={20}
-          className="rounded"
+          width={22}
+          height={22}
           aria-hidden
         />
         {PRODUCT_TAGLINE}
