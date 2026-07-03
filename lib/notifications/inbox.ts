@@ -19,7 +19,7 @@ export const NOTIFICATION_TAB_KINDS: Record<
   NotificationKind[] | null
 > = {
   all: null,
-  meetings: ["completed"],
+  meetings: ["completed", "review_queue"],
   tasks: ["tasks_due"],
   prep: ["prep"],
   system: ["bot_failed"],

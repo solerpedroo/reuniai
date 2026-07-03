@@ -8,6 +8,7 @@ import {
   CalendarBlank,
   Check,
   CheckSquare,
+  ClipboardText,
   Trash,
   VideoCamera,
   Warning,
@@ -35,6 +36,7 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
   completed: VideoCamera,
   bot_failed: Warning,
   tasks_due: CheckSquare,
+  review_queue: ClipboardText,
 };
 
 function dayGroupLabel(iso: string): string {
