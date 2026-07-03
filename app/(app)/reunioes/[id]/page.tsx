@@ -35,6 +35,7 @@ import { parseTemplateId } from "@/lib/analysis/template-types";
 import { ReviewQueueBanner } from "@/components/review/review-queue-banner";
 import { DistributeDialog } from "@/components/meetings/distribute-dialog";
 import { GenerateMinutesButton } from "@/components/minutes/generate-minutes-button";
+import { TemplateAnalysisPanel } from "@/components/meetings/template-analysis-panel";
 import { MeetingCoachPanel } from "@/components/meetings/meeting-coach-panel";
 import { needsPostCallReview } from "@/lib/meetings/post-call-review";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
@@ -103,6 +104,23 @@ export default async function MeetingDetailPage({
   const analysisTemplate = meetingWithTemplate.analysis_template
     ? parseTemplateId(meetingWithTemplate.analysis_template)
     : null;
+
+  const rawTemplateId =
+    summary?.raw_json &&
+    typeof summary.raw_json === "object" &&
+    !Array.isArray(summary.raw_json) &&
+    "template_id" in summary.raw_json
+      ? String((summary.raw_json as { template_id?: string }).template_id ?? "")
+      : null;
+
+  const templateFields =
+    summary?.raw_json &&
+    typeof summary.raw_json === "object" &&
+    !Array.isArray(summary.raw_json) &&
+    "template_fields" in summary.raw_json
+      ? (summary.raw_json as { template_fields?: Record<string, string[] | string> })
+          .template_fields
+      : null;
 
   const chatUiMessages = chatMessages.map((m) => ({
     id: m.id,
