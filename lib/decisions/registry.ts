@@ -24,17 +24,17 @@ export async function getDecisionRegistry(
 
   const { data: meetings, error: meetingsError } = await supabase
     .from("meetings")
-    .select("id, title, started_at, calendar_recurring_event_id")
+    .select("id, title, started_at, calendar_recurring_event_id, status")
     .gte("started_at", start.toISOString())
     .lte("started_at", end.toISOString())
-    .in("status", ["completed", "partial"]);
+    .in("status", ["completed", "partial", "bot_joining", "recording"]);
 
   if (meetingsError) throw meetingsError;
 
-  const meetingRows = (meetings ?? []) as Pick<
+  const meetingRows = (meetings ?? []) as (Pick<
     Meeting,
     "id" | "title" | "started_at" | "calendar_recurring_event_id"
-  >[];
+  > & { status: string })[];
 
   if (meetingRows.length === 0) {
     return {
@@ -49,6 +49,18 @@ export async function getDecisionRegistry(
   const meetingIds = meetingRows.map((m) => m.id);
   const meetingById = new Map(meetingRows.map((m) => [m.id, m]));
 
+  const liveMeetingIds = meetingRows
+    .filter((m) => m.status === "bot_joining" || m.status === "recording")
+    .map((m) => m.id);
+
+  const { data: liveDecisionRows } =
+    liveMeetingIds.length > 0
+      ? await supabase
+          .from("meeting_live_decisions")
+          .select("meeting_id, text, captured_at_ms")
+          .in("meeting_id", liveMeetingIds)
+      : { data: [] };
+
   const { data: summaries, error: summariesError } = await supabase
     .from("meeting_summaries")
     .select("meeting_id, decisions")
@@ -60,29 +72,43 @@ export async function getDecisionRegistry(
   const entries: DecisionRegistry["entries"] = [];
   const meetingsWithDecisions = new Set<string>();
 
+  const pushDecision = (
+    meeting: Pick<Meeting, "id" | "title" | "started_at" | "calendar_recurring_event_id">,
+    decision: string
+  ) => {
+    const text = decision.trim();
+    if (!text) return;
+
+    const key = normalizeDecision(text);
+    occurrenceCounts.set(key, (occurrenceCounts.get(key) ?? 0) + 1);
+    meetingsWithDecisions.add(meeting.id);
+
+    entries.push({
+      id: `${meeting.id}:${key.slice(0, 48)}`,
+      text,
+      meetingId: meeting.id,
+      meetingTitle: meeting.title,
+      meetingStartedAt: meeting.started_at,
+      seriesId: meeting.calendar_recurring_event_id,
+      occurrenceCount: 0,
+    });
+  };
+
   for (const row of summaries ?? []) {
     const summary = row as Pick<MeetingSummary, "meeting_id" | "decisions">;
     const meeting = meetingById.get(summary.meeting_id);
     if (!meeting) continue;
 
     for (const decision of parseDecisions(summary.decisions ?? [])) {
-      const text = decision.trim();
-      if (!text) continue;
-
-      const key = normalizeDecision(text);
-      occurrenceCounts.set(key, (occurrenceCounts.get(key) ?? 0) + 1);
-      meetingsWithDecisions.add(meeting.id);
-
-      entries.push({
-        id: `${meeting.id}:${key.slice(0, 48)}`,
-        text,
-        meetingId: meeting.id,
-        meetingTitle: meeting.title,
-        meetingStartedAt: meeting.started_at,
-        seriesId: meeting.calendar_recurring_event_id,
-        occurrenceCount: 0,
-      });
+      pushDecision(meeting, decision);
     }
+  }
+
+  for (const row of liveDecisionRows ?? []) {
+    const live = row as { meeting_id: string; text: string };
+    const meeting = meetingById.get(live.meeting_id);
+    if (!meeting) continue;
+    pushDecision(meeting, live.text);
   }
 
   for (const entry of entries) {
