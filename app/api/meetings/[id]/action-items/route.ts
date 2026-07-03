@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { dispatchActionItemCreated } from "@/lib/integrations/dispatch";
-import { syncActionItemById } from "@/lib/task-sync/hooks";
+import { syncActionItemById } from "@/lib/tasks/hub-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ActionItem } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/server";
