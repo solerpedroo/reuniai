@@ -5,20 +5,24 @@ import { StatusBadge } from "@/components/meetings/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ParticipantNotesEditor } from "@/components/participants/participant-notes-editor";
+import { ParticipantRelationshipEditor } from "@/components/participants/participant-relationship-editor";
 import type { ParticipantTalkTimeSummary } from "@/lib/insights/talk-time-types";
 import type { ParticipantDetail } from "@/lib/participants/directory";
+import type { ParticipantRelationship } from "@/lib/participants/relationship";
 import { formatMeetingDate } from "@/lib/meetings/types";
 
 type ParticipantDetailViewProps = {
   participant: ParticipantDetail;
   initialNoteBody: string;
   talkTimeSummary: ParticipantTalkTimeSummary | null;
+  initialRelationship: ParticipantRelationship | null;
 };
 
 export function ParticipantDetailView({
   participant,
   initialNoteBody,
   talkTimeSummary,
+  initialRelationship,
 }: ParticipantDetailViewProps) {
   return (
     <div>
@@ -81,6 +85,20 @@ export function ParticipantDetailView({
           </CardContent>
         </Card>
       )}
+
+      <div className="mb-6">
+        <Card className="surface-card">
+          <CardHeader>
+            <CardTitle className="text-base">CRM relacional</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ParticipantRelationshipEditor
+              participantKey={participant.hrefKey}
+              initialRelationship={initialRelationship}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mb-6">
         <Card className="surface-card">

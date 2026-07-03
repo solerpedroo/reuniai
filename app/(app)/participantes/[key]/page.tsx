@@ -3,6 +3,7 @@ import { ParticipantDetailView } from "@/components/participants/participant-det
 import { getParticipantTalkTimeSummary } from "@/lib/insights/talk-time-stats";
 import { getParticipantDetail } from "@/lib/participants/directory";
 import { getParticipantNote, parseParticipantKeyParam } from "@/lib/participants/notes";
+import { getParticipantRelationship } from "@/lib/participants/relationship";
 import { createClient } from "@/lib/supabase/server";
 
 type ParticipantDetailPageProps = {
@@ -24,6 +25,11 @@ export default async function ParticipantDetailPage({ params }: ParticipantDetai
       ? await getParticipantNote(supabase, user.id, parseParticipantKeyParam(key))
       : null;
 
+  const relationship =
+    user != null
+      ? await getParticipantRelationship(supabase, user.id, parseParticipantKeyParam(key))
+      : null;
+
   const talkTimeSummary = await getParticipantTalkTimeSummary(
     supabase,
     participant.displayName
@@ -34,6 +40,7 @@ export default async function ParticipantDetailPage({ params }: ParticipantDetai
       participant={participant}
       initialNoteBody={note?.body ?? ""}
       talkTimeSummary={talkTimeSummary}
+      initialRelationship={relationship}
     />
   );
 }
