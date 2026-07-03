@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { BOT_ACTIVE_STATUSES } from "@/lib/meetings/bot-lifecycle";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -8,8 +9,6 @@ import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import type { Meeting } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
-
-const LIVE_STATUSES = new Set<Meeting["status"]>(["bot_joining", "recording", "processing"]);
 
 export async function GET(
   _request: NextRequest,
@@ -38,7 +37,11 @@ export async function GET(
     return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
   }
 
-  if (!LIVE_STATUSES.has(meeting.status)) {
+  if (meeting.status === "processing") {
+    return NextResponse.json({ live: false, phase: "processing" });
+  }
+
+  if (!BOT_ACTIVE_STATUSES.has(meeting.status)) {
     return NextResponse.json({ live: false });
   }
 
@@ -54,12 +57,17 @@ export async function GET(
   }
 
   try {
-    const session = await getMeetingSessionStatus(parsed.platform, nativeMeetingId);
+    const session = await getMeetingSessionStatus(
+      parsed.platform,
+      nativeMeetingId,
+      meeting.started_at
+    );
 
     const admin = createAdminClient();
     const lifecycleStatus = session.vexaStatus;
+    let synced = false;
 
-    // Sincroniza DB quando o Vexa já está ativo mas o status local ficou em "entrando".
+    // Vexa já ativo mas DB ainda em "entrando".
     if (
       meeting.status === "bot_joining" &&
       lifecycleStatus &&
@@ -70,9 +78,24 @@ export async function GET(
         vexaStatus: lifecycleStatus,
         startTime: meeting.started_at,
       });
+      synced = true;
     }
 
-    // Bot saiu (container down) mas a reunião ainda aparece como gravando no app.
+    // Falha de entrada reportada pelo Vexa.
+    if (
+      (meeting.status === "bot_joining" || meeting.status === "recording") &&
+      lifecycleStatus === "failed"
+    ) {
+      await applyMeetingStatus(admin, {
+        nativeMeetingId,
+        vexaStatus: "failed",
+        startTime: meeting.started_at,
+        reason: "O bot não conseguiu concluir a gravação.",
+      });
+      return NextResponse.json({ live: false, synced: true, session });
+    }
+
+    // Bot saiu (container down) mas DB ainda indica bot ativo.
     const botDisconnected =
       !session.connected ||
       lifecycleStatus === "completed" ||
@@ -89,7 +112,7 @@ export async function GET(
       return NextResponse.json({ live: false, synced: true, session });
     }
 
-    return NextResponse.json({ live: true, session });
+    return NextResponse.json({ live: true, synced, session });
   } catch (err) {
     return NextResponse.json({
       live: true,
