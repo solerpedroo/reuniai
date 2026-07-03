@@ -267,6 +267,15 @@ export function getNavItem(pathname: string): NavItem {
     };
   }
 
+  if (pathname === "/automacoes" || pathname.startsWith("/automacoes")) {
+    return {
+      href: "/automacoes",
+      label: "Automações",
+      description: "Playbooks pós-reunião",
+      icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
+    };
+  }
+
   if (pathname === "/decisoes" || pathname.startsWith("/decisoes?")) {
     return findLibraryNav("/decisoes") ?? NAV_ITEMS[0];
   }
