@@ -6,6 +6,7 @@ import { CheckCircle, Sparkle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { TasksInboxFilters } from "@/components/tasks/tasks-inbox-filters";
 import { TasksInboxItem } from "@/components/tasks/tasks-inbox-item";
 import {
@@ -26,9 +27,10 @@ type TasksInboxProps = {
 function groupByMeeting(items: InboxActionItem[]): Map<string, InboxActionItem[]> {
   const map = new Map<string, InboxActionItem[]>();
   for (const item of items) {
-    const list = map.get(item.meeting_id) ?? [];
+    const key = item.meeting_id ?? "_standalone";
+    const list = map.get(key) ?? [];
     list.push(item);
-    map.set(item.meeting_id, list);
+    map.set(key, list);
   }
   return map;
 }
@@ -36,6 +38,8 @@ function groupByMeeting(items: InboxActionItem[]): Map<string, InboxActionItem[]
 export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [adding, setAdding] = useState(false);
   const isSuggestedView = query.filter === "suggested";
   const suggestedItems = isSuggestedView ? items : [];
 
@@ -43,7 +47,7 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
     item: InboxActionItem,
     body: Record<string, unknown>
   ): Promise<boolean> {
-    const res = await fetch(`/api/meetings/${item.meeting_id}/action-items/${item.id}`, {
+    const res = await fetch(`/api/tasks/${item.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -93,12 +97,17 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
       let total = 0;
 
       for (const [meetingId, group] of groups) {
+        if (meetingId === "_standalone") continue;
+        const ids = group
+          .map((item) => item.action_item_id)
+          .filter((id): id is string => Boolean(id));
+        if (ids.length === 0) continue;
         const res = await fetch(`/api/meetings/${meetingId}/action-items/suggestions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action,
-            ids: group.map((item) => item.id),
+            ids,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -130,14 +139,11 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
   async function snoozeItem(item: InboxActionItem, preset: "tomorrow" | "next_week") {
     setBusy(true);
     try {
-      const res = await fetch(
-        `/api/meetings/${item.meeting_id}/action-items/${item.id}/snooze`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ preset }),
-        }
-      );
+      const res = await fetch(`/api/tasks/${item.id}/snooze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preset }),
+      });
       if (!res.ok) {
         toast.error("Não foi possível adiar a tarefa.");
         return;
@@ -152,14 +158,11 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
   async function clearSnooze(item: InboxActionItem) {
     setBusy(true);
     try {
-      const res = await fetch(
-        `/api/meetings/${item.meeting_id}/action-items/${item.id}/snooze`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clear: true }),
-        }
-      );
+      const res = await fetch(`/api/tasks/${item.id}/snooze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clear: true }),
+      });
       if (!res.ok) {
         toast.error("Não foi possível remover o adiamento.");
         return;
@@ -179,9 +182,48 @@ export function TasksInbox({ query, items, counts, options }: TasksInboxProps) {
     if (ok) toast.success(`Prioridade ${priority === "high" ? "alta" : priority === "low" ? "baixa" : "média"}.`);
   }
 
+  async function createStandaloneTask() {
+    const title = newTitle.trim();
+    if (!title) return;
+    setAdding(true);
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) {
+        toast.error("Não foi possível criar a tarefa.");
+        return;
+      }
+      setNewTitle("");
+      toast.success("Tarefa criada.");
+      router.refresh();
+    } finally {
+      setAdding(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <TasksInboxFilters query={query} counts={counts} options={options} />
+
+      {!isSuggestedView && (
+        <div className="flex flex-wrap gap-2">
+          <Input
+            placeholder="Nova tarefa avulsa…"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void createStandaloneTask();
+            }}
+            className="max-w-md"
+          />
+          <Button size="sm" disabled={adding || !newTitle.trim()} onClick={() => void createStandaloneTask()}>
+            Adicionar
+          </Button>
+        </div>
+      )}
 
       {isSuggestedView && suggestedItems.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/25 bg-brand/5 px-4 py-3">
