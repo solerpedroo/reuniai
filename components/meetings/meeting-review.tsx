@@ -6,7 +6,7 @@ import { MeetingHighlightsPanel } from "@/components/meetings/meeting-highlights
 import { SpeakerMappingEditor } from "@/components/meetings/speaker-mapping-editor";
 import { MeetingLiveStatus } from "@/components/meetings/meeting-live-status";
 import { MeetingLiveCopilot } from "@/components/meetings/meeting-live-copilot";
-import { useMeetingSession } from "@/lib/meetings/use-meeting-session";
+import { useMeetingSessionContext } from "@/lib/meetings/meeting-session-context";
 import { MeetingTabs } from "@/components/meetings/meeting-tabs";
 import { RecordingPlayer } from "@/components/meetings/recording-player";
 import { SummaryView } from "@/components/meetings/summary-view";
@@ -56,7 +56,7 @@ export function MeetingReview({
   const [highlightMs, setHighlightMs] = useState<number | null>(initialSeekMs ?? null);
 
   const talkTime = useMemo(() => computeTalkTime(segments), [segments]);
-  const liveSession = useMeetingSession(meeting.id, meeting.status, meeting.recall_bot_id);
+  const liveSession = useMeetingSessionContext();
 
   const seek = useCallback((ms: number) => {
     setCurrentTimeMs(ms);
