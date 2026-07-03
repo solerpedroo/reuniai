@@ -22,7 +22,11 @@ export function botFailedNotificationHref(meetingId: string): string {
 }
 
 export function tasksDueNotificationHref(): string {
-  return "/agenda";
+  return "/tarefas";
+}
+
+export function reviewQueueNotificationHref(): string {
+  return "/revisar";
 }
 
 export function notificationDedupeKey(
