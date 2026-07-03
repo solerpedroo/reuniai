@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   RELATIONSHIP_TYPES,
   type ParticipantRelationship,
-} from "@/lib/participants/relationship";
+} from "@/lib/participants/relationship-types";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
