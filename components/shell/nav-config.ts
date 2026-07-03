@@ -20,6 +20,7 @@ import {
   MagnifyingGlass,
   NotePencil,
   Sparkle,
+  Trophy,
   UserCircle,
   UsersThree,
   VideoCamera,
@@ -124,7 +125,7 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     href: "/impacto",
     label: "Impacto",
     description: "Retrospectiva pessoal e valor do produto",
-    icon: ChartLineUp,
+    icon: Trophy,
   },
 ];
 
