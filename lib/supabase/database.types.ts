@@ -657,6 +657,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_tasks: {
+        Row: {
+          id: string;
+          user_id: string;
+          action_item_id: string | null;
+          meeting_id: string | null;
+          title: string;
+          assignee: string | null;
+          due_date: string | null;
+          status: Database["public"]["Enums"]["action_item_status"];
+          source: Database["public"]["Enums"]["action_item_source"];
+          priority: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until: string | null;
+          hub_synced_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          action_item_id?: string | null;
+          meeting_id?: string | null;
+          title: string;
+          assignee?: string | null;
+          due_date?: string | null;
+          status?: Database["public"]["Enums"]["action_item_status"];
+          source?: Database["public"]["Enums"]["action_item_source"];
+          priority?: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until?: string | null;
+          hub_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          action_item_id?: string | null;
+          meeting_id?: string | null;
+          title?: string;
+          assignee?: string | null;
+          due_date?: string | null;
+          status?: Database["public"]["Enums"]["action_item_status"];
+          source?: Database["public"]["Enums"]["action_item_source"];
+          priority?: Database["public"]["Enums"]["action_item_priority"];
+          snoozed_until?: string | null;
+          hub_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       task_sync_connections: {
         Row: {
           id: string;
