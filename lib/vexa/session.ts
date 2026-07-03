@@ -15,7 +15,8 @@ export type { MeetingSessionStatus };
 /** Confirma se o bot está na call, transcrevendo e/ou gravando áudio. */
 export async function getMeetingSessionStatus(
   platform: BotPlatform,
-  nativeMeetingId: string
+  nativeMeetingId: string,
+  startedAt?: string | null
 ): Promise<MeetingSessionStatus> {
   const [runningBots, transcript, vexaMeeting] = await Promise.all([
     getRunningBots().catch(() => []),
@@ -39,7 +40,9 @@ export async function getMeetingSessionStatus(
     lifecycleStatus = "joining";
   }
 
-  lifecycleStatus = reconcileVexaLifecycleStatus(lifecycleStatus, containerRunning, 0);
+  const elapsedMs = startedAt ? Date.now() - new Date(startedAt).getTime() : 0;
+
+  lifecycleStatus = reconcileVexaLifecycleStatus(lifecycleStatus, containerRunning, elapsedMs);
 
   const connected =
     containerRunning &&
