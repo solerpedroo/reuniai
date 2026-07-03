@@ -187,7 +187,12 @@ export function MeetingsDataTable({
                     className="text-right"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <BotActions meetingId={meeting.id} status={meeting.status} />
+                    <BotActions
+                      meetingId={meeting.id}
+                      status={meeting.status}
+                      recallBotId={meeting.recall_bot_id}
+                      preferNativeTranscript={meeting.prefer_native_transcript}
+                    />
                   </TableCell>
                 </TableRow>
               ))
