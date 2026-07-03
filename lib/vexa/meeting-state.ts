@@ -86,6 +86,28 @@ export function isCapturingVexaStatus(status: string): boolean {
 }
 
 /**
+ * Quando o container do bot já caiu, `/meetings` pode continuar retornando `active`
+ * por alguns segundos — tratamos como encerrado para não deixar a UI presa em "gravando".
+ */
+export function reconcileVexaLifecycleStatus(
+  lifecycleStatus: string | null | undefined,
+  containerUp: boolean,
+  elapsedMs: number
+): string | null {
+  if (!lifecycleStatus || containerUp) return lifecycleStatus ?? null;
+
+  if (isCapturingVexaStatus(lifecycleStatus)) {
+    return "completed";
+  }
+
+  if (isJoiningVexaStatus(lifecycleStatus) && elapsedMs >= JOINING_GRACE_MS) {
+    return "completed";
+  }
+
+  return lifecycleStatus;
+}
+
+/**
  * Resolve o status real da reunião no Vexa.
  * `/bots/status` retorna uptime do container ("Up 4 seconds"), não o ciclo de vida
  * (`active`, `joining`, etc.) — por isso usamos `/meetings` e fallbacks.
@@ -103,12 +125,17 @@ export function resolveVexaMeetingStatus(input: {
     return "failed";
   }
 
+  const containerUp = Boolean(input.container?.containerUp);
+
   if (input.vexaMeeting?.status) {
-    return input.vexaMeeting.status;
+    return (
+      reconcileVexaLifecycleStatus(input.vexaMeeting.status, containerUp, elapsedMs) ??
+      input.vexaMeeting.status
+    );
   }
 
   if (input.hasTranscriptSegments) {
-    return "active";
+    return reconcileVexaLifecycleStatus("active", containerUp, elapsedMs) ?? "active";
   }
 
   if (input.container?.containerUp) {
@@ -132,7 +159,9 @@ export function resolveVexaMeetingStatus(input: {
 export async function refineVexaMeetingStatus(
   platform: BotPlatform,
   nativeMeetingId: string,
-  coarseStatus: string
+  coarseStatus: string,
+  containerUp = false,
+  elapsedMs = 0
 ): Promise<string> {
   if (isCapturingVexaStatus(coarseStatus) || coarseStatus === "failed" || coarseStatus === "completed") {
     return coarseStatus;
@@ -140,7 +169,11 @@ export async function refineVexaMeetingStatus(
 
   try {
     const direct = await getVexaMeeting(platform, nativeMeetingId);
-    if (direct?.status) return direct.status;
+    if (direct?.status) {
+      return (
+        reconcileVexaLifecycleStatus(direct.status, containerUp, elapsedMs) ?? direct.status
+      );
+    }
   } catch {
     // segue para fallback de transcrição
   }
@@ -149,7 +182,7 @@ export async function refineVexaMeetingStatus(
     try {
       const transcript = await getTranscript(platform, nativeMeetingId);
       if ((transcript.segments?.length ?? 0) > 0) {
-        return "active";
+        return reconcileVexaLifecycleStatus("active", containerUp, elapsedMs) ?? "active";
       }
     } catch {
       // mantém status coarse
