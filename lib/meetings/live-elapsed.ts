@@ -5,11 +5,10 @@ export function getLiveElapsedMs(startedAt: string, now = Date.now()): number {
   return Math.max(0, now - startMs);
 }
 
-export const LIVE_MEETING_STATUSES = new Set([
-  "bot_joining",
-  "recording",
-] as const);
+import { BOT_ACTIVE_STATUSES } from "@/lib/meetings/bot-lifecycle";
+
+export const LIVE_MEETING_STATUSES = BOT_ACTIVE_STATUSES;
 
 export function isLiveMeetingStatus(status: string): boolean {
-  return LIVE_MEETING_STATUSES.has(status as "bot_joining" | "recording");
+  return BOT_ACTIVE_STATUSES.has(status as "bot_joining" | "recording");
 }
