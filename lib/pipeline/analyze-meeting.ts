@@ -10,6 +10,7 @@ import { generateMeetingEmbeddings } from "@/lib/embeddings/generate";
 import { generateAndSaveFollowUp } from "@/lib/meetings/follow-up";
 import { dispatchMeetingCompleted } from "@/lib/integrations/dispatch";
 import { sendMeetingCompletedEmail } from "@/lib/email/meeting-completed";
+import { syncAndSuggestDecisionOutcomes } from "@/lib/decisions/suggest-outcomes";
 import { notifyUser } from "@/lib/notifications/dispatch";
 import {
   completedNotificationHref,
@@ -103,6 +104,19 @@ export async function analyzeMeetingById(
       await mergeLiveDecisionsIntoSummary(admin, meetingId);
     } catch (err) {
       console.error("Falha ao mesclar decisões ao vivo (não bloqueante):", err);
+    }
+
+    try {
+      await syncAndSuggestDecisionOutcomes(
+        admin,
+        meetingId,
+        meeting.user_id,
+        analysis.decisions,
+        transcript,
+        meeting.calendar_recurring_event_id
+      );
+    } catch (err) {
+      console.error("Falha ao sincronizar outcomes de decisões (não bloqueante):", err);
     }
 
     // Recria os action items gerados por IA (preserva manuais e ao vivo).
