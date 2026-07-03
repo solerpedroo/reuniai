@@ -5,6 +5,7 @@ import { useState } from "react";
 import { UploadSimple } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -84,11 +85,11 @@ export function ImportRecordingForm() {
 
       <div className="space-y-2">
         <Label htmlFor="import-date">Data e hora (opcional)</Label>
-        <Input
+        <DateTimePicker
           id="import-date"
-          type="datetime-local"
           value={startedAt}
-          onChange={(e) => setStartedAt(e.target.value)}
+          onChange={setStartedAt}
+          clearable
         />
       </div>
 
