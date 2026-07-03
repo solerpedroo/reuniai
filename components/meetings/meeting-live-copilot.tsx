@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/lib/meetings/transcript";
+import { deriveBotUiPhase } from "@/lib/meetings/bot-lifecycle";
 import { getLiveElapsedMs, isLiveMeetingStatus } from "@/lib/meetings/live-elapsed";
 import type { Meeting } from "@/lib/supabase/types";
 import type { MeetingSessionResponse } from "@/lib/meetings/use-meeting-session";
@@ -215,7 +216,10 @@ export function MeetingLiveCopilot({
 
   if (!live) return null;
 
-  const transcriptionActive = session?.session?.transcription.active ?? segments.length > 0;
+  const phase = deriveBotUiPhase(meeting.status, session?.session ?? null);
+  const transcriptionActive =
+    phase === "recording" &&
+    (session?.session?.transcription.active ?? segments.length > 0);
 
   return (
     <div className="surface-toolbar space-y-4 p-4">
@@ -328,9 +332,15 @@ export function MeetingLiveCopilot({
       >
         {segments.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            {transcriptionActive
-              ? "Aguardando trechos de transcrição…"
-              : "Transcrição ainda não disponível. O bot pode estar entrando na call."}
+            {phase === "joining"
+              ? "O bot está entrando na call. A transcrição aparecerá em instantes."
+              : phase === "in_call"
+                ? "Bot na reunião. Aguardando início da transcrição…"
+                : phase === "stopping"
+                  ? "Encerrando gravação. Os trechos finais podem ainda chegar…"
+                  : transcriptionActive
+                    ? "Aguardando trechos de transcrição…"
+                    : "Transcrição ainda não disponível."}
           </p>
         ) : (
           <ul className="space-y-2">
