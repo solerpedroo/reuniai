@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
-import { stopBot } from "@/lib/vexa/client";
+import { getRunningBots, stopBot } from "@/lib/vexa/client";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, meeting_url, recall_bot_id, started_at")
+    .select("id, user_id, meeting_url, recall_bot_id, started_at, status")
     .eq("id", meetingId)
     .maybeSingle<{
       id: string;
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       meeting_url: string | null;
       recall_bot_id: string | null;
       started_at: string;
+      status: string;
     }>();
 
   if (!meeting || meeting.user_id !== user.id) {
@@ -56,11 +57,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bot não está ativo nesta reunião" }, { status: 400 });
   }
 
+  const activeStatuses = new Set(["bot_joining", "recording"]);
+  if (!activeStatuses.has(meeting.status)) {
+    return NextResponse.json({ ok: true, alreadyStopped: true });
+  }
+
+  let botRunning = false;
   try {
-    await stopBot(parsed.platform, meeting.recall_bot_id);
+    const running = await getRunningBots();
+    botRunning = running.some((bot) => bot.native_meeting_id === meeting.recall_bot_id);
   } catch (err) {
-    console.error("Erro ao parar bot:", err);
-    return NextResponse.json({ error: "Falha ao parar o bot" }, { status: 500 });
+    console.error("Erro ao consultar bots ativos:", err);
+  }
+
+  if (botRunning) {
+    try {
+      await stopBot(parsed.platform, meeting.recall_bot_id);
+    } catch (err) {
+      console.error("Erro ao parar bot:", err);
+      return NextResponse.json({ error: "Falha ao parar o bot" }, { status: 500 });
+    }
   }
 
   const admin = createAdminClient();
@@ -69,5 +85,5 @@ export async function POST(request: NextRequest) {
     startTime: meeting.started_at,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, botWasRunning: botRunning });
 }
