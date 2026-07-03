@@ -6,7 +6,7 @@
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
 **Última atualização:** julho 2026  
-**Foco atual:** lote 9 (Ondas 61–65) — importar gravações, atas, distribuição, templates v2, higiene de calendário.
+**Foco atual:** lote 10 (Ondas 66–70) — push proativo, briefing do dia, rastreamento de decisões, clips compartilháveis, impacto pessoal e portabilidade LGPD. **Último lote de produto individual.**
 
 ### Andamento das fases
 
@@ -76,6 +76,11 @@
 | **63** | **Distribuição para participantes** | ✅ Concluída |
 | **64** | **Análise por tipo (templates v2)** | ✅ Concluída |
 | **65** | **Higiene de calendário** | ✅ Concluída |
+| **66** | **Push proativo (Web Push)** | 📋 Próxima |
+| **67** | **Briefing do dia (`/hoje`)** | 📋 |
+| **68** | **Rastreamento de decisões** | 📋 |
+| **69** | **Clips de momento** | 📋 |
+| **70** | **Impacto pessoal + portabilidade** | 📋 |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -2933,6 +2938,247 @@ flowchart LR
 
 ---
 
+## Lote 10 — Ondas finais (66–70)
+
+> **Capstone do produto individual.** Fecha o loop: alcançar o usuário fora do app → orientar o dia → prestar contas → compartilhar momentos → provar valor + portabilidade LGPD.  
+> Após a Onda 70, congela-se o escopo de produto pessoal (Ondas 18/19 permanecem postergadas).
+
+```mermaid
+flowchart LR
+    O66[66 Push] --> O67[67 Hoje]
+    O67 --> O68[68 Decisões]
+    O68 --> O69[69 Clips]
+    O69 --> O70[70 Impacto]
+```
+
+| Onda | Pergunta que responde |
+|------|------------------------|
+| 66 | Me avisa quando preciso agir? |
+| 67 | O que importa hoje? |
+| 68 | Aquela decisão foi cumprida? |
+| 69 | Quero mandar só aquele trecho |
+| 70 | O ReuniAI vale a pena? Meus dados são meus? |
+
+**Fora deste lote (de propósito):** Onda 18 (Stripe/API/MCP), Onda 19 (workspaces/SSO), Onda 16 completa (Teams/Outlook nativo), multi-idioma transcrição.
+
+---
+
+## Onda 66 — Push proativo (Web Push)
+
+**Objetivo:** Enviar notificações push nos momentos certos — o PWA deixa de ser passivo.
+
+**Estimativa:** 3–4 dias  
+**Depende de:** Onda 37 (notificações), 55 (PWA), 22 (alertas), 53 (tarefas)  
+**Branch:** `feat/onda-66-push`
+
+### Contexto
+
+- Tabela `push_subscriptions` e opt-in em Configurações **já existem** (Onda 16.4 parcial).
+- Pacote `web-push` já está no projeto; falta orquestrar **envio** nos eventos.
+
+### Features
+
+#### 66.1 Infra de envio (`lib/notifications/web-push.ts`)
+
+- [ ] VAPID keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
+- [ ] `sendPushToUser(userId, { title, body, url })` com retry e dedupe
+- [ ] Respeitar `notification_prefs` por categoria
+
+#### 66.2 Eventos
+
+- [ ] Reunião concluída (`status = completed`)
+- [ ] Prep disponível (~5 min antes de `started_at`)
+- [ ] Tarefa com snooze vencendo (cron `tasks-due-reminder`)
+- [ ] Fila `/revisar` acima de N itens (digest matinal opcional)
+
+#### 66.3 Service worker
+
+- [ ] Handler `push` + `notificationclick` com deep link (`/reunioes/[id]`, `/revisar`, `/tarefas`)
+- [ ] Cache SW v4+ compatível com rotas novas
+
+#### 66.4 UI
+
+- [ ] Completar toggles por categoria em `/configuracoes` (push vs in-app)
+- [ ] Estado “push não suportado” gracioso no browser
+
+### Critérios de aceite
+
+- [ ] Usuário com push ativo recebe notificação quando reunião termina
+- [ ] Clique na notificação abre a rota correta no PWA
+- [ ] Opt-out desativa envio sem quebrar notificações in-app
+- [ ] Sem VAPID configurado: UI informa indisponibilidade, app não quebra
+
+---
+
+## Onda 67 — Briefing do dia (`/hoje`)
+
+**Objetivo:** Tela única para começar o dia — unifica hubs existentes no momento certo (manhã).
+
+**Estimativa:** 3–4 dias  
+**Depende de:** Onda 27 (agenda), 41 (prep), 53 (tarefas), 56 (compromissos), 58 (planejar), 65 (calendário)  
+**Branch:** `feat/onda-67-hoje`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/hoje` | Briefing matinal com blocos dinâmicos |
+| `/` | Card “Comece por `/hoje`” na visão geral |
+
+### Features
+
+#### 67.1 Data layer (`lib/briefing/daily-briefing.ts`)
+
+- [ ] Próxima reunião + countdown
+- [ ] Top 3 tarefas urgentes (`user_tasks`)
+- [ ] Compromissos vencendo (`verbal_commitments`)
+- [ ] Contagem fila `/revisar`
+- [ ] Score resumido de higiene de calendário (Onda 65)
+- [ ] Prep cards do dia
+
+#### 67.2 UI (`components/briefing/daily-briefing-view.tsx`)
+
+- [ ] Hero com próxima call
+- [ ] Blocos colapsáveis por prioridade
+- [ ] Ações rápidas: Ensaiar · Importar · Marcar revisada
+- [ ] Empty state celebratório quando dia limpo
+
+#### 67.3 Nav
+
+- [ ] Entrada `/hoje` em `NAV_PRIMARY_ITEMS` (após Visão geral ou Agenda)
+
+### Critérios de aceite
+
+- [ ] `/hoje` carrega em < 2s com dados reais do usuário
+- [ ] Links levam às rotas corretas com contexto preservado
+- [ ] Funciona sem calendário conectado (degrada graciosamente)
+
+---
+
+## Onda 68 — Rastreamento de decisões (`/decisoes` v2)
+
+**Objetivo:** Decisões deixam de ser registro estático — acompanhar cumprimento ao longo do tempo.
+
+**Estimativa:** 4–5 dias  
+**Depende de:** Onda 42 (decisões), 34 (séries), 52 (playbooks), 59 (coach)  
+**Branch:** `feat/onda-68-decisoes-outcome`
+
+### Schema
+
+- [ ] Migration: `decision_outcomes` ou colunas `outcome_status`, `outcome_updated_at` em registro existente
+- [ ] Enum `outcome_status`: `pending` · `in_progress` · `done` · `reversed`
+
+### Features
+
+#### 68.1 Detecção automática
+
+- [ ] Hook pós-análise: LLM compara decisões da série com transcript atual
+- [ ] Sugestão “decisão X parece cumprida” → usuário confirma/rejeita
+
+#### 68.2 UI (`/decisoes` v2)
+
+- [ ] Filtro por `outcome_status`
+- [ ] Timeline por decisão (reuniões onde foi tomada → mencionada → fechada)
+- [ ] KPIs: taxa de cumprimento · decisões stale > 30 dias
+
+#### 68.3 Playbooks
+
+- [ ] Matcher opcional: `decision_stale_days > N` → tag ou alerta
+
+### Critérios de aceite
+
+- [ ] Status manual persiste e aparece no hub
+- [ ] Sugestão automática não altera status sem confirmação
+- [ ] RLS: só decisões de reuniões do usuário
+
+---
+
+## Onda 69 — Clips de momento (`/clips`)
+
+**Objetivo:** Compartilhar trechos específicos da call — não a reunião inteira.
+
+**Estimativa:** 4–5 dias  
+**Depende de:** Onda 35 (highlights), 43 (share links), 14.3 (redação PII)  
+**Branch:** `feat/onda-69-clips`
+
+### Schema
+
+- [ ] Tabela `meeting_clips`: `highlight_id`, `token`, `caption`, `expires_at`, `user_id`
+- [ ] RLS + revogação
+
+### Features
+
+#### 69.1 Geração
+
+- [ ] Botão “Compartilhar clip” no highlight (detalhe da reunião)
+- [ ] Redação PII via `lib/privacy/redact.ts` antes de tornar público
+- [ ] URL `/c/[token]` — player no timestamp + legenda
+
+#### 69.2 Hub `/clips`
+
+- [ ] Lista de clips ativos/expirados
+- [ ] Copiar link · revogar · estender validade
+
+#### 69.3 Integração
+
+- [ ] Distribuição (Onda 63) pode incluir clip no email opcionalmente
+
+### Critérios de aceite
+
+- [ ] Clip abre player no segundo exato do highlight
+- [ ] Link expira conforme configurado
+- [ ] PII redigido quando `redact_pii = true`
+- [ ] Revogação invalida URL imediatamente
+
+---
+
+## Onda 70 — Impacto pessoal + portabilidade (`/impacto`)
+
+**Objetivo:** Capstone final — provar valor do produto + export LGPD completo.
+
+**Estimativa:** 5–6 dias  
+**Depende de:** Onda 25 (insights), 38 (talk-time), 56 (compromissos), 58 (planejar), 59 (coach), 68 (decisões), 11 (LGPD)  
+**Branch:** `feat/onda-70-impacto`
+
+### Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/impacto` | Dashboard narrativo 7d · 30d · 90d |
+| `/configuracoes` | Botão “Exportar meus dados” |
+
+### Features
+
+#### 70.1 Retrospectiva (`lib/impact/personal-impact.ts`)
+
+- [ ] Métricas: horas em reunião · coach score · follow-ups · tarefas · compromissos · decisões cumpridas
+- [ ] Narrativa LLM em PT-BR (“78% compromissos cumpridos…”)
+- [ ] Gráficos (recharts, padrão `/insights`)
+
+#### 70.2 Export PDF
+
+- [ ] Relatório mensal exportável (pdfkit, padrão atas)
+
+#### 70.3 Portabilidade LGPD
+
+- [ ] `GET /api/account/export` — ZIP com JSON estruturado + transcrições + atas
+- [ ] Rate limit 1×/24h por usuário
+- [ ] Log de export em `audit` (se existir) ou tabela dedicada
+
+#### 70.4 Integração
+
+- [ ] Links desde `/semana`, `/planejar`, `/hoje`
+- [ ] Card na home quando período fecha (fim de mês)
+
+### Critérios de aceite
+
+- [ ] `/impacto` reflete dados reais do período selecionado
+- [ ] Export ZIP contém todas as reuniões do usuário
+- [ ] Export não inclui dados de outros usuários (RLS verificado)
+- [ ] PDF gerado em < 30s para conta com ≤ 100 reuniões
+
+---
+
 ## Roadmap resumido (todas as features futuras)
 
 | # | Feature | Onda |
@@ -3004,6 +3250,16 @@ flowchart LR
 | 64 | Hub de biblioteca + nav secundária (`/biblioteca`) | 48 |
 | 65 | Busca semântica avançada (`/busca`) | 49 |
 | 66 | Hub de follow-ups (`/follow-ups`) | 50 |
+| 67 | Importar gravação manual (`/importar`) | 61 |
+| 68 | Atas formais (`/atas`) | 62 |
+| 69 | Distribuição para participantes | 63 |
+| 70 | Templates v2 + campos por tipo | 64 |
+| 71 | Higiene de calendário (`/calendario`) | 65 |
+| 72 | Push proativo (Web Push) | 66 |
+| 73 | Briefing do dia (`/hoje`) | 67 |
+| 74 | Rastreamento de decisões (outcome) | 68 |
+| 75 | Clips de momento (`/clips`) | 69 |
+| 76 | Impacto pessoal + export LGPD (`/impacto`) | 70 |
 
 ---
 
@@ -3048,6 +3304,11 @@ EMBEDDINGS_API_KEY=
 
 # Cron protection
 CRON_SECRET=
+
+# Web Push (Onda 66 — opcional)
+# VAPID_PUBLIC_KEY=
+# VAPID_PRIVATE_KEY=
+# VAPID_SUBJECT=mailto:voce@dominio.com
 
 # Email (opcional)
 RESEND_API_KEY=
