@@ -2,7 +2,11 @@ import "server-only";
 
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { getRunningBots, getTranscript, getVexaMeeting } from "@/lib/vexa/client";
-import { isCapturingVexaStatus, isJoiningVexaStatus } from "@/lib/vexa/meeting-state";
+import {
+  isCapturingVexaStatus,
+  isJoiningVexaStatus,
+  reconcileVexaLifecycleStatus,
+} from "@/lib/vexa/meeting-state";
 import { pickPrimaryAudioMedia } from "@/lib/vexa/recordings";
 import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
 
@@ -22,25 +26,30 @@ export async function getMeetingSessionStatus(
   ]);
 
   const bot = runningBots.find((item) => item.native_meeting_id === nativeMeetingId) ?? null;
+  const containerRunning = Boolean(bot);
   const segmentCount = transcript.segments?.length ?? 0;
   const recordingMedia = pickPrimaryAudioMedia(transcript);
 
   // Ciclo de vida vem de /meetings — nunca do uptime do container ("Up 4 seconds").
   let lifecycleStatus = vexaMeeting?.status ?? transcript.status ?? null;
-  if (!lifecycleStatus && segmentCount > 0) {
+  if (!lifecycleStatus && containerRunning && segmentCount > 0) {
     lifecycleStatus = "active";
   }
-  if (!lifecycleStatus && bot) {
+  if (!lifecycleStatus && containerRunning) {
     lifecycleStatus = "joining";
   }
 
+  lifecycleStatus = reconcileVexaLifecycleStatus(lifecycleStatus, containerRunning, 0);
+
   const connected =
-    Boolean(bot) ||
-    isCapturingVexaStatus(lifecycleStatus ?? "") ||
-    isJoiningVexaStatus(lifecycleStatus ?? "");
+    containerRunning &&
+    (isCapturingVexaStatus(lifecycleStatus ?? "") ||
+      isJoiningVexaStatus(lifecycleStatus ?? ""));
   const capturing =
-    isCapturingVexaStatus(lifecycleStatus ?? "") || segmentCount > 0;
-  const transcriptionActive = segmentCount > 0 || capturing;
+    containerRunning && isCapturingVexaStatus(lifecycleStatus ?? "");
+  const transcriptionActive =
+    containerRunning &&
+    (isCapturingVexaStatus(lifecycleStatus ?? "") || segmentCount > 0);
 
   return {
     connected,
