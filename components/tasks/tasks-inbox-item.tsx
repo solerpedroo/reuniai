@@ -134,12 +134,18 @@ export function TasksInboxItem({
         ) : (
           <>
             <div className="flex items-start gap-2">
-              <Link
-                href={`/reunioes/${item.meeting_id}`}
-                className="block min-w-0 flex-1 text-sm font-medium leading-snug text-foreground hover:text-brand hover:underline"
-              >
-                {item.title}
-              </Link>
+              {item.meeting_id ? (
+                <Link
+                  href={`/reunioes/${item.meeting_id}`}
+                  className="block min-w-0 flex-1 text-sm font-medium leading-snug text-foreground hover:text-brand hover:underline"
+                >
+                  {item.title}
+                </Link>
+              ) : (
+                <span className="block min-w-0 flex-1 text-sm font-medium leading-snug text-foreground">
+                  {item.title}
+                </span>
+              )}
               {!isSuggested && (
                 <button
                   type="button"
@@ -152,12 +158,16 @@ export function TasksInboxItem({
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              <Link
-                href={`/reunioes/${item.meeting_id}`}
-                className="truncate hover:text-foreground hover:underline"
-              >
-                {item.meeting_title}
-              </Link>
+              {item.meeting_id ? (
+                <Link
+                  href={`/reunioes/${item.meeting_id}`}
+                  className="truncate hover:text-foreground hover:underline"
+                >
+                  {item.meeting_title}
+                </Link>
+              ) : (
+                <span className="truncate">{item.meeting_title}</span>
+              )}
               {item.assignee && (
                 <span className="inline-flex items-center gap-1">
                   <User size={12} aria-hidden />
@@ -256,12 +266,14 @@ export function TasksInboxItem({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" size="sm" asChild>
-            <Link href={`/reunioes/${item.meeting_id}`}>
-              Abrir
-              <ArrowRight size={14} />
-            </Link>
-          </Button>
+            {item.meeting_id && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/reunioes/${item.meeting_id}`}>
+                  Abrir
+                  <ArrowRight size={14} />
+                </Link>
+              </Button>
+            )}
           </>
         )}
       </div>
