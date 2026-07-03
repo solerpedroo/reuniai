@@ -22,6 +22,7 @@ export type Database = {
           last_weekly_digest_at: string | null;
           last_tasks_due_reminder_at: string | null;
           last_review_queue_reminder_at: string | null;
+          last_account_export_at: string | null;
           locale: string;
           default_analysis_template: string;
           created_at: string;
@@ -39,6 +40,7 @@ export type Database = {
           last_weekly_digest_at?: string | null;
           last_tasks_due_reminder_at?: string | null;
           last_review_queue_reminder_at?: string | null;
+          last_account_export_at?: string | null;
           locale?: string;
           default_analysis_template?: string;
           created_at?: string;
@@ -56,6 +58,7 @@ export type Database = {
           last_weekly_digest_at?: string | null;
           last_tasks_due_reminder_at?: string | null;
           last_review_queue_reminder_at?: string | null;
+          last_account_export_at?: string | null;
           locale?: string;
           default_analysis_template?: string;
           created_at?: string;
