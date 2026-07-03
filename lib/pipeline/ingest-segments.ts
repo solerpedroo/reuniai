@@ -84,11 +84,12 @@ export async function persistMeetingSegments(
     }
   }
 
-  const status: IngestResult["status"] = rows.length > 0 ? "completed" : "partial";
+  const ingestOutcome: IngestResult["status"] = rows.length > 0 ? "completed" : "partial";
+  const dbStatus = rows.length > 0 ? "processing" : "partial";
   await admin
     .from("meetings")
-    .update({ status, transcript_source: transcriptSource })
+    .update({ status: dbStatus, transcript_source: transcriptSource })
     .eq("id", meetingId);
 
-  return { segments: rows.length, status, transcriptSource };
+  return { segments: rows.length, status: ingestOutcome, transcriptSource };
 }
