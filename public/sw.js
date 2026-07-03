@@ -1,5 +1,5 @@
-const CACHE_NAME = "reuniai-shell-v3";
-const SHELL = ["/", "/manifest.webmanifest", "/revisar"];
+const CACHE_NAME = "reuniai-shell-v4";
+const SHELL = ["/", "/manifest.webmanifest", "/revisar", "/hoje", "/tarefas"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -8,7 +8,14 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      )
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (event) => {
@@ -35,9 +42,14 @@ self.addEventListener("push", (event) => {
     payload = undefined;
   }
   const title = (payload && payload.title) || "ReuniAI";
+  const href = (payload && payload.href) || "/";
   const options = {
     body: (payload && payload.body) || "",
-    data: { href: (payload && payload.href) || "/" },
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { href },
+    tag: (payload && payload.kind) || "reuniai",
+    renotify: true,
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -45,5 +57,19 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const href = (event.notification.data && event.notification.data.href) || "/";
-  event.waitUntil(self.clients.openWindow(href));
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          const url = new URL(client.url);
+          if (url.origin === self.location.origin) {
+            client.navigate(href);
+            return client.focus();
+          }
+        }
+      }
+      return self.clients.openWindow(href);
+    })
+  );
 });
