@@ -22,7 +22,7 @@ export function wrapEmailHtml({ title, bodyHtml, footerNote }: EmailLayoutOption
   return `
     <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
       <div style="padding: 24px 0 16px; border-bottom: 1px solid #e5e7eb;">
-        <img src="${logoUrl}" alt="${PRODUCT_NAME}" width="40" height="40" style="display: block; border-radius: 10px;" />
+        <img src="${logoUrl}" alt="${PRODUCT_NAME}" width="44" height="44" style="display: block;" />
       </div>
       <div style="padding: 24px 0;">
         <h1 style="font-size: 20px; margin: 0 0 16px; font-weight: 600;">${title}</h1>
