@@ -771,6 +771,174 @@ export type Database = {
         };
         Relationships: [];
       };
+      verbal_commitments: {
+        Row: {
+          id: string;
+          user_id: string;
+          meeting_id: string;
+          text: string;
+          direction: Database["public"]["Enums"]["commitment_direction"];
+          status: Database["public"]["Enums"]["verbal_commitment_status"];
+          counterparty: string | null;
+          due_date: string | null;
+          source_quote: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          meeting_id: string;
+          text: string;
+          direction: Database["public"]["Enums"]["commitment_direction"];
+          status?: Database["public"]["Enums"]["verbal_commitment_status"];
+          counterparty?: string | null;
+          due_date?: string | null;
+          source_quote?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          meeting_id?: string;
+          text?: string;
+          direction?: Database["public"]["Enums"]["commitment_direction"];
+          status?: Database["public"]["Enums"]["verbal_commitment_status"];
+          counterparty?: string | null;
+          due_date?: string | null;
+          source_quote?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      participant_relationships: {
+        Row: {
+          id: string;
+          user_id: string;
+          participant_key: string;
+          relationship_type: string;
+          talking_points: Json;
+          open_loops: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          participant_key: string;
+          relationship_type?: string;
+          talking_points?: Json;
+          open_loops?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          participant_key?: string;
+          relationship_type?: string;
+          talking_points?: Json;
+          open_loops?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      user_weekly_intentions: {
+        Row: {
+          id: string;
+          user_id: string;
+          week_key: string;
+          intention: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          week_key: string;
+          intention?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          week_key?: string;
+          intention?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      meeting_coach_reports: {
+        Row: {
+          id: string;
+          meeting_id: string;
+          user_id: string;
+          score: number;
+          metrics: Json;
+          suggestions: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          meeting_id: string;
+          user_id: string;
+          score: number;
+          metrics?: Json;
+          suggestions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          meeting_id?: string;
+          user_id?: string;
+          score?: number;
+          metrics?: Json;
+          suggestions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      conversation_rehearsals: {
+        Row: {
+          id: string;
+          user_id: string;
+          participant_key: string | null;
+          scenario: string;
+          messages: Json;
+          feedback: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          participant_key?: string | null;
+          scenario: string;
+          messages?: Json;
+          feedback?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          participant_key?: string | null;
+          scenario?: string;
+          messages?: Json;
+          feedback?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       speaker_mappings: {
         Row: {
           id: string;
@@ -1241,6 +1409,8 @@ export type Database = {
       transcript_source: "vexa" | "teams_native" | "meet_native";
       chat_message_role: "user" | "assistant";
       share_scope: "summary_only" | "full_transcript";
+      commitment_direction: "i_owe" | "they_owe" | "mutual";
+      verbal_commitment_status: "pending" | "fulfilled" | "overdue" | "disputed";
     };
     CompositeTypes: {
       [_ in never]: never;

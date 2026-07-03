@@ -21,6 +21,8 @@ import { upsertKnowledgeFromMeeting } from "@/lib/knowledge/entries";
 import { suggestAndApplyTags } from "@/lib/tags/auto-tag";
 import { detectAndSaveCommitments } from "@/lib/meetings/commitments";
 import { mergeLiveDecisionsIntoSummary } from "@/lib/meetings/live-decisions";
+import { extractAndSaveVerbalLedger } from "@/lib/meetings/verbal-ledger";
+import { generateAndSaveCoachReport } from "@/lib/coach/analyze-meeting-coach";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ActionItemInsert = Database["public"]["Tables"]["action_items"]["Insert"];
@@ -132,6 +134,18 @@ export async function analyzeMeetingById(
       );
     } catch (err) {
       console.error("Falha na detecção de compromissos (não bloqueante):", err);
+    }
+
+    try {
+      await extractAndSaveVerbalLedger(admin, meetingId, transcript);
+    } catch (err) {
+      console.error("Falha no ledger de compromissos (não bloqueante):", err);
+    }
+
+    try {
+      await generateAndSaveCoachReport(admin, meetingId, transcript);
+    } catch (err) {
+      console.error("Falha no coach de reunião (não bloqueante):", err);
     }
 
     // Embeddings (opcional, prep para RAG da Onda 10).

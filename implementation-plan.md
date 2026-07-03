@@ -65,12 +65,12 @@
 | **52** | **Playbooks pós-reunião** | ✅ Concluída |
 | **53** | **Sync bidirecional de tarefas** | ✅ Concluída |
 | **54** | **Base de conhecimento viva** | ✅ Concluída |
-| **55** | **PWA mobile + revisão express** | 🔄 Em andamento |
-| **56** | **Ledger de compromissos** | 📋 Planejada |
-| **57** | **Participantes++ (CRM relacional)** | 📋 Planejada |
-| **58** | **Planejador semanal unificado** | 📋 Planejada |
-| **59** | **Coach de reunião** | 📋 Planejada |
-| **60** | **Ensaio de conversa (AI roleplay)** | 📋 Planejada |
+| **55** | **PWA mobile + revisão express** | ✅ Concluída |
+| **56** | **Ledger de compromissos** | ✅ Concluída |
+| **57** | **Participantes++ (CRM relacional)** | ✅ Concluída |
+| **58** | **Planejador semanal unificado** | ✅ Concluída |
+| **59** | **Coach de reunião** | ✅ Concluída |
+| **60** | **Ensaio de conversa (AI roleplay)** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -2725,6 +2725,8 @@ flowchart LR
 
 ---
 
+---
+
 ## Onda 54 — Base de conhecimento viva
 
 **Objetivo:** Wiki acumulativa com proveniência das reuniões.
@@ -2737,6 +2739,121 @@ flowchart LR
 - [x] Upsert automático pós-análise
 - [x] Hub `/conhecimento` + detalhe por slug
 - [x] Tags e links para reuniões fonte
+
+---
+
+## Onda 55 — PWA mobile + revisão express
+
+**Objetivo:** Revisão rápida no celular com PWA e modo express.
+
+**Branch:** `feat/onda-55-pwa-express`
+
+### Features
+
+- [x] Service worker v3 com cache de `/revisar`
+- [x] `ReviewExpressMode` — botões grandes Revisada/Depois
+- [x] Toggle express na fila (mobile)
+
+---
+
+## Onda 56 — Ledger de compromissos
+
+**Objetivo:** Rastrear promessas verbais interpessoais separadas de action items.
+
+**Branch:** `feat/onda-56-plus`
+
+### Features
+
+- [x] Schema `verbal_commitments` com `direction` e `status`
+- [x] Extração LLM em `lib/meetings/verbal-ledger.ts`
+- [x] Hook pós-análise em `analyze-meeting.ts`
+- [x] Hub `/compromissos` + `CommitmentsHubView`
+- [x] API PATCH `/api/commitments/[id]`
+
+### Critérios de aceite
+
+- [x] Compromissos persistidos fora de `action_items`
+- [x] Filtros por status e marcação de cumprido
+
+---
+
+## Onda 57 — Participantes++ (CRM relacional)
+
+**Objetivo:** Tipo de relacionamento e talking points por participante.
+
+**Branch:** `feat/onda-56-plus`
+
+### Features
+
+- [x] Schema `participant_relationships`
+- [x] `lib/participants/relationship.ts`
+- [x] Editor no detalhe do participante
+- [x] API GET/PATCH `/api/participants/[key]/relationship`
+
+### Critérios de aceite
+
+- [x] Tipo de relacionamento editável com autosave
+- [x] Talking points persistidos por `participant_key`
+
+---
+
+## Onda 58 — Planejador semanal (`/planejar`)
+
+**Objetivo:** Wizard de 4 passos para planejar a semana com dados existentes.
+
+**Branch:** `feat/onda-56-plus`
+
+### Features
+
+- [x] Schema `user_weekly_intentions`
+- [x] `lib/planner/weekly-planner.ts` (review queue, inbox, agenda, intenção)
+- [x] `WeeklyPlannerWizard` + página `/planejar`
+- [x] Entrada na nav principal
+- [x] API PATCH `/api/planner/intention`
+
+### Critérios de aceite
+
+- [x] 4 passos funcionais com links para `/revisar`, `/tarefas`, `/agenda`
+- [x] Intenção salva por `week_key`
+
+---
+
+## Onda 59 — Coach de reunião
+
+**Objetivo:** Score e sugestões de melhoria pós-call via LLM.
+
+**Branch:** `feat/onda-56-plus`
+
+### Features
+
+- [x] Schema `meeting_coach_reports`
+- [x] `lib/coach/analyze-meeting-coach.ts` + hook pós-análise
+- [x] `MeetingCoachPanel` no detalhe da reunião
+
+### Critérios de aceite
+
+- [x] Relatório idempotente por `meeting_id`
+- [x] Score 0–100 e sugestões exibidas na UI
+
+---
+
+## Onda 60 — Ensaio de conversa
+
+**Objetivo:** Roleplay com IA para praticar conversas difíceis.
+
+**Branch:** `feat/onda-56-plus`
+
+### Features
+
+- [x] Schema `conversation_rehearsals`
+- [x] Página `/ensaiar` + `RehearsalChat`
+- [x] API POST `/api/rehearsal/chat` (`generateJson` + `generateText`)
+- [x] `generateText` em `lib/llm/client.ts`
+
+### Critérios de aceite
+
+- [x] Turnos de diálogo persistidos por sessão
+- [x] Resumo ao encerrar ensaio
 
 ---
 

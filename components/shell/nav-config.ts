@@ -12,10 +12,12 @@ import {
   EnvelopeSimple,
   Gavel,
   Gear,
+  Handshake,
   House,
   LinkSimple,
   MagnifyingGlass,
   NotePencil,
+  Sparkle,
   UserCircle,
   UsersThree,
   VideoCamera,
@@ -55,6 +57,18 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     icon: CalendarCheck,
   },
   {
+    href: "/planejar",
+    label: "Planejar",
+    description: "Wizard semanal: revisão, tarefas, agenda e intenção",
+    icon: ClipboardText,
+  },
+  {
+    href: "/compromissos",
+    label: "Compromissos",
+    description: "Ledger de promessas verbais das reuniões",
+    icon: Handshake,
+  },
+  {
     href: "/reunioes",
     label: "Reuniões",
     description: "Lista completa de reuniões gravadas",
@@ -71,6 +85,12 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     label: "Participantes",
     description: "Pessoas com quem você se reuniu",
     icon: UsersThree,
+  },
+  {
+    href: "/ensaiar",
+    label: "Ensaiar",
+    description: "Roleplay de conversas difíceis com IA",
+    icon: Sparkle,
   },
   {
     href: "/insights",
@@ -205,6 +225,18 @@ export function getNavItem(pathname: string): NavItem {
 
   if (pathname === "/semana" || pathname.startsWith("/semana?")) {
     return NAV_ITEMS.find((item) => item.href === "/semana") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/planejar" || pathname.startsWith("/planejar?")) {
+    return NAV_ITEMS.find((item) => item.href === "/planejar") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/compromissos" || pathname.startsWith("/compromissos?")) {
+    return NAV_ITEMS.find((item) => item.href === "/compromissos") ?? NAV_ITEMS[0];
+  }
+
+  if (pathname === "/ensaiar" || pathname.startsWith("/ensaiar?")) {
+    return NAV_ITEMS.find((item) => item.href === "/ensaiar") ?? NAV_ITEMS[0];
   }
 
   if (pathname === "/speakers" || pathname.startsWith("/speakers/")) {
