@@ -5,17 +5,19 @@ import { useRouter } from "next/navigation";
 import { Robot, Spinner, StopCircle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { canSendBot, canStopBot } from "@/lib/meetings/bot-lifecycle";
 import type { MeetingStatus } from "@/lib/supabase/types";
-
-const ACTIVE_STATUSES: MeetingStatus[] = ["bot_joining", "recording"];
-const SENDABLE_STATUSES: MeetingStatus[] = ["scheduled", "failed"];
 
 export function BotActions({
   meetingId,
   status,
+  recallBotId = null,
+  preferNativeTranscript = false,
 }: {
   meetingId: string;
   status: MeetingStatus;
+  recallBotId?: string | null;
+  preferNativeTranscript?: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,11 @@ export function BotActions({
         toast.error(data?.error ?? "Algo deu errado.");
         return;
       }
-      toast.success(successMsg);
+      if (data?.alreadyStopped) {
+        toast.info("O bot já havia encerrado.");
+      } else {
+        toast.success(successMsg);
+      }
       router.refresh();
     } catch {
       toast.error("Falha de conexão.");
@@ -42,7 +48,7 @@ export function BotActions({
     }
   }
 
-  if (ACTIVE_STATUSES.includes(status)) {
+  if (canStopBot(status, recallBotId, preferNativeTranscript)) {
     return (
       <Button
         size="sm"
@@ -56,7 +62,7 @@ export function BotActions({
     );
   }
 
-  if (SENDABLE_STATUSES.includes(status)) {
+  if (canSendBot(status, preferNativeTranscript)) {
     return (
       <Button
         size="sm"
