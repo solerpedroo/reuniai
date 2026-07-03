@@ -6,7 +6,7 @@
 
 **Estimativa total MVP:** 6–8 semanas (1 dev experiente)  
 **Última atualização:** julho 2026  
-**Foco atual:** lote 8 (Ondas 51–60) — copiloto live, automações, sync de tarefas, conhecimento, mobile, compromissos, CRM relacional, planejador semanal, coach e ensaio.
+**Foco atual:** lote 9 (Ondas 61–65) — importar gravações, atas, distribuição, templates v2, higiene de calendário.
 
 ### Andamento das fases
 
@@ -71,6 +71,11 @@
 | **58** | **Planejador semanal unificado** | ✅ Concluída |
 | **59** | **Coach de reunião** | ✅ Concluída |
 | **60** | **Ensaio de conversa (AI roleplay)** | ✅ Concluída |
+| **61** | **Importar gravação manual** | ✅ Concluída |
+| **62** | **Atas formais** | ✅ Concluída |
+| **63** | **Distribuição para participantes** | ✅ Concluída |
+| **64** | **Análise por tipo (templates v2)** | ✅ Concluída |
+| **65** | **Higiene de calendário** | ✅ Concluída |
 | 18 | Monetização e API (Stripe, REST, MCP) | ⏸️ Postergada |
 | 19 | Escala e infra própria | 📋 Baixa prioridade |
 
@@ -2854,6 +2859,77 @@ flowchart LR
 
 - [x] Turnos de diálogo persistidos por sessão
 - [x] Resumo ao encerrar ensaio
+
+---
+
+## Onda 61 — Importar gravação manual
+
+**Objetivo:** Upload de áudio/vídeo → Whisper → pipeline existente.
+
+**Branch:** `feat/onda-61-importar`
+
+### Features
+
+- [x] Enum `transcript_source` + valor `upload`
+- [x] `POST /api/meetings/import` (multipart)
+- [x] `lib/pipeline/transcribe-upload.ts` (OpenAI/Groq Whisper)
+- [x] Página `/importar` + nav
+
+---
+
+## Onda 62 — Atas formais
+
+**Objetivo:** Documento formal exportável (PDF).
+
+**Branch:** `feat/onda-62-atas`
+
+### Features
+
+- [x] Schema `meeting_minutes`
+- [x] Gerador LLM + export PDF
+- [x] Hub `/atas` + botão no detalhe da reunião
+
+---
+
+## Onda 63 — Distribuição para participantes
+
+**Objetivo:** Email de resumo + link read-only aos participantes.
+
+**Branch:** `feat/onda-63-distribuir`
+
+### Features
+
+- [x] Schema `participant_digests`
+- [x] `POST /api/meetings/[id]/distribute`
+- [x] Dialog no detalhe da reunião
+
+---
+
+## Onda 64 — Análise por tipo (templates v2)
+
+**Objetivo:** Campos estruturados por template + UI dedicada.
+
+**Branch:** `feat/onda-64-templates-v2`
+
+### Features
+
+- [x] `template_fields` em `raw_json`
+- [x] Template `interview`
+- [x] `TemplateAnalysisPanel` no detalhe
+
+---
+
+## Onda 65 — Higiene de calendário
+
+**Objetivo:** Score de carga + sugestões para cortar reuniões.
+
+**Branch:** `feat/onda-65-calendario`
+
+### Features
+
+- [x] `lib/calendar/hygiene.ts`
+- [x] `GET /api/calendar/hygiene`
+- [x] Página `/calendario` + nav
 
 ---
 
