@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { logStructured } from "@/lib/logging/structured";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
-import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
 import { applyBotBranding } from "@/lib/vexa/branding";
+import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { applyMeetingStatus } from "@/lib/vexa/sync";
 
 export const dynamic = "force-dynamic";
@@ -81,44 +81,48 @@ export async function POST(request: NextRequest) {
   const platform = resolvePlatform(payload.meeting?.platform);
 
   if (payload.event_type === "meeting.status_change" && vexaStatus) {
-    await applyMeetingStatus(admin, {
-      nativeMeetingId,
-      vexaStatus,
-      startTime: payload.meeting?.start_time,
-      endTime: payload.meeting?.end_time,
-      reason: payload.status_change?.reason,
-    });
+    if (vexaStatus === "completed" && platform) {
+      await finalizeStoppedMeeting(admin, platform, nativeMeetingId, {
+        endTime: payload.meeting?.end_time ?? new Date().toISOString(),
+        startTime: payload.meeting?.start_time,
+      });
+    } else {
+      await applyMeetingStatus(admin, {
+        nativeMeetingId,
+        vexaStatus,
+        startTime: payload.meeting?.start_time,
+        endTime: payload.meeting?.end_time,
+        reason: payload.status_change?.reason,
+      });
 
-    // Bot admitido → aplica câmera (aguarda concluir; maxDuration=60).
-    if (vexaStatus === "active" && platform) {
-      const branding = await applyBotBranding(platform, nativeMeetingId, { skipWait: true });
-      if (!branding.avatar) {
-        logStructured("warn", "bot.branding.failed", {
-          platform,
-          nativeMeetingId,
-          avatar: branding.avatar,
-          screen: branding.screen,
-          errors: branding.errors.join(" | "),
-        });
+      if (vexaStatus === "active" && platform) {
+        const branding = await applyBotBranding(platform, nativeMeetingId, { skipWait: true });
+        if (!branding.avatar) {
+          logStructured("warn", "bot.branding.failed", {
+            platform,
+            nativeMeetingId,
+            avatar: branding.avatar,
+            screen: branding.screen,
+            errors: branding.errors.join(" | "),
+          });
+        }
       }
     }
   }
 
-  // Reunião finalizada ou gravação pronta → ingerir transcrição (Onda 7).
-  const shouldIngest =
-    payload.event_type === "recording.completed" || vexaStatus === "completed";
-
-  if (shouldIngest) {
-    if (platform) {
-      try {
-        await processMeetingByNativeId(admin, platform, nativeMeetingId);
-      } catch (err) {
-        logStructured("error", "vexa.webhook.process_failed", {
-          nativeMeetingId,
-          platform,
-          message: err instanceof Error ? err.message : String(err),
-        });
-      }
+  // Gravação pronta sem evento de status (fallback).
+  if (payload.event_type === "recording.completed" && platform && vexaStatus !== "completed") {
+    try {
+      await finalizeStoppedMeeting(admin, platform, nativeMeetingId, {
+        endTime: payload.meeting?.end_time ?? new Date().toISOString(),
+        startTime: payload.meeting?.start_time,
+      });
+    } catch (err) {
+      logStructured("error", "vexa.webhook.process_failed", {
+        nativeMeetingId,
+        platform,
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
