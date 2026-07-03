@@ -100,7 +100,14 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       hasTranscriptSegments,
     });
 
-    vexaStatus = await refineVexaMeetingStatus(parsed.platform, nativeId, vexaStatus);
+    const elapsedMs = Date.now() - new Date(meeting.started_at).getTime();
+    vexaStatus = await refineVexaMeetingStatus(
+      parsed.platform,
+      nativeId,
+      vexaStatus,
+      Boolean(container?.containerUp),
+      elapsedMs
+    );
 
     // Bot ainda na call enquanto DB já está em processamento → força saída.
     if (meeting.status === "processing" && container?.containerUp) {
