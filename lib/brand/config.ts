@@ -1,12 +1,14 @@
 /** Fonte única de verdade para identidade visual do ReuniAI. */
 
 export const PRODUCT_NAME = "ReuniAI" as const;
-export const PRODUCT_TAGLINE = "Inteligência de reuniões" as const;
-export const PRODUCT_CONTEXT = "Transcrição · Resumo · Action items" as const;
+export const PRODUCT_TAGLINE = "Ouve. Transcreve. Analisa. Potencializa." as const;
+export const PRODUCT_CONTEXT = "Meet · Zoom · Teams" as const;
 
 /** #0064F5 — alinhado com --brand em globals.css */
 export const BRAND_HEX = "#0064F5" as const;
 export const BRAND_HEX_DARK = "#0047B8" as const;
+/** Tom escuro do wordmark "Reuni". */
+export const BRAND_WORDMARK_DARK = "#0A192F" as const;
 
 /** Fallback genérico quando não há contexto de usuário (páginas públicas). */
 export const BOT_DISPLAY_NAME_FALLBACK = `${PRODUCT_NAME} Bot`;
