@@ -5,7 +5,7 @@ import type { ActionItem, Meeting, MeetingSummary, TranscriptSegment } from "@/l
 import { decryptToken } from "@/lib/crypto/token-encrypt";
 import { parseDecisions, parseTopics } from "@/lib/meetings/insights";
 import { formatTimestamp } from "@/lib/meetings/transcript";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import { notionFetch } from "@/lib/notion/oauth";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -94,7 +94,7 @@ function buildNotionBlocks(
   const blocks: NotionBlock[] = [
     heading(meeting.title, 1),
     paragraph(
-      `${formatMeetingDate(meeting.started_at)} · Plataforma: ${meeting.platform}`
+      `${formatMeetingDateTime(meeting.started_at)} · Plataforma: ${meeting.platform}`
     ),
     heading("Resumo executivo"),
     paragraph(summary?.executive_summary ?? "Sem resumo disponível."),
