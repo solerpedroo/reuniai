@@ -17,7 +17,7 @@ import {
   DECISION_PERIODS,
   type DecisionRegistry,
 } from "@/lib/decisions/registry-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import { cn } from "@/lib/utils";
 
 function weekLabel(iso: string): string {
@@ -233,7 +233,7 @@ export function DecisionsRegistryView({
                               {entry.meetingTitle}
                             </Link>
                             <span>·</span>
-                            <span>{formatMeetingDate(entry.meetingStartedAt)}</span>
+                            <span>{formatMeetingDateTime(entry.meetingStartedAt)}</span>
                             {entry.occurrenceCount > 1 && (
                               <span className="inline-flex items-center gap-1 text-brand">
                                 <TrendUp size={12} aria-hidden />
@@ -327,7 +327,7 @@ export function DecisionsRegistryView({
                               >
                                 {item.meetingTitle}
                               </Link>{" "}
-                              · {formatMeetingDate(item.meetingStartedAt)}
+                              · {formatMeetingDateTime(item.meetingStartedAt)}
                             </li>
                           ))}
                         </ol>
