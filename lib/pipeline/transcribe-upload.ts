@@ -95,7 +95,5 @@ export async function transcribeUploadedAudio(
     return transcribeWithProvider(buffer, filename, "groq");
   }
 
-  throw new Error(
-    "Transcrição não configurada. Defina OPENAI_API_KEY ou GROQ_API_KEY."
-  );
+  throw new Error("Importação de gravação indisponível no momento.");
 }
