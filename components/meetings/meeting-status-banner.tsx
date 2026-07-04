@@ -1,4 +1,5 @@
 import { CheckCircle, Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { LiveAutoLeaveCountdown } from "@/components/meetings/live-auto-leave-countdown";
 import {
   deriveBotUiPhase,
   getLiveStepIndex,
@@ -63,6 +64,24 @@ export function MeetingStatusBanner({
                           : "Gravação pendente"
                   }
                 />
+                {liveSession.participants.humanCount != null && (
+                  <SessionBadge
+                    ok={liveSession.participants.humanCount > 0}
+                    label={
+                      liveSession.participants.humanCount === 0
+                        ? "Sala vazia"
+                        : liveSession.participants.humanCount === 1
+                          ? "1 pessoa na call"
+                          : `${liveSession.participants.humanCount} pessoas na call`
+                    }
+                  />
+                )}
+                {liveSession.participants.humanCount === 0 &&
+                  liveSession.participants.autoLeaveAt && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
+                      <LiveAutoLeaveCountdown autoLeaveAt={liveSession.participants.autoLeaveAt} />
+                    </span>
+                  )}
               </div>
             )}
 
