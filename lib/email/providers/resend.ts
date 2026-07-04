@@ -5,6 +5,7 @@ import {
   getResendFromAddress,
 } from "@/lib/email/config";
 import { EmailDeliveryError } from "@/lib/email/errors";
+import { EMAIL_SEND_FAILED, EMAIL_UNAVAILABLE } from "@/lib/email/user-messages";
 import type { SendEmailInput } from "@/lib/email/types";
 
 function formatResendError(status: number, responseBody: string): string {
@@ -27,7 +28,7 @@ function normalizeRecipients(input: string | string[]): string[] {
 export async function sendViaResend(input: SendEmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
-    throw new EmailDeliveryError("RESEND_API_KEY não está configurada.", 503);
+    throw new EmailDeliveryError(EMAIL_UNAVAILABLE, 503);
   }
 
   const recipients = normalizeRecipients(input.to);
@@ -66,6 +67,6 @@ export async function sendViaResend(input: SendEmailInput): Promise<void> {
     console.error(
       `[email:resend] Falha ao enviar para ${recipients.join(", ")} (${input.subject}): ${message}`
     );
-    throw new EmailDeliveryError(message, res.status, responseBody);
+    throw new EmailDeliveryError(EMAIL_SEND_FAILED, res.status, responseBody);
   }
 }
