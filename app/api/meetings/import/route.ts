@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Transcrição não configurada. Defina OPENAI_API_KEY ou GROQ_API_KEY no servidor.",
+          "Importação de gravação indisponível no momento. Tente novamente mais tarde.",
       },
       { status: 503 }
     );
