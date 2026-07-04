@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { buildFollowUpMailto } from "@/lib/meetings/follow-up-mailto";
 import { FollowUpSendDialog } from "@/components/meetings/follow-up-send-dialog";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 export function FollowUpTab({
   meetingId,
@@ -149,7 +149,7 @@ export function FollowUpTab({
       {followUp?.sent_at && (
         <Badge variant="outline" className="gap-1">
           <EnvelopeSimple size={12} />
-          Enviado em {formatMeetingDate(followUp.sent_at)}
+          Enviado em {formatMeetingDateTime(followUp.sent_at)}
         </Badge>
       )}
 
