@@ -116,8 +116,7 @@ export function FollowUpSendDialog({
         <DialogHeader>
           <DialogTitle>Enviar follow-up</DialogTitle>
           <DialogDescription>
-            Confirme os destinatários antes de enviar via Resend. Requer RESEND_API_KEY
-            configurada.
+            Confirme os destinatários antes de enviar o follow-up por email.
           </DialogDescription>
         </DialogHeader>
 
