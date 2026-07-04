@@ -8,7 +8,7 @@ import {
 } from "@/lib/participants/normalize";
 import type { CommandSearchHit } from "@/lib/command/types";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -133,7 +133,7 @@ async function searchMeetings(
       id: `meeting-${meeting.id}`,
       type: "meeting" as const,
       label: meeting.title,
-      description: formatMeetingDate(meeting.started_at),
+      description: formatMeetingDateTime(meeting.started_at),
       href: `/reunioes/${meeting.id}`,
     };
   });
