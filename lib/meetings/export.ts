@@ -5,7 +5,7 @@ import { parseDecisions, parseTopics } from "@/lib/meetings/insights";
 import { formatTimestamp } from "@/lib/meetings/transcript";
 import {
   formatDuration,
-  formatMeetingDate,
+  formatMeetingDateTime,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { redactManyTexts } from "@/lib/privacy/redact";
@@ -132,7 +132,7 @@ export function buildMeetingMarkdownFromData(data: MeetingExportData): string {
   const lines: string[] = [
     `# ${meeting.title}`,
     "",
-    `- **Data:** ${formatMeetingDate(meeting.started_at)}`,
+    `- **Data:** ${formatMeetingDateTime(meeting.started_at)}`,
     `- **Duração:** ${formatDuration(getMeetingDurationMs(meeting))}`,
     `- **Plataforma:** ${meeting.platform}`,
     "",

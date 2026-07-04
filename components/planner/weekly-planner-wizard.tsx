@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { WeeklyPlannerData } from "@/lib/planner/weekly-planner";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 const STEPS = [
   { id: 1, title: "Revisão pendente", description: "Reuniões que ainda precisam de fechamento." },
@@ -76,7 +76,7 @@ export function WeeklyPlannerWizard({ data }: { data: WeeklyPlannerData }) {
                       {m.title}
                     </Link>
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {formatMeetingDate(m.started_at)}
+                      {formatMeetingDateTime(m.started_at)}
                     </span>
                   </li>
                 ))}
@@ -129,7 +129,7 @@ export function WeeklyPlannerWizard({ data }: { data: WeeklyPlannerData }) {
                     <Link href={`/reunioes/${m.id}`} className="text-brand hover:underline">
                       {m.title}
                     </Link>
-                    <span className="text-xs text-muted-foreground">{formatMeetingDate(m.started_at)}</span>
+                    <span className="text-xs text-muted-foreground">{formatMeetingDateTime(m.started_at)}</span>
                   </li>
                 ))}
               </ul>

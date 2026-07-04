@@ -9,7 +9,7 @@ import { ParticipantRelationshipEditor } from "@/components/participants/partici
 import type { ParticipantTalkTimeSummary } from "@/lib/insights/talk-time-types";
 import type { ParticipantDetail } from "@/lib/participants/directory";
 import type { ParticipantRelationship } from "@/lib/participants/relationship-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 type ParticipantDetailViewProps = {
   participant: ParticipantDetail;
@@ -55,7 +55,7 @@ export function ParticipantDetailView({
             <div>
               <p className="font-medium">{participant.nextScheduledMeeting.title}</p>
               <p className="text-sm text-muted-foreground">
-                {formatMeetingDate(participant.nextScheduledMeeting.started_at)}
+                {formatMeetingDateTime(participant.nextScheduledMeeting.started_at)}
               </p>
             </div>
             <Button size="sm" asChild>
@@ -141,7 +141,7 @@ export function ParticipantDetailView({
                   <div className="min-w-0">
                     <p className="truncate font-medium">{meeting.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatMeetingDate(meeting.started_at)}
+                      {formatMeetingDateTime(meeting.started_at)}
                     </p>
                   </div>
                   <StatusBadge status={meeting.status} />

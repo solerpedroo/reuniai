@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarBlank, Clock } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import type { MeetingPrepCard } from "@/lib/workflow/types";
 import type { Meeting } from "@/lib/supabase/types";
 
@@ -37,7 +37,7 @@ export function PrepCard({
               </span>
               <span className="inline-flex items-center gap-1">
                 <Clock size={14} />
-                {startsIn <= 0 ? "Começando agora" : `Em ${startsIn} min · ${formatMeetingDate(meeting.started_at)}`}
+                {startsIn <= 0 ? "Começando agora" : `Em ${startsIn} min · ${formatMeetingDateTime(meeting.started_at)}`}
               </span>
             </CardDescription>
           </div>

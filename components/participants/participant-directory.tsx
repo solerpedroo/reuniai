@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ParticipantDirectoryEntry, ParticipantSort } from "@/lib/participants/directory";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 const SORT_LABELS: Record<ParticipantSort, string> = {
   recent: "Mais recente",
@@ -132,7 +132,7 @@ export function ParticipantDirectory({ participants, search, sort }: Participant
                   <td className="hidden px-4 py-3 sm:table-cell">{participant.meetingCount}</td>
                   <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
                     {participant.lastMeetingAt
-                      ? formatMeetingDate(participant.lastMeetingAt)
+                      ? formatMeetingDateTime(participant.lastMeetingAt)
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">

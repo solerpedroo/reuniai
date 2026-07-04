@@ -17,7 +17,7 @@ import {
   type PrepHubPeriod,
   type PrepHubResult,
 } from "@/lib/prep/hub-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import { cn } from "@/lib/utils";
 
 export function PrepHubView({ hub }: { hub: PrepHubResult }) {
@@ -83,7 +83,7 @@ export function PrepHubView({ hub }: { hub: PrepHubResult }) {
                         <Clock size={14} aria-hidden />
                         {startsIn <= 0
                           ? "Começando agora"
-                          : `Em ${startsIn} min · ${formatMeetingDate(item.startedAt)}`}
+                          : `Em ${startsIn} min · ${formatMeetingDateTime(item.startedAt)}`}
                       </span>
                       {item.prep && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">

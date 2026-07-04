@@ -11,7 +11,7 @@ import { formatTimestamp } from "@/lib/meetings/transcript";
 import { computeTalkTime, type SpeakerTalkTime } from "@/lib/meetings/talk-time";
 import {
   formatDuration,
-  formatMeetingDate,
+  formatMeetingDateTime,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { redactManyTexts } from "@/lib/privacy/redact";
@@ -255,7 +255,7 @@ export function buildShareSummaryText(
 ): string {
   const lines: string[] = [
     meeting.title,
-    formatMeetingDate(meeting.started_at),
+    formatMeetingDateTime(meeting.started_at),
     formatDuration(getMeetingDurationMs(meeting)),
   ];
 

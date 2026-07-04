@@ -27,6 +27,7 @@ import { ReviewExpressMode } from "@/components/review/review-express-mode";
 import type { ActionItem } from "@/lib/supabase/types";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
 import { cn } from "@/lib/utils";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 function formatRelativeDays(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -34,15 +35,6 @@ function formatRelativeDays(iso: string): string {
   if (days <= 0) return "hoje";
   if (days === 1) return "há 1 dia";
   return `há ${days} dias`;
-}
-
-function formatMeetingDate(iso: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
 }
 
 function CompactActionItems({
@@ -288,7 +280,7 @@ function InlineFollowUp({
       {followUp?.sent_at && (
         <Badge variant="outline" className="gap-1">
           <EnvelopeSimple size={12} />
-          Enviado em {formatMeetingDate(followUp.sent_at)}
+          Enviado em {formatMeetingDateTime(followUp.sent_at)}
         </Badge>
       )}
 
@@ -404,7 +396,7 @@ function ReviewQueueCard({
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {formatMeetingDate(item.started_at)} · {formatRelativeDays(item.started_at)}
+            {formatMeetingDateTime(item.started_at)} · {formatRelativeDays(item.started_at)}
           </p>
         </div>
         {expanded ? (
