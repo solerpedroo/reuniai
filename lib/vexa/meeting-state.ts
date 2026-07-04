@@ -14,10 +14,8 @@ import {
   type VexaTranscriptSegment,
 } from "@/lib/vexa/client";
 
-/** Silêncio humano na transcrição antes de considerar sala vazia e encerrar o bot. */
-export const EMPTY_ROOM_SILENCE_MS = 30_000;
-/** Tempo mínimo na reunião antes de auto-saída por silêncio (evita sair cedo demais). */
-export const EMPTY_ROOM_MIN_ACTIVE_MS = 60_000;
+/** Tempo de espera após sala vazia (sem humanos) antes de encerrar o bot. */
+export const EMPTY_ROOM_GRACE_MS = 3 * 60_000;
 /** Janela de tolerância enquanto o bot ainda está entrando (evita falso "completed"). */
 export const JOINING_GRACE_MS = 3 * 60_000;
 /** Tempo máximo em lobby/entrada antes de marcar falha. */
@@ -244,8 +242,7 @@ export async function shouldAutoLeaveEmptyMeeting(
   if (!isCapturingVexaStatus(vexaStatus) && !inLobby) return false;
 
   const activeForMs = Date.now() - new Date(meetingStartedAt).getTime();
-  const minWaitMs = inLobby ? EMPTY_LOBBY_MIN_MS : EMPTY_ROOM_MIN_ACTIVE_MS;
-  if (activeForMs < minWaitMs) return false;
+  if (inLobby && activeForMs < EMPTY_LOBBY_MIN_MS) return false;
 
   try {
     const participants = await getMeetingParticipants(platform, nativeMeetingId);
@@ -261,10 +258,10 @@ export async function shouldAutoLeaveEmptyMeeting(
     const lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
 
     if (lastHumanActivityMs == null) {
-      return activeForMs >= EMPTY_ROOM_MIN_ACTIVE_MS;
+      return activeForMs >= EMPTY_ROOM_GRACE_MS;
     }
 
-    return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_SILENCE_MS;
+    return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_GRACE_MS;
   } catch (err) {
     logStructured("warn", "bot.auto_leave.check_failed", {
       platform,
@@ -273,4 +270,31 @@ export async function shouldAutoLeaveEmptyMeeting(
     });
     return false;
   }
+}
+
+/** Horário previsto de auto-saída quando a sala está vazia (ISO). Null se não aplicável. */
+export function resolveAutoLeaveAt(input: {
+  vexaStatus: string | null;
+  meetingStartedAt: string | null;
+  humanCount: number | null;
+  lastHumanActivityMs: number | null;
+}): string | null {
+  if (input.humanCount == null || input.humanCount > 0) return null;
+  if (!input.vexaStatus || !input.meetingStartedAt) return null;
+
+  const inLobby = isJoiningVexaStatus(input.vexaStatus);
+  if (!isCapturingVexaStatus(input.vexaStatus) && !inLobby) return null;
+
+  const startedMs = new Date(input.meetingStartedAt).getTime();
+
+  if (inLobby) {
+    return new Date(startedMs + EMPTY_LOBBY_MIN_MS).toISOString();
+  }
+
+  const leaveAtMs =
+    input.lastHumanActivityMs != null
+      ? input.lastHumanActivityMs + EMPTY_ROOM_GRACE_MS
+      : startedMs + EMPTY_ROOM_GRACE_MS;
+
+  return new Date(leaveAtMs).toISOString();
 }
