@@ -14,7 +14,7 @@ import { computeTopicDiff } from "@/lib/series/topic-diff";
 import { getMeetingsInSeries } from "@/lib/series/queries";
 import {
   formatDuration,
-  formatMeetingDate,
+  formatMeetingDateTime,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import { createClient } from "@/lib/supabase/server";
@@ -115,7 +115,7 @@ export default async function SeriesPage({
             className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-brand/5"
           >
             <div>
-              <p className="font-medium">{formatMeetingDate(meeting.started_at)}</p>
+              <p className="font-medium">{formatMeetingDateTime(meeting.started_at)}</p>
               <p className="text-sm text-muted-foreground">
                 {formatDuration(getMeetingDurationMs(meeting))}
               </p>
