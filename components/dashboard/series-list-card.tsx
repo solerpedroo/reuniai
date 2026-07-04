@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowsClockwise } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import type { MeetingSeries } from "@/lib/workflow/types";
 
 export function SeriesListCard({ series }: { series: MeetingSeries[] }) {
@@ -33,7 +33,7 @@ export function SeriesListCard({ series }: { series: MeetingSeries[] }) {
             <div className="min-w-0">
               <p className="truncate font-medium">{item.title}</p>
               <p className="text-xs text-muted-foreground">
-                {item.meetingCount} reuniões · última {formatMeetingDate(item.lastStartedAt)}
+                {item.meetingCount} reuniões · última {formatMeetingDateTime(item.lastStartedAt)}
               </p>
             </div>
           </Link>
