@@ -105,7 +105,7 @@ export function MeetingTabs({
       <div
         role="tablist"
         aria-label="Conteúdo da reunião"
-        className="inline-flex flex-wrap gap-1 rounded-xl bg-muted/60 p-1"
+        className="flex w-full gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1 scrollbar-none sm:inline-flex sm:flex-wrap"
       >
         {TABS.map((tab) => {
           const Icon = tab.icon;
@@ -121,7 +121,7 @@ export function MeetingTabs({
               aria-controls={panelId(tab.value)}
               onClick={() => setActiveTab(tab.value)}
               className={cn(
-                "relative inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "relative inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >

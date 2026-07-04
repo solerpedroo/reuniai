@@ -232,9 +232,12 @@ export function MeetingLiveCopilot({
           <div>
             <p className="text-sm font-medium">Copiloto ao vivo</p>
             <p className="text-xs text-muted-foreground">
-              Atalhos: <kbd className="font-mono">D</kbd> decisão ·{" "}
-              <kbd className="font-mono">A</kbd> atribuição · <kbd className="font-mono">H</kbd>{" "}
-              momento
+              <span className="hidden sm:inline">
+                Atalhos: <kbd className="font-mono">D</kbd> decisão ·{" "}
+                <kbd className="font-mono">A</kbd> atribuição · <kbd className="font-mono">H</kbd>{" "}
+                momento
+              </span>
+              <span className="sm:hidden">Toque nos botões abaixo para capturar</span>
             </p>
           </div>
         </div>

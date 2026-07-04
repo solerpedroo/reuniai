@@ -157,7 +157,7 @@ export function RecordingPlayer({
           type="button"
           size="sm"
           variant="outline"
-          className="hidden h-8 px-2 text-xs sm:inline-flex"
+          className="h-8 shrink-0 px-2 text-xs"
           onClick={() => {
             const next = (rateIndex + 1) % PLAYBACK_RATES.length;
             setRateIndex(next);

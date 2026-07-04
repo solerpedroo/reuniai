@@ -27,9 +27,9 @@ export function SeriesTemplateSelect({
   const [busy, setBusy] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Sparkle size={14} className="text-brand" />
-      <span className="text-muted-foreground">Template da série:</span>
+    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 text-sm sm:w-auto">
+      <Sparkle size={14} className="shrink-0 text-brand" />
+      <span className="shrink-0 text-muted-foreground">Template da série:</span>
       <Select
         value={value}
         disabled={busy}
@@ -50,7 +50,7 @@ export function SeriesTemplateSelect({
             .finally(() => setBusy(false));
         }}
       >
-        <SelectTrigger className="h-8 w-[200px]">
+        <SelectTrigger className="h-8 w-full min-w-0 sm:w-[200px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

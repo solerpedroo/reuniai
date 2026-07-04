@@ -311,6 +311,32 @@ html {
     box-shadow: 0 10px 26px -10px color-mix(in oklab, var(--foreground) 22%, transparent);
   }
 
+  /* Mobile-first layout helpers */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-fab {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .pb-fab {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pb-fab {
+      padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
   /* Raised card surface — premium depth from a top-light gradient + a 4-layer
      neutral shadow falloff. Replaces flat white-on-white (which reads cheap). */
   .surface-card {
