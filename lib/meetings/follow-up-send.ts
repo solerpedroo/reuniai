@@ -2,7 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { wrapEmailHtml } from "@/lib/brand/email-layout";
-import { isEmailConfigured, sendEmail, ResendDeliveryError } from "@/lib/email/resend";
+import { EmailDeliveryError, isEmailConfigured, sendEmail } from "@/lib/email/send";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -41,8 +41,8 @@ export async function sendMeetingFollowUpEmail(
   input: { to: string[]; subject: string; body: string }
 ): Promise<MeetingFollowUp> {
   if (!isEmailConfigured()) {
-    throw new ResendDeliveryError(
-      "Envio por email não configurado. Defina RESEND_API_KEY ou use Copiar/Abrir no email.",
+    throw new EmailDeliveryError(
+      "Envio por email não configurado. Defina Gmail (GMAIL_USER + GMAIL_APP_PASSWORD) ou Resend (RESEND_API_KEY).",
       503,
       ""
     );
@@ -50,13 +50,13 @@ export async function sendMeetingFollowUpEmail(
 
   const recipients = normalizeRecipients(input.to);
   if (recipients.length === 0) {
-    throw new ResendDeliveryError("Selecione ao menos um destinatário válido.", 400, "");
+    throw new EmailDeliveryError("Selecione ao menos um destinatário válido.", 400, "");
   }
 
   const subject = input.subject.trim();
   const body = input.body.trim();
   if (!subject || !body) {
-    throw new ResendDeliveryError("Assunto e corpo são obrigatórios.", 400, "");
+    throw new EmailDeliveryError("Assunto e corpo são obrigatórios.", 400, "");
   }
 
   const { data: meeting } = await admin
@@ -66,7 +66,7 @@ export async function sendMeetingFollowUpEmail(
     .maybeSingle<{ id: string; user_id: string; title: string }>();
 
   if (!meeting || meeting.user_id !== userId) {
-    throw new ResendDeliveryError("Reunião não encontrada.", 404, "");
+    throw new EmailDeliveryError("Reunião não encontrada.", 404, "");
   }
 
   const html = wrapEmailHtml({
