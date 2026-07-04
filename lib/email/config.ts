@@ -5,6 +5,10 @@ import type {
   EmailDeliveryStatus,
   EmailProvider,
 } from "@/lib/email/types";
+import {
+  EMAIL_RECIPIENT_NOT_ALLOWED,
+  EMAIL_UNAVAILABLE,
+} from "@/lib/email/user-messages";
 
 const DEFAULT_RESEND_FROM = "ReuniAI <onboarding@resend.dev>";
 
@@ -87,11 +91,7 @@ export function checkEmailDelivery(recipient: string): EmailDeliveryCheck {
   const provider = getEmailProvider();
 
   if (!provider || !isEmailConfigured()) {
-    return {
-      allowed: false,
-      reason:
-        "Email não configurado. Defina EMAIL_PROVIDER=gmail com GMAIL_USER e GMAIL_APP_PASSWORD, ou RESEND_API_KEY.",
-    };
+    return { allowed: false, reason: EMAIL_UNAVAILABLE };
   }
 
   if (provider === "gmail") {
@@ -106,18 +106,11 @@ export function checkEmailDelivery(recipient: string): EmailDeliveryCheck {
   const normalizedRecipient = recipient.trim().toLowerCase();
 
   if (!sandboxRecipient) {
-    return {
-      allowed: false,
-      reason:
-        "Resend em modo sandbox (onboarding@resend.dev): defina RESEND_SANDBOX_RECIPIENT com o email da sua conta Resend ou verifique um domínio em resend.com/domains.",
-    };
+    return { allowed: false, reason: EMAIL_UNAVAILABLE };
   }
 
   if (normalizedRecipient !== sandboxRecipient) {
-    return {
-      allowed: false,
-      reason: `Resend sandbox: emails só podem ir para ${sandboxRecipient} até você verificar um domínio e atualizar RESEND_FROM.`,
-    };
+    return { allowed: false, reason: EMAIL_RECIPIENT_NOT_ALLOWED };
   }
 
   return { allowed: true };
