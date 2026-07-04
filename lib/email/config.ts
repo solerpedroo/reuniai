@@ -1,13 +1,81 @@
 import "server-only";
 
-const DEFAULT_FROM = "ReuniAI <onboarding@resend.dev>";
+import type {
+  EmailDeliveryCheck,
+  EmailDeliveryStatus,
+  EmailProvider,
+} from "@/lib/email/types";
+
+const DEFAULT_RESEND_FROM = "ReuniAI <onboarding@resend.dev>";
+
+function normalizeProvider(value: string | undefined): EmailProvider | null {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "gmail" || normalized === "resend") return normalized;
+  return null;
+}
+
+export function getEmailProvider(): EmailProvider | null {
+  const explicit = normalizeProvider(process.env.EMAIL_PROVIDER);
+  if (explicit) return explicit;
+
+  const hasGmail =
+    Boolean(process.env.GMAIL_USER?.trim()) &&
+    Boolean(process.env.GMAIL_APP_PASSWORD?.trim());
+  if (hasGmail) return "gmail";
+
+  if (process.env.RESEND_API_KEY?.trim()) return "resend";
+
+  return null;
+}
+
+export function isGmailConfigured(): boolean {
+  return (
+    Boolean(process.env.GMAIL_USER?.trim()) &&
+    Boolean(process.env.GMAIL_APP_PASSWORD?.trim())
+  );
+}
+
+export function isResendConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY?.trim());
+}
+
+export function isEmailConfigured(): boolean {
+  const provider = getEmailProvider();
+  if (provider === "gmail") return isGmailConfigured();
+  if (provider === "resend") return isResendConfigured();
+  return false;
+}
+
+export function getGmailUser(): string | null {
+  const user = process.env.GMAIL_USER?.trim();
+  return user ? user.toLowerCase() : null;
+}
+
+export function getGmailAppPassword(): string | null {
+  const raw = process.env.GMAIL_APP_PASSWORD?.trim();
+  if (!raw) return null;
+  return raw.replace(/\s/g, "");
+}
 
 export function getResendFromAddress(): string {
-  return process.env.RESEND_FROM?.trim() || DEFAULT_FROM;
+  return process.env.RESEND_FROM?.trim() || DEFAULT_RESEND_FROM;
+}
+
+export function getEmailFromAddress(): string {
+  const explicit = process.env.EMAIL_FROM?.trim();
+  if (explicit) return explicit;
+
+  const provider = getEmailProvider();
+  if (provider === "gmail") {
+    const user = getGmailUser();
+    return user ? `ReuniAI <${user}>` : DEFAULT_RESEND_FROM;
+  }
+
+  return getResendFromAddress();
 }
 
 export function isResendSandboxMode(): boolean {
-  return getResendFromAddress().toLowerCase().includes("@resend.dev");
+  return getEmailProvider() === "resend" && getResendFromAddress().toLowerCase().includes("@resend.dev");
 }
 
 export function getResendSandboxRecipient(): string | null {
@@ -15,17 +83,19 @@ export function getResendSandboxRecipient(): string | null {
   return raw ? raw.toLowerCase() : null;
 }
 
-export function isEmailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY?.trim());
-}
-
-export type EmailDeliveryCheck =
-  | { allowed: true }
-  | { allowed: false; reason: string };
-
 export function checkEmailDelivery(recipient: string): EmailDeliveryCheck {
-  if (!isEmailConfigured()) {
-    return { allowed: false, reason: "RESEND_API_KEY não está configurada." };
+  const provider = getEmailProvider();
+
+  if (!provider || !isEmailConfigured()) {
+    return {
+      allowed: false,
+      reason:
+        "Email não configurado. Defina EMAIL_PROVIDER=gmail com GMAIL_USER e GMAIL_APP_PASSWORD, ou RESEND_API_KEY.",
+    };
+  }
+
+  if (provider === "gmail") {
+    return { allowed: true };
   }
 
   if (!isResendSandboxMode()) {
@@ -53,14 +123,13 @@ export function checkEmailDelivery(recipient: string): EmailDeliveryCheck {
   return { allowed: true };
 }
 
-export function getEmailDeliveryStatus(): {
-  configured: boolean;
-  sandbox: boolean;
-  sandboxRecipient: string | null;
-} {
+export function getEmailDeliveryStatus(): EmailDeliveryStatus {
+  const provider = getEmailProvider();
   return {
     configured: isEmailConfigured(),
+    provider,
     sandbox: isResendSandboxMode(),
     sandboxRecipient: getResendSandboxRecipient(),
+    fromAddress: isEmailConfigured() ? getEmailFromAddress() : null,
   };
 }
