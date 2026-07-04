@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { sendMeetingFollowUpEmail } from "@/lib/meetings/follow-up-send";
-import { ResendDeliveryError } from "@/lib/email/resend";
+import { EmailDeliveryError } from "@/lib/email/send";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
@@ -46,7 +46,7 @@ export async function POST(
     const followUp = await sendMeetingFollowUpEmail(admin, user.id, meetingId, parsed.data);
     return NextResponse.json({ followUp });
   } catch (err) {
-    if (err instanceof ResendDeliveryError) {
+    if (err instanceof EmailDeliveryError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[follow-up/send]", err);
