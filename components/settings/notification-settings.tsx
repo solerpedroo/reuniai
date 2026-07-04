@@ -61,8 +61,10 @@ export function NotificationSettings({
   initialPrefs: NotificationPrefs;
   emailStatus?: {
     configured: boolean;
+    provider: "gmail" | "resend" | null;
     sandbox: boolean;
     sandboxRecipient: string | null;
+    fromAddress: string | null;
   };
 }) {
   const [prefs, setPrefs] = useState(initialPrefs);
@@ -133,8 +135,24 @@ export function NotificationSettings({
       <CardContent className="space-y-4">
         {!emailStatus?.configured ? (
           <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            Email desativado no servidor: configure <code className="font-mono">RESEND_API_KEY</code>{" "}
-            (e no Vercel, se estiver em produção).
+            Email desativado no servidor: configure{" "}
+            <code className="font-mono">EMAIL_PROVIDER=gmail</code> com{" "}
+            <code className="font-mono">GMAIL_USER</code> e{" "}
+            <code className="font-mono">GMAIL_APP_PASSWORD</code> (ou{" "}
+            <code className="font-mono">RESEND_API_KEY</code> para Resend) no{" "}
+            <code className="font-mono">.env.local</code> e no Vercel, se estiver em produção.
+          </p>
+        ) : emailStatus.provider === "gmail" ? (
+          <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-100">
+            Email via Gmail SMTP ativo
+            {emailStatus.fromAddress ? (
+              <>
+                {" "}
+                — remetente <strong>{emailStatus.fromAddress}</strong>
+              </>
+            ) : null}
+            . Limite aproximado: 500 emails/dia (conta pessoal). Para volume maior, use Google
+            Workspace ou Resend.
           </p>
         ) : emailStatus.sandbox ? (
           <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
@@ -155,7 +173,7 @@ export function NotificationSettings({
           <div>
             <p className="text-sm font-medium">Email de resumo</p>
             <p className="text-xs text-muted-foreground">
-              Receba resumo por email quando a reunião for processada (requer Resend)
+              Receba resumo por email quando a reunião for processada (requer Gmail ou Resend)
             </p>
           </div>
           <Switch
