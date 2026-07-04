@@ -15,7 +15,7 @@ import { WeekDateNav } from "@/components/review/week-date-nav";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import type { WeeklyReviewData } from "@/lib/review/weekly-review";
-import { formatHours, formatMeetingDate } from "@/lib/meetings/types";
+import { formatHours, formatMeetingDateTime } from "@/lib/meetings/types";
 import { inboxHref } from "@/lib/meetings/action-items-inbox";
 
 function Panel({
@@ -262,7 +262,7 @@ export function WeeklyReviewView({ data }: { data: WeeklyReviewData }) {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{item.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.meetingCount} ocorrências · {formatMeetingDate(item.lastStartedAt)}
+                          {item.meetingCount} ocorrências · {formatMeetingDateTime(item.lastStartedAt)}
                         </p>
                       </div>
                       <ArrowsClockwise size={16} className="shrink-0 text-brand" />
