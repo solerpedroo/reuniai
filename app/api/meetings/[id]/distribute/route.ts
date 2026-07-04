@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { distributeMeetingSummary } from "@/lib/meetings/participant-distribute";
-import { ResendDeliveryError } from "@/lib/email/resend";
+import { EmailDeliveryError } from "@/lib/email/send";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,7 +39,7 @@ export async function POST(
     const result = await distributeMeetingSummary(admin, user.id, id, parsed.data);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    if (err instanceof ResendDeliveryError) {
+    if (err instanceof EmailDeliveryError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     const message = err instanceof Error ? err.message : "Falha ao distribuir.";
