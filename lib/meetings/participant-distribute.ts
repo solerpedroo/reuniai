@@ -3,6 +3,7 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { wrapEmailHtml } from "@/lib/brand/email-layout";
 import { EmailDeliveryError, isEmailConfigured, sendEmail } from "@/lib/email/send";
+import { EMAIL_UNAVAILABLE } from "@/lib/email/user-messages";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
 import {
   DEFAULT_SHARE_PERMISSIONS,
@@ -53,11 +54,7 @@ export async function distributeMeetingSummary(
   input: { recipients: string[]; includeShareLink?: boolean }
 ): Promise<{ sent: number; shareUrl?: string }> {
   if (!isEmailConfigured()) {
-    throw new EmailDeliveryError(
-      "Envio por email não configurado. Defina Gmail (GMAIL_USER + GMAIL_APP_PASSWORD) ou Resend (RESEND_API_KEY).",
-      503,
-      ""
-    );
+    throw new EmailDeliveryError(EMAIL_UNAVAILABLE, 503, "");
   }
 
   const recipients = normalizeRecipients(input.recipients);
