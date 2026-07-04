@@ -49,7 +49,7 @@ export function CommitmentsHubView({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="surface-card p-4">
           <p className="text-xs text-muted-foreground">Pendentes</p>
           <p className="text-2xl font-semibold tabular-nums">{hub.counts.pending}</p>
