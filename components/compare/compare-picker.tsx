@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ComparePickerMeeting } from "@/lib/meetings/compare-picker-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 export function ComparePicker({
   meetings,
@@ -64,7 +64,7 @@ export function ComparePicker({
                 <SelectContent>
                   {meetings.map((meeting) => (
                     <SelectItem key={meeting.id} value={meeting.id}>
-                      {meeting.title} · {formatMeetingDate(meeting.startedAt)}
+                      {meeting.title} · {formatMeetingDateTime(meeting.startedAt)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -82,7 +82,7 @@ export function ComparePicker({
                 <SelectContent>
                   {meetings.map((meeting) => (
                     <SelectItem key={meeting.id} value={meeting.id}>
-                      {meeting.title} · {formatMeetingDate(meeting.startedAt)}
+                      {meeting.title} · {formatMeetingDateTime(meeting.startedAt)}
                     </SelectItem>
                   ))}
                 </SelectContent>
