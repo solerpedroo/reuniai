@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
+import { sendEmail, isEmailConfigured } from "@/lib/email/send";
 import { emailButton, wrapEmailHtml } from "@/lib/brand/email-layout";
 import { PRODUCT_NAME, getAppUrl } from "@/lib/brand/config";
 import { getWeeklyDigestStats } from "@/lib/digest/weekly-stats";
