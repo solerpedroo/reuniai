@@ -3,13 +3,13 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { stopBot, getTranscript } from "@/lib/vexa/client";
+import { tryAutoLeaveEmptyMeeting } from "@/lib/vexa/auto-leave";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import {
   getRunningBotsByNativeId,
   getVexaMeetingsByNativeId,
   refineVexaMeetingStatus,
   resolveVexaMeetingStatus,
-  shouldAutoLeaveEmptyMeeting,
 } from "@/lib/vexa/meeting-state";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import { scheduleBotBranding } from "@/lib/vexa/branding";
@@ -121,28 +121,21 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     }
 
     // Sala vazia: encerra o bot proativamente.
-    if (
-      (meeting.status === "recording" || meeting.status === "bot_joining") &&
-      container?.containerUp &&
-      (await shouldAutoLeaveEmptyMeeting(
-        parsed.platform,
-        nativeId,
+    if (meeting.status === "recording" || meeting.status === "bot_joining") {
+      const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
+        platform: parsed.platform,
+        nativeMeetingId: nativeId,
         vexaStatus,
-        vexaMeeting?.start_time ?? meeting.started_at
-      ))
-    ) {
-      try {
-        await stopBot(parsed.platform, nativeId);
-        await finalizeStoppedMeeting(admin, parsed.platform, nativeId, {
-          endTime: new Date().toISOString(),
-          startTime: vexaMeeting?.start_time ?? meeting.started_at,
-        });
+        meetingStartedAt: meeting.started_at,
+        vexaStartTime: vexaMeeting?.start_time,
+        containerUp: Boolean(container?.containerUp),
+        dbStatus: meeting.status,
+      });
+      if (autoLeave.autoLeft) {
         autoLeft += 1;
         processed += 1;
-      } catch (err) {
-        console.error("Falha ao encerrar bot em sala vazia:", err);
+        continue;
       }
-      continue;
     }
 
     const result = await applyMeetingStatus(admin, {

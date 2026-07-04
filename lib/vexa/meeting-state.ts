@@ -1,6 +1,8 @@
 import "server-only";
 
+import { PRODUCT_NAME } from "@/lib/brand/config";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
+import { logStructured } from "@/lib/logging/structured";
 import {
   getMeetingParticipants,
   getRunningBots,
@@ -8,13 +10,14 @@ import {
   getVexaMeeting,
   listVexaMeetings,
   type VexaMeeting,
+  type VexaMeetingParticipantsResponse,
   type VexaTranscriptSegment,
 } from "@/lib/vexa/client";
 
-/** Silêncio na transcrição antes de considerar sala vazia e encerrar o bot. */
-export const EMPTY_ROOM_SILENCE_MS = 90_000;
+/** Silêncio humano na transcrição antes de considerar sala vazia e encerrar o bot. */
+export const EMPTY_ROOM_SILENCE_MS = 30_000;
 /** Tempo mínimo na reunião antes de auto-saída por silêncio (evita sair cedo demais). */
-export const EMPTY_ROOM_MIN_ACTIVE_MS = 120_000;
+export const EMPTY_ROOM_MIN_ACTIVE_MS = 60_000;
 /** Janela de tolerância enquanto o bot ainda está entrando (evita falso "completed"). */
 export const JOINING_GRACE_MS = 3 * 60_000;
 /** Tempo máximo em lobby/entrada antes de marcar falha. */
@@ -25,11 +28,55 @@ export const EMPTY_LOBBY_MIN_MS = 60_000;
 const JOINING_STATUSES = new Set(["requested", "joining", "awaiting_admission"]);
 const CAPTURING_STATUSES = new Set(["active", "stopping"]);
 
-export type VexaMeetingState = {
-  status: string;
-  startTime?: string | null;
-  endTime?: string | null;
-};
+const BOT_PARTICIPANT_PATTERNS = [
+  new RegExp(`^${PRODUCT_NAME}`, "i"),
+  /\bbot\b/i,
+  /notetaker/i,
+  /recall/i,
+  /vexa/i,
+];
+
+/** Nome de participante que provavelmente é o próprio bot (não humano). */
+export function isLikelyBotParticipant(name: string | null | undefined): boolean {
+  const trimmed = name?.trim();
+  if (!trimmed) return false;
+  return BOT_PARTICIPANT_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+/** Conta participantes humanos, excluindo o bot quando a API o inclui na contagem. */
+export function countHumanParticipants(
+  response: VexaMeetingParticipantsResponse
+): number {
+  const participants = response.participants ?? [];
+  if (participants.length > 0) {
+    return participants.filter((participant) => !isLikelyBotParticipant(participant.name)).length;
+  }
+
+  // Sem lista detalhada: assume que participant_count pode incluir o bot.
+  return Math.max(0, response.participant_count - 1);
+}
+
+export function getLastTranscriptActivityMs(segments: VexaTranscriptSegment[]): number | null {
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    if (segment.absolute_end_time) return new Date(segment.absolute_end_time).getTime();
+    if (segment.absolute_start_time) return new Date(segment.absolute_start_time).getTime();
+  }
+  return null;
+}
+
+/** Última fala humana na transcrição — ignora segmentos atribuídos ao bot. */
+export function getLastHumanTranscriptActivityMs(
+  segments: VexaTranscriptSegment[]
+): number | null {
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    if (isLikelyBotParticipant(segment.speaker)) continue;
+    if (segment.absolute_end_time) return new Date(segment.absolute_end_time).getTime();
+    if (segment.absolute_start_time) return new Date(segment.absolute_start_time).getTime();
+  }
+  return null;
+}
 
 export type RunningBotRef = {
   platform: BotPlatform;
@@ -66,15 +113,6 @@ export async function getRunningBotsByNativeId(): Promise<Map<string, RunningBot
     });
   }
   return map;
-}
-
-export function getLastTranscriptActivityMs(segments: VexaTranscriptSegment[]): number | null {
-  for (let index = segments.length - 1; index >= 0; index -= 1) {
-    const segment = segments[index];
-    if (segment.absolute_end_time) return new Date(segment.absolute_end_time).getTime();
-    if (segment.absolute_start_time) return new Date(segment.absolute_start_time).getTime();
-  }
-  return null;
 }
 
 export function isJoiningVexaStatus(status: string): boolean {
@@ -211,7 +249,8 @@ export async function shouldAutoLeaveEmptyMeeting(
 
   try {
     const participants = await getMeetingParticipants(platform, nativeMeetingId);
-    if (participants.participant_count > 0) return false;
+    const humanCount = countHumanParticipants(participants);
+    if (humanCount > 0) return false;
 
     if (inLobby) {
       return true;
@@ -219,14 +258,19 @@ export async function shouldAutoLeaveEmptyMeeting(
 
     const transcript = await getTranscript(platform, nativeMeetingId);
     const segments = transcript.segments ?? [];
-    const lastActivityMs = getLastTranscriptActivityMs(segments);
+    const lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
 
-    if (lastActivityMs == null) {
+    if (lastHumanActivityMs == null) {
       return activeForMs >= EMPTY_ROOM_MIN_ACTIVE_MS;
     }
 
-    return Date.now() - lastActivityMs >= EMPTY_ROOM_SILENCE_MS;
-  } catch {
+    return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_SILENCE_MS;
+  } catch (err) {
+    logStructured("warn", "bot.auto_leave.check_failed", {
+      platform,
+      nativeMeetingId,
+      message: err instanceof Error ? err.message : String(err),
+    });
     return false;
   }
 }

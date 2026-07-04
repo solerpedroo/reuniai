@@ -4,6 +4,7 @@ import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
+import { tryAutoLeaveEmptyMeeting } from "@/lib/vexa/auto-leave";
 import { getMeetingSessionStatus } from "@/lib/vexa/session";
 import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import type { Meeting } from "@/lib/supabase/types";
@@ -93,6 +94,25 @@ export async function GET(
         reason: "O bot não conseguiu concluir a gravação.",
       });
       return NextResponse.json({ live: false, synced: true, session });
+    }
+
+    // Sala vazia com bot ainda na call — encerra sem esperar o cron de 5 min.
+    if (
+      (meeting.status === "recording" || meeting.status === "bot_joining") &&
+      session.connected &&
+      session.vexaStatus
+    ) {
+      const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
+        platform: parsed.platform,
+        nativeMeetingId,
+        vexaStatus: session.vexaStatus,
+        meetingStartedAt: meeting.started_at,
+        containerUp: true,
+        dbStatus: meeting.status,
+      });
+      if (autoLeave.autoLeft) {
+        return NextResponse.json({ live: false, synced: true, session });
+      }
     }
 
     // Bot saiu (container down) mas DB ainda indica bot ativo.

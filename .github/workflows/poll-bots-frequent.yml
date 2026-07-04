@@ -1,0 +1,38 @@
+name: Poll bots (frequent)
+
+# Encerra bots em salas vazias sem depender só do cron de 5 minutos.
+# Requer os mesmos secrets do workflow Cron (ReuniAI):
+#   APP_URL, CRON_SECRET
+
+on:
+  schedule:
+    - cron: "* * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: reuniai-poll-bots-frequent
+  cancel-in-progress: false
+
+jobs:
+  poll-bots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acionar poll-bots
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -u
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Defina os secrets APP_URL e CRON_SECRET no repositório."
+            exit 1
+          fi
+
+          url="${APP_URL%/}/api/cron/poll-bots"
+          code=$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" "${url}")
+          echo "→ poll-bots: HTTP ${code}"
+          if [ "${code}" -ge 400 ] || [ "${code}" -eq 000 ]; then
+            echo "::warning::poll-bots retornou ${code}"
+            exit 1
+          fi
