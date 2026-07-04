@@ -6,7 +6,7 @@ import {
   formatHighlightTimestamp,
   type HighlightLibraryEntry,
 } from "@/lib/meetings/highlights-library";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 export function HighlightsLibraryView({
   entries,
@@ -48,7 +48,7 @@ export function HighlightsLibraryView({
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{entry.label}</span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  {entry.meeting_title} · {formatMeetingDate(entry.meeting_started_at)}
+                  {entry.meeting_title} · {formatMeetingDateTime(entry.meeting_started_at)}
                 </span>
                 <span className="mt-1 block text-xs tabular-nums text-muted-foreground">
                   {formatHighlightTimestamp(entry.start_ms, entry.end_ms)}
