@@ -10,6 +10,7 @@ import {
   getGmailUser,
 } from "@/lib/email/config";
 import { EmailDeliveryError } from "@/lib/email/errors";
+import { EMAIL_SEND_FAILED, EMAIL_UNAVAILABLE } from "@/lib/email/user-messages";
 import type { SendEmailInput } from "@/lib/email/types";
 
 let transporter: Transporter | null = null;
@@ -21,10 +22,7 @@ function getTransporter(): Transporter {
   const pass = getGmailAppPassword();
 
   if (!user || !pass) {
-    throw new EmailDeliveryError(
-      "Gmail SMTP não configurado. Defina GMAIL_USER e GMAIL_APP_PASSWORD.",
-      503
-    );
+    throw new EmailDeliveryError(EMAIL_UNAVAILABLE, 503);
   }
 
   transporter = nodemailer.createTransport({
@@ -73,6 +71,6 @@ export async function sendViaGmail(input: SendEmailInput): Promise<void> {
     console.error(
       `[email:gmail] Falha ao enviar para ${recipients.join(", ")} (${input.subject}): ${message}`
     );
-    throw new EmailDeliveryError(message, 502);
+    throw new EmailDeliveryError(EMAIL_SEND_FAILED, 502);
   }
 }
