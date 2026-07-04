@@ -44,11 +44,9 @@ export const PLATFORM_LABELS: Record<MeetingPlatform, string> = {
 export const MEETING_STATUSES = Object.keys(STATUS_LABELS) as MeetingStatus[];
 export const MEETING_PLATFORMS = Object.keys(PLATFORM_LABELS) as MeetingPlatform[];
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+const dateOnlyFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
 });
 
 const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -56,9 +54,28 @@ const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
+function formatDateOnly(iso: string, timezone?: string): string {
+  if (!timezone) {
+    return dateOnlyFormatter.format(new Date(iso)).replace(/\./g, "");
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    timeZone: timezone,
+  })
+    .format(new Date(iso))
+    .replace(/\./g, "");
+}
+
+/** Ex.: "29 jun" */
+export function formatMeetingDate(iso: string, timezone?: string): string {
+  return formatDateOnly(iso, timezone);
+}
+
 /** Ex.: "29 jun, 14:00" */
-export function formatMeetingDate(iso: string): string {
-  return dateFormatter.format(new Date(iso)).replace(".", "");
+export function formatMeetingDateTime(iso: string, timezone?: string): string {
+  return `${formatDateOnly(iso, timezone)}, ${formatMeetingTime(iso, timezone)}`;
 }
 
 /** Ex.: "14:00" — use `timezone` (ex. America/Sao_Paulo) em código server-side. */
