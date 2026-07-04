@@ -16,7 +16,7 @@ import type { SpeakerTalkTime } from "@/lib/meetings/talk-time";
 import type { SharePermissions } from "@/lib/meetings/share-permissions";
 import {
   formatDuration,
-  formatMeetingDate,
+  formatMeetingDateTime,
   getMeetingDurationMs,
 } from "@/lib/meetings/types";
 import type {
@@ -69,7 +69,7 @@ export function PublicMeetingView({
             </p>
             <h1 className="mt-1 truncate text-2xl font-semibold">{meeting.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {formatMeetingDate(meeting.started_at)} ·{" "}
+              {formatMeetingDateTime(meeting.started_at)} ·{" "}
               {formatDuration(getMeetingDurationMs(meeting))}
             </p>
           </div>
