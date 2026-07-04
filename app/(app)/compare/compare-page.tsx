@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ComparePickerMeeting } from "@/lib/meetings/compare-picker-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 type CompareResponse = {
   meetingA: { id: string; title: string; started_at: string };
@@ -90,7 +90,7 @@ export default function ComparePage({
                 <CardTitle className="text-base">{data.meetingA.title}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                {formatMeetingDate(data.meetingA.started_at)}
+                {formatMeetingDateTime(data.meetingA.started_at)}
                 <div className="mt-2">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/reunioes/${data.meetingA.id}`}>Abrir reunião</Link>
@@ -103,7 +103,7 @@ export default function ComparePage({
                 <CardTitle className="text-base">{data.meetingB.title}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                {formatMeetingDate(data.meetingB.started_at)}
+                {formatMeetingDateTime(data.meetingB.started_at)}
                 <div className="mt-2">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/reunioes/${data.meetingB.id}`}>Abrir reunião</Link>
