@@ -13,6 +13,7 @@ import { MeetingTagsEditor } from "@/components/meetings/meeting-tags-editor";
 import { ShareLinkDialog } from "@/components/meetings/share-link-dialog";
 import { PlatformBadge } from "@/components/meetings/platform-badge";
 import { LiveStatusBadge } from "@/components/meetings/live-status-badge";
+import { LiveParticipantBadge } from "@/components/meetings/live-participant-badge";
 import { MeetingSessionProvider } from "@/lib/meetings/meeting-session-context";
 import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-button";
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
@@ -175,6 +176,7 @@ export default async function MeetingDetailPage({
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <LiveStatusBadge status={meeting.status} />
+        <LiveParticipantBadge status={meeting.status} recallBotId={meeting.recall_bot_id} />
         <PlatformBadge platform={meeting.platform} />
         {isLlmConfigured() && (
           <AnalysisTemplateSelect meetingId={meeting.id} initialTemplate={analysisTemplate} />
