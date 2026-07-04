@@ -6,7 +6,7 @@ import { NotePencil } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PersonalNoteLibraryEntry } from "@/lib/meetings/personal-notes-library-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 
 export function PersonalNotesLibraryView({
   entries,
@@ -69,8 +69,8 @@ export function PersonalNotesLibraryView({
                 {entry.preview}
               </span>
               <span className="mt-2 block text-xs text-muted-foreground">
-                Reunião {formatMeetingDate(entry.started_at)} · atualizada{" "}
-                {formatMeetingDate(entry.updated_at)}
+                Reunião {formatMeetingDateTime(entry.started_at)} · atualizada{" "}
+                {formatMeetingDateTime(entry.updated_at)}
               </span>
             </Link>
           </li>
