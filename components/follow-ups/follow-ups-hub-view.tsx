@@ -11,7 +11,7 @@ import {
   type FollowUpsHub,
   type FollowUpStatus,
 } from "@/lib/follow-ups/hub-types";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<FollowUpStatus, string> = {
@@ -106,7 +106,7 @@ export function FollowUpsHubView({
                     {item.bodyPreview}
                   </p>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {item.meetingTitle} · {formatMeetingDate(item.meetingStartedAt)}
+                    {item.meetingTitle} · {formatMeetingDateTime(item.meetingStartedAt)}
                   </p>
                   <span
                     className={cn(
