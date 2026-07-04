@@ -4,7 +4,7 @@ import { z } from "zod";
 import { generateJson } from "@/lib/llm/client";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import type { createClient } from "@/lib/supabase/server";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
@@ -128,7 +128,7 @@ export async function generateMeetingMinutes(
   const contentJson: MeetingMinutesContent = {
     ...parsed,
     meeting_title: meeting.title,
-    meeting_date: formatMeetingDate(meeting.started_at),
+    meeting_date: formatMeetingDateTime(meeting.started_at),
   };
 
   const contentMd = minutesToMarkdown(contentJson);
