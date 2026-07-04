@@ -3,6 +3,7 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { wrapEmailHtml } from "@/lib/brand/email-layout";
 import { EmailDeliveryError, isEmailConfigured, sendEmail } from "@/lib/email/send";
+import { EMAIL_UNAVAILABLE } from "@/lib/email/user-messages";
 import type { MeetingFollowUp } from "@/lib/workflow/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -41,11 +42,7 @@ export async function sendMeetingFollowUpEmail(
   input: { to: string[]; subject: string; body: string }
 ): Promise<MeetingFollowUp> {
   if (!isEmailConfigured()) {
-    throw new EmailDeliveryError(
-      "Envio por email não configurado. Defina Gmail (GMAIL_USER + GMAIL_APP_PASSWORD) ou Resend (RESEND_API_KEY).",
-      503,
-      ""
-    );
+    throw new EmailDeliveryError(EMAIL_UNAVAILABLE, 503, "");
   }
 
   const recipients = normalizeRecipients(input.to);
