@@ -7,7 +7,7 @@ import type { MeetingExportData } from "@/lib/meetings/export-data";
 import { formatTimestamp } from "@/lib/meetings/transcript";
 import {
   formatDuration,
-  formatMeetingDate,
+  formatMeetingDateTime,
   getMeetingDurationMs,
   PLATFORM_LABELS,
 } from "@/lib/meetings/types";
@@ -117,7 +117,7 @@ function drawCoverHeader(doc: PDFKit.PDFDocument, data: MeetingExportData): void
     });
 
   const platform = PLATFORM_LABELS[meeting.platform] ?? meeting.platform;
-  const meta = `${formatMeetingDate(meeting.started_at)} · ${formatDuration(getMeetingDurationMs(meeting))} · ${platform}`;
+  const meta = `${formatMeetingDateTime(meeting.started_at)} · ${formatDuration(getMeetingDurationMs(meeting))} · ${platform}`;
 
   doc
     .font(PDF_FONT_NAMES.regular)
