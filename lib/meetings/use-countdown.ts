@@ -12,8 +12,10 @@ export function useCountdownTo(isoTarget: string | null | undefined): number | n
       return;
     }
 
+    const target = isoTarget;
+
     function tick() {
-      setRemainingMs(Math.max(0, new Date(isoTarget).getTime() - Date.now()));
+      setRemainingMs(Math.max(0, new Date(target).getTime() - Date.now()));
     }
 
     tick();
