@@ -2,7 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { wrapEmailHtml } from "@/lib/brand/email-layout";
-import { isEmailConfigured, sendEmail, ResendDeliveryError } from "@/lib/email/resend";
+import { EmailDeliveryError, isEmailConfigured, sendEmail } from "@/lib/email/send";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
 import {
   DEFAULT_SHARE_PERMISSIONS,
@@ -53,8 +53,8 @@ export async function distributeMeetingSummary(
   input: { recipients: string[]; includeShareLink?: boolean }
 ): Promise<{ sent: number; shareUrl?: string }> {
   if (!isEmailConfigured()) {
-    throw new ResendDeliveryError(
-      "Envio por email não configurado. Defina RESEND_API_KEY.",
+    throw new EmailDeliveryError(
+      "Envio por email não configurado. Defina Gmail (GMAIL_USER + GMAIL_APP_PASSWORD) ou Resend (RESEND_API_KEY).",
       503,
       ""
     );
@@ -62,7 +62,7 @@ export async function distributeMeetingSummary(
 
   const recipients = normalizeRecipients(input.recipients);
   if (recipients.length === 0) {
-    throw new ResendDeliveryError("Informe ao menos um email válido.", 400, "");
+    throw new EmailDeliveryError("Informe ao menos um email válido.", 400, "");
   }
 
   const { data: meeting } = await admin
@@ -72,13 +72,13 @@ export async function distributeMeetingSummary(
     .maybeSingle<{ id: string; user_id: string; title: string; started_at: string }>();
 
   if (!meeting || meeting.user_id !== userId) {
-    throw new ResendDeliveryError("Reunião não encontrada.", 404, "");
+    throw new EmailDeliveryError("Reunião não encontrada.", 404, "");
   }
 
   const supabase = admin as unknown as Client;
   const summary = await getMeetingSummary(supabase, meetingId);
   if (!summary) {
-    throw new ResendDeliveryError("Reunião ainda não analisada.", 400, "");
+    throw new EmailDeliveryError("Reunião ainda não analisada.", 400, "");
   }
 
   const actionItems = await getActionItems(supabase, meetingId);
