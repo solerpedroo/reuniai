@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, isEmailConfigured } from "@/lib/email/resend";
+import { sendEmail, isEmailConfigured } from "@/lib/email/send";
 import { emailButton, emailLink, wrapEmailHtml } from "@/lib/brand/email-layout";
 import { getAppUrl } from "@/lib/brand/config";
 import { prepNotificationHref } from "@/lib/notifications/hrefs";
