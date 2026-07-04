@@ -119,7 +119,7 @@ export function ImportRecordingForm() {
           required
         />
         <p className="text-xs text-muted-foreground">
-          mp3, mp4, m4a, wav ou webm. Requer OPENAI_API_KEY ou GROQ_API_KEY no servidor.
+          mp3, mp4, m4a, wav ou webm.
         </p>
       </div>
 
