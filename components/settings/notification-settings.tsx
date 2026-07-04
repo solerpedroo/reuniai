@@ -45,10 +45,6 @@ const IN_APP_TOGGLES: Array<{
   },
 ];
 
-function isPushConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
-}
-
 function isPushSupported(): boolean {
   if (typeof window === "undefined") return false;
   return "serviceWorker" in navigator && "PushManager" in window;
@@ -56,16 +52,12 @@ function isPushSupported(): boolean {
 
 export function NotificationSettings({
   initialPrefs,
-  emailStatus,
+  emailEnabled = false,
+  pushEnabled = false,
 }: {
   initialPrefs: NotificationPrefs;
-  emailStatus?: {
-    configured: boolean;
-    provider: "gmail" | "resend" | null;
-    sandbox: boolean;
-    sandboxRecipient: string | null;
-    fromAddress: string | null;
-  };
+  emailEnabled?: boolean;
+  pushEnabled?: boolean;
 }) {
   const [prefs, setPrefs] = useState(initialPrefs);
   const [pushLoading, setPushLoading] = useState(false);
@@ -88,7 +80,7 @@ export function NotificationSettings({
 
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!vapidKey) {
-      toast.error("Push não configurado no servidor");
+      toast.error("Notificações push indisponíveis no momento");
       return;
     }
 
@@ -133,53 +125,26 @@ export function NotificationSettings({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!emailStatus?.configured ? (
+        {!emailEnabled ? (
           <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            Email desativado no servidor: configure{" "}
-            <code className="font-mono">EMAIL_PROVIDER=gmail</code> com{" "}
-            <code className="font-mono">GMAIL_USER</code> e{" "}
-            <code className="font-mono">GMAIL_APP_PASSWORD</code> (ou{" "}
-            <code className="font-mono">RESEND_API_KEY</code> para Resend) no{" "}
-            <code className="font-mono">.env.local</code> e no Vercel, se estiver em produção.
-          </p>
-        ) : emailStatus.provider === "gmail" ? (
-          <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-100">
-            Email via Gmail SMTP ativo
-            {emailStatus.fromAddress ? (
-              <>
-                {" "}
-                — remetente <strong>{emailStatus.fromAddress}</strong>
-              </>
-            ) : null}
-            . Limite aproximado: 500 emails/dia (conta pessoal). Para volume maior, use Google
-            Workspace ou Resend.
-          </p>
-        ) : emailStatus.sandbox ? (
-          <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            Resend em modo teste (<code className="font-mono">onboarding@resend.dev</code>): emails só
-            chegam em{" "}
-            <strong>{emailStatus.sandboxRecipient ?? "o email da conta Resend"}</strong>. Para enviar
-            a qualquer usuário logado, verifique <strong>reuniai.app</strong> em resend.com/domains e
-            use <code className="font-mono">RESEND_FROM=&quot;ReuniAI &lt;notifications@reuniai.app&gt;&quot;</code>{" "}
-            no Vercel e no <code className="font-mono">.env.local</code>.
+            Notificações por email não estão disponíveis no momento.
           </p>
         ) : (
           <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-100">
-            Email transacional ativo: qualquer conta com notificações por email habilitadas recebe
-            os envios no endereço de login.
+            Notificações por email ativas no endereço da sua conta.
           </p>
         )}
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium">Email de resumo</p>
             <p className="text-xs text-muted-foreground">
-              Receba resumo por email quando a reunião for processada (requer Gmail ou Resend)
+              Receba resumo por email quando a reunião for processada
             </p>
           </div>
           <Switch
             checked={prefs.email}
             onCheckedChange={(email) => void savePrefs({ ...prefs, email })}
-            disabled={!emailStatus?.configured}
+            disabled={!emailEnabled}
           />
         </div>
         <div className="flex items-center justify-between gap-4">
@@ -192,7 +157,7 @@ export function NotificationSettings({
           <Switch
             checked={prefs.digest ?? true}
             onCheckedChange={(digest) => void savePrefs({ ...prefs, digest })}
-            disabled={!emailStatus?.configured}
+            disabled={!emailEnabled}
           />
         </div>
 
@@ -218,11 +183,9 @@ export function NotificationSettings({
           </div>
         </div>
 
-        {!isPushConfigured() ? (
+        {!pushEnabled ? (
           <p className="rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
-            Push não configurado no servidor. Defina{" "}
-            <code className="font-mono">NEXT_PUBLIC_VAPID_PUBLIC_KEY</code> e{" "}
-            <code className="font-mono">VAPID_PRIVATE_KEY</code> para habilitar.
+            Notificações push não estão disponíveis no momento.
           </p>
         ) : !isPushSupported() ? (
           <p className="rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
@@ -263,7 +226,7 @@ export function NotificationSettings({
               size="sm"
               variant="outline"
               onClick={enablePush}
-              disabled={pushLoading || !isPushConfigured() || !isPushSupported()}
+              disabled={pushLoading || !pushEnabled || !isPushSupported()}
             >
               Ativar
             </Button>
