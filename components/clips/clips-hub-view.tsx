@@ -5,7 +5,7 @@ import { Copy, LinkSimple, Prohibit, Timer } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { ClipsHub } from "@/lib/clips/hub";
-import { formatMeetingDate } from "@/lib/meetings/types";
+import { formatMeetingDateTime } from "@/lib/meetings/types";
 import { formatTimestamp } from "@/lib/meetings/transcript";
 
 export function ClipsHubView({ hub }: { hub: ClipsHub }) {
@@ -55,13 +55,13 @@ export function ClipsHubView({ hub }: { hub: ClipsHub }) {
               <p className="font-medium">{item.caption}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {item.meetingTitle} · {formatTimestamp(item.start_ms)} ·{" "}
-                {formatMeetingDate(item.created_at)}
+                {formatMeetingDateTime(item.created_at)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {item.isActive ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600">
                     <Timer size={12} />
-                    Expira {formatMeetingDate(item.expires_at)}
+                    Expira {formatMeetingDateTime(item.expires_at)}
                   </span>
                 ) : (
                   <span className="text-muted-foreground">Inativo</span>
