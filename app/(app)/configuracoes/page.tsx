@@ -193,7 +193,8 @@ export default async function ConfiguracoesPage({
 
         <NotificationSettings
           initialPrefs={notificationPrefs}
-          emailStatus={getEmailDeliveryStatus()}
+          emailEnabled={getEmailDeliveryStatus().configured}
+          pushEnabled={Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)}
         />
 
         <LocaleAndTemplateSettings
