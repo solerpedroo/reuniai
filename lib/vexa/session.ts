@@ -1,11 +1,14 @@
 import "server-only";
 
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
-import { getRunningBots, getTranscript, getVexaMeeting } from "@/lib/vexa/client";
+import { getRunningBots, getMeetingParticipants, getTranscript, getVexaMeeting } from "@/lib/vexa/client";
 import {
+  countHumanParticipants,
+  getLastHumanTranscriptActivityMs,
   isCapturingVexaStatus,
   isJoiningVexaStatus,
   reconcileVexaLifecycleStatus,
+  resolveAutoLeaveAt,
 } from "@/lib/vexa/meeting-state";
 import { pickPrimaryAudioMedia } from "@/lib/vexa/recordings";
 import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
@@ -54,6 +57,26 @@ export async function getMeetingSessionStatus(
     containerRunning &&
     (isCapturingVexaStatus(lifecycleStatus ?? "") || segmentCount > 0);
 
+  let humanCount: number | null = null;
+  let autoLeaveAt: string | null = null;
+  const lastHumanActivityMs = getLastHumanTranscriptActivityMs(transcript.segments ?? []);
+
+  if (connected) {
+    try {
+      const participants = await getMeetingParticipants(platform, nativeMeetingId);
+      humanCount = countHumanParticipants(participants);
+      autoLeaveAt = resolveAutoLeaveAt({
+        vexaStatus: lifecycleStatus,
+        meetingStartedAt: startedAt ?? null,
+        humanCount,
+        lastHumanActivityMs,
+      });
+    } catch {
+      humanCount = null;
+      autoLeaveAt = null;
+    }
+  }
+
   return {
     connected,
     vexaStatus: lifecycleStatus,
@@ -66,6 +89,10 @@ export async function getMeetingSessionStatus(
       enabled: true,
       capturing,
       available: Boolean(recordingMedia),
+    },
+    participants: {
+      humanCount,
+      autoLeaveAt,
     },
   };
 }
