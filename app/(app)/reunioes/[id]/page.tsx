@@ -174,7 +174,7 @@ export default async function MeetingDetailPage({
         }
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <LiveStatusBadge status={meeting.status} />
         <LiveParticipantBadge status={meeting.status} recallBotId={meeting.recall_bot_id} />
         <PlatformBadge platform={meeting.platform} />
