@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 
 /** Contagem regressiva em ms até um instante ISO. Null se alvo ausente. */
 export function useCountdownTo(isoTarget: string | null | undefined): number | null {
-  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  const [remainingMs, setRemainingMs] = useState<number | null>(() => {
+    if (!isoTarget) return null;
+    return Math.max(0, new Date(isoTarget).getTime() - Date.now());
+  });
 
   useEffect(() => {
     if (!isoTarget) {
