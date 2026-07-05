@@ -5,7 +5,7 @@ import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { logStructured } from "@/lib/logging/structured";
 import { stopBot } from "@/lib/vexa/client";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
-import { shouldAutoLeaveEmptyMeeting } from "@/lib/vexa/meeting-state";
+import { shouldAutoLeaveEmptyMeeting, resolveAutoLeaveReferenceMs } from "@/lib/vexa/meeting-state";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -40,12 +40,12 @@ export async function tryAutoLeaveEmptyMeeting(
     return { autoLeft: false };
   }
 
-  const referenceStart = input.vexaStartTime ?? input.meetingStartedAt;
+  const referenceMs = resolveAutoLeaveReferenceMs(input.vexaStartTime, input.meetingStartedAt);
   const shouldLeave = await shouldAutoLeaveEmptyMeeting(
     input.platform,
     input.nativeMeetingId,
     input.vexaStatus,
-    referenceStart
+    referenceMs
   );
 
   if (!shouldLeave) {
@@ -56,7 +56,7 @@ export async function tryAutoLeaveEmptyMeeting(
     await stopBot(input.platform, input.nativeMeetingId);
     await finalizeStoppedMeeting(admin, input.platform, input.nativeMeetingId, {
       endTime: new Date().toISOString(),
-      startTime: referenceStart,
+      startTime: new Date(referenceMs).toISOString(),
     });
     logStructured("info", "bot.auto_leave.empty_room", {
       platform: input.platform,
