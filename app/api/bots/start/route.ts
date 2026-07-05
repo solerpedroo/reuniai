@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const { data: meeting } = await supabase
     .from("meetings")
     .select(
-      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id, calendar_event_id"
     )
     .eq("id", meetingId)
     .maybeSingle<
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         | "platform"
         | "prefer_native_transcript"
         | "native_artifact_id"
+        | "calendar_event_id"
       >
     >();
 
