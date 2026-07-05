@@ -1,5 +1,9 @@
 import { detectPlatform, findMeetingUrlInText } from "@/lib/calendar/platform";
-import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
+import {
+  extractTeamsNumericId,
+  extractTeamsPasscode,
+  parseMeetingUrl,
+} from "@/lib/meetings/meeting-url";
 import { PLATFORM_LABELS } from "@/lib/meetings/types";
 import type { MeetingPlatform } from "@/lib/supabase/types";
 
@@ -29,7 +33,9 @@ export function normalizeMeetingUrlInput(raw: string): string | null {
   const withProtocol = `https://${trimmed.replace(/^\/\//, "")}`;
   if (
     findMeetingUrlInText(withProtocol) ||
-    /meet\.google|zoom\.us|teams\.(microsoft|live)\.com/i.test(withProtocol)
+    /meet\.google|zoom\.us|teams\.(microsoft|live)\.com|gov\.teams\.microsoft\.us|dod\.teams\.microsoft\.us/i.test(
+      withProtocol
+    )
   ) {
     return withProtocol;
   }
@@ -45,7 +51,7 @@ export function previewMeetingUrlInput(raw: string): MeetingUrlPreview {
       platform: null,
       platformLabel: null,
       botSupported: false,
-      message: "Cole o link da reunião — Google Meet ou Zoom.",
+      message: "Cole o link da reunião — Google Meet, Zoom ou Teams.",
       tone: "idle",
     };
   }
@@ -65,30 +71,35 @@ export function previewMeetingUrlInput(raw: string): MeetingUrlPreview {
   const platform = detectPlatform(normalizedUrl);
   const platformLabel = PLATFORM_LABELS[platform];
 
-  if (platform === "teams") {
-    return {
-      normalizedUrl,
-      platform,
-      platformLabel,
-      botSupported: false,
-      message: "Microsoft Teams ainda não é suportado para entrada automática.",
-      tone: "warning",
-    };
-  }
-
   if (platform === "other") {
     return {
       normalizedUrl,
       platform,
       platformLabel,
       botSupported: false,
-      message: "Plataforma não reconhecida. Use Google Meet ou Zoom.",
+      message: "Plataforma não reconhecida. Use Google Meet, Zoom ou Teams.",
       tone: "error",
     };
   }
 
   const parsed = parseMeetingUrl(normalizedUrl);
   if (!parsed) {
+    if (platform === "teams") {
+      const numericId = extractTeamsNumericId(normalizedUrl);
+      const passcode = extractTeamsPasscode(normalizedUrl);
+      if (numericId && !passcode) {
+        return {
+          normalizedUrl,
+          platform,
+          platformLabel,
+          botSupported: false,
+          message:
+            "Link Teams reconhecido, mas falta a senha (?p=) no endereço. Copie o link completo do convite.",
+          tone: "error",
+        };
+      }
+    }
+
     return {
       normalizedUrl,
       platform,
