@@ -22,6 +22,8 @@ export const JOINING_GRACE_MS = 3 * 60_000;
 export const JOINING_TIMEOUT_MS = 15 * 60_000;
 /** Tempo mínimo no lobby vazio antes de desistir da entrada. */
 export const EMPTY_LOBBY_MIN_MS = 60_000;
+/** Janela sem last_seen na API de participantes = considerado ausente da call. */
+export const PARTICIPANT_PRESENCE_MS = 90_000;
 
 const JOINING_STATUSES = new Set(["requested", "joining", "awaiting_admission"]);
 const CAPTURING_STATUSES = new Set(["active", "stopping"]);
@@ -41,7 +43,7 @@ export function isLikelyBotParticipant(name: string | null | undefined): boolean
   return BOT_PARTICIPANT_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
 
-/** Conta participantes humanos, excluindo o bot quando a API o inclui na contagem. */
+/** Conta participantes humanos na call (exclui bot). Usado na UI. */
 export function countHumanParticipants(
   response: VexaMeetingParticipantsResponse
 ): number {
@@ -50,8 +52,89 @@ export function countHumanParticipants(
     return participants.filter((participant) => !isLikelyBotParticipant(participant.name)).length;
   }
 
-  // Sem lista detalhada: assume que participant_count pode incluir o bot.
   return Math.max(0, response.participant_count - 1);
+}
+
+/** Humanos ainda presentes — usa last_seen quando disponível (auto-saída). */
+export function countPresentHumanParticipants(
+  response: VexaMeetingParticipantsResponse
+): number {
+  const participants = response.participants ?? [];
+  const now = Date.now();
+  if (participants.length > 0) {
+    return participants.filter((participant) => {
+      if (isLikelyBotParticipant(participant.name)) return false;
+      if (participant.last_seen) {
+        return now - new Date(participant.last_seen).getTime() <= PARTICIPANT_PRESENCE_MS;
+      }
+      return true;
+    }).length;
+  }
+
+  return Math.max(0, response.participant_count - 1);
+}
+
+/** Falantes humanos distintos na transcrição (fallback quando a API falha). */
+export function countHumanSpeakersFromTranscript(segments: VexaTranscriptSegment[]): number {
+  const speakers = new Set<string>();
+  for (const segment of segments) {
+    if (isLikelyBotParticipant(segment.speaker)) continue;
+    const name = segment.speaker?.trim();
+    if (name) speakers.add(name.toLowerCase());
+  }
+  return speakers.size;
+}
+
+/**
+ * Contagem para exibir na UI — API Vexa com fallback por transcrição.
+ * Sempre retorna número quando o bot está ativo (nunca null).
+ */
+export function resolveSessionHumanCount(
+  apiResponse: VexaMeetingParticipantsResponse | null,
+  segments: VexaTranscriptSegment[],
+  lastHumanActivityMs: number | null
+): number {
+  const fromTranscript = countHumanSpeakersFromTranscript(segments);
+
+  if (apiResponse) {
+    const fromApi = countHumanParticipants(apiResponse);
+    if (fromApi > 0) return fromApi;
+    if (fromTranscript > 0) return fromTranscript;
+    return fromApi;
+  }
+
+  if (fromTranscript > 0) return fromTranscript;
+  return inferHumanCountFromTranscript(lastHumanActivityMs);
+}
+
+/**
+ * Referência temporal para grace period — prioriza start_time do Vexa.
+ * Se meeting.started_at for futuro (call agendada), o relógio começa agora.
+ */
+export function resolveAutoLeaveReferenceMs(
+  vexaStartTime: string | null | undefined,
+  meetingStartedAt: string | null | undefined
+): number {
+  const now = Date.now();
+
+  if (vexaStartTime) {
+    const vexaMs = new Date(vexaStartTime).getTime();
+    if (!Number.isNaN(vexaMs) && vexaMs <= now) return vexaMs;
+  }
+
+  if (meetingStartedAt) {
+    const meetingMs = new Date(meetingStartedAt).getTime();
+    if (!Number.isNaN(meetingMs) && meetingMs <= now) return meetingMs;
+  }
+
+  return now;
+}
+
+/** Estimativa conservadora quando a API de participantes falha. */
+export function inferHumanCountFromTranscript(lastHumanActivityMs: number | null): number {
+  if (lastHumanActivityMs == null) return 0;
+  if (Date.now() - lastHumanActivityMs < EMPTY_ROOM_GRACE_MS) return 1;
+  return 0;
 }
 
 export function getLastTranscriptActivityMs(segments: VexaTranscriptSegment[]): number | null {
@@ -236,17 +319,19 @@ export async function shouldAutoLeaveEmptyMeeting(
   platform: BotPlatform,
   nativeMeetingId: string,
   vexaStatus: string,
-  meetingStartedAt: string
+  referenceMs: number
 ): Promise<boolean> {
   const inLobby = isJoiningVexaStatus(vexaStatus);
   if (!isCapturingVexaStatus(vexaStatus) && !inLobby) return false;
 
-  const activeForMs = Date.now() - new Date(meetingStartedAt).getTime();
+  const activeForMs = Date.now() - referenceMs;
   if (inLobby && activeForMs < EMPTY_LOBBY_MIN_MS) return false;
+
+  let lastHumanActivityMs: number | null = null;
 
   try {
     const participants = await getMeetingParticipants(platform, nativeMeetingId);
-    const humanCount = countHumanParticipants(participants);
+    const humanCount = countPresentHumanParticipants(participants);
     if (humanCount > 0) return false;
 
     if (inLobby) {
@@ -255,7 +340,7 @@ export async function shouldAutoLeaveEmptyMeeting(
 
     const transcript = await getTranscript(platform, nativeMeetingId);
     const segments = transcript.segments ?? [];
-    const lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
+    lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
 
     if (lastHumanActivityMs == null) {
       return activeForMs >= EMPTY_ROOM_GRACE_MS;
@@ -268,33 +353,50 @@ export async function shouldAutoLeaveEmptyMeeting(
       nativeMeetingId,
       message: err instanceof Error ? err.message : String(err),
     });
-    return false;
+
+    try {
+      const transcript = await getTranscript(platform, nativeMeetingId);
+      lastHumanActivityMs = getLastHumanTranscriptActivityMs(transcript.segments ?? []);
+    } catch {
+      lastHumanActivityMs = null;
+    }
+
+    const inferredHumans = inferHumanCountFromTranscript(lastHumanActivityMs);
+    if (inferredHumans > 0) return false;
+
+    if (inLobby) {
+      return activeForMs >= EMPTY_LOBBY_MIN_MS;
+    }
+
+    if (lastHumanActivityMs == null) {
+      return activeForMs >= EMPTY_ROOM_GRACE_MS;
+    }
+
+    return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_GRACE_MS;
   }
 }
 
 /** Horário previsto de auto-saída quando a sala está vazia (ISO). Null se não aplicável. */
 export function resolveAutoLeaveAt(input: {
   vexaStatus: string | null;
-  meetingStartedAt: string | null;
+  referenceMs: number;
   humanCount: number | null;
   lastHumanActivityMs: number | null;
 }): string | null {
   if (input.humanCount == null || input.humanCount > 0) return null;
-  if (!input.vexaStatus || !input.meetingStartedAt) return null;
+  if (!input.vexaStatus) return null;
 
   const inLobby = isJoiningVexaStatus(input.vexaStatus);
   if (!isCapturingVexaStatus(input.vexaStatus) && !inLobby) return null;
 
-  const startedMs = new Date(input.meetingStartedAt).getTime();
-
   if (inLobby) {
-    return new Date(startedMs + EMPTY_LOBBY_MIN_MS).toISOString();
+    return new Date(input.referenceMs + EMPTY_LOBBY_MIN_MS).toISOString();
   }
 
   const leaveAtMs =
     input.lastHumanActivityMs != null
       ? input.lastHumanActivityMs + EMPTY_ROOM_GRACE_MS
-      : startedMs + EMPTY_ROOM_GRACE_MS;
+      : input.referenceMs + EMPTY_ROOM_GRACE_MS;
 
   return new Date(leaveAtMs).toISOString();
 }
