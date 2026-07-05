@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { RECORDINGS_BUCKET } from "@/lib/meetings/recording";
 import { resolveMeetingRecording } from "@/lib/meetings/resolve-recording";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +9,6 @@ import type { Meeting } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 const FORWARD_RESPONSE_HEADERS = [
-  "content-type",
   "content-length",
   "content-range",
   "accept-ranges",
@@ -42,30 +42,60 @@ export async function GET(
   const admin = createAdminClient();
   const resolved = await resolveMeetingRecording(admin, meeting);
 
-  if (!resolved || resolved.source !== "proxy" || !resolved.vexaRef) {
+  if (!resolved) {
     return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
   }
 
   const range = request.headers.get("range");
-  const vexaResponse = await fetchRecordingMediaRaw(
-    resolved.vexaRef.recordingId,
-    resolved.vexaRef.mediaFileId,
-    range ? { Range: range } : undefined
-  );
+  const rangeHeaders = range ? { Range: range } : undefined;
 
-  if (!vexaResponse.ok && vexaResponse.status !== 206) {
-    return NextResponse.json({ error: "Gravação não disponível" }, { status: vexaResponse.status === 401 ? 502 : 404 });
+  let mediaResponse: Response;
+  let contentType = resolved.contentType ?? "audio/wav";
+
+  if (resolved.source === "proxy" && resolved.vexaRef) {
+    mediaResponse = await fetchRecordingMediaRaw(
+      resolved.vexaRef.recordingId,
+      resolved.vexaRef.mediaFileId,
+      rangeHeaders
+    );
+    const upstreamType = mediaResponse.headers.get("content-type");
+    if (upstreamType) contentType = upstreamType;
+  } else if (resolved.source === "supabase" && resolved.storagePath) {
+    const { data: signed, error: signError } = await admin.storage
+      .from(RECORDINGS_BUCKET)
+      .createSignedUrl(resolved.storagePath, 60 * 60);
+
+    if (signError || !signed?.signedUrl) {
+      return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
+    }
+
+    mediaResponse = await fetch(signed.signedUrl, {
+      headers: rangeHeaders,
+      cache: "no-store",
+    });
+  } else {
+    return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
+  }
+
+  if (!mediaResponse.ok && mediaResponse.status !== 206) {
+    return NextResponse.json(
+      { error: "Gravação não disponível" },
+      { status: mediaResponse.status === 401 ? 502 : 404 }
+    );
   }
 
   const headers = new Headers();
+  headers.set("Content-Type", contentType);
+
   for (const name of FORWARD_RESPONSE_HEADERS) {
-    const value = vexaResponse.headers.get(name);
+    const value = mediaResponse.headers.get(name);
     if (value) headers.set(name, value);
   }
+
   headers.set("Cache-Control", "private, no-store");
 
-  return new Response(vexaResponse.body, {
-    status: vexaResponse.status,
+  return new Response(mediaResponse.body, {
+    status: mediaResponse.status,
     headers,
   });
 }

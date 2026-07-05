@@ -67,17 +67,33 @@ export function RecordingPlayer({
     const audio = audioRef.current;
     if (!audio || !url) return;
     const diff = Math.abs(audio.currentTime * 1000 - currentTimeMs);
-    if (diff > 500) {
+    if (audio.paused || diff > 250) {
       audio.currentTime = currentTimeMs / 1000;
     }
   }, [currentTimeMs, url]);
 
-  const togglePlay = useCallback(() => {
+  const handleSeek = useCallback(
+    (ms: number) => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = ms / 1000;
+      }
+      onSeek(ms);
+    },
+    [onSeek]
+  );
+
+  const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      void audio.play();
-      setPlaying(true);
+      try {
+        await audio.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+        setError("Não foi possível reproduzir a gravação.");
+      }
     } else {
       audio.pause();
       setPlaying(false);
@@ -91,7 +107,7 @@ export function RecordingPlayer({
 
       if (event.code === "Space" && event.target === document.body) {
         event.preventDefault();
-        togglePlay();
+        void togglePlay();
       }
     }
 
@@ -130,10 +146,14 @@ export function RecordingPlayer({
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}
+        onError={() => {
+          setPlaying(false);
+          setError("Erro ao reproduzir a gravação.");
+        }}
       />
 
       <div className="flex items-center gap-2">
-        <Button type="button" size="icon" variant="brand" className="size-9 shrink-0" onClick={togglePlay}>
+        <Button type="button" size="icon" variant="brand" className="size-9 shrink-0" onClick={() => void togglePlay()}>
           {playing ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
         </Button>
 
@@ -143,7 +163,7 @@ export function RecordingPlayer({
             min={0}
             max={durationMs || 1}
             value={currentTimeMs}
-            onChange={(e) => onSeek(Number(e.target.value))}
+            onChange={(e) => handleSeek(Number(e.target.value))}
             className="h-1.5 w-full cursor-pointer accent-brand"
             aria-label="Posição da gravação"
           />

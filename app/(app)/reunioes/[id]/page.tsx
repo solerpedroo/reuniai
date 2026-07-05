@@ -19,6 +19,7 @@ import { TranscriptSyncButton } from "@/components/meetings/transcript-sync-butt
 import { getChatMessages, parseCitations } from "@/lib/meetings/chat";
 import { getActionItems, getMeetingSummary } from "@/lib/meetings/insights";
 import { meetingHasRecording } from "@/lib/meetings/recording";
+import { resolveMeetingRecording } from "@/lib/meetings/resolve-recording";
 import { getTranscriptSegments } from "@/lib/meetings/transcript";
 import { isLlmConfigured } from "@/lib/llm/client";
 import {
@@ -133,6 +134,15 @@ export default async function MeetingDetailPage({
 
   const initialSeekMs = t ? Number.parseInt(t, 10) : undefined;
 
+  const resolvedRecording = await resolveMeetingRecording(admin, {
+    id: meeting.id,
+    user_id: meeting.user_id,
+    recording_path: meeting.recording_path,
+    recall_bot_id: meeting.recall_bot_id,
+    meeting_url: meeting.meeting_url,
+  });
+  const hasRecording = Boolean(resolvedRecording) || meetingHasRecording(meeting);
+
   return (
     <MeetingSessionProvider
       meetingId={meeting.id}
@@ -230,7 +240,7 @@ export default async function MeetingDetailPage({
 
       <MeetingReview
         meeting={meeting}
-        hasRecording={meetingHasRecording(meeting)}
+        hasRecording={hasRecording}
         segments={segments}
         summary={summary}
         actionItems={actionItems}
