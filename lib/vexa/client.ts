@@ -65,7 +65,9 @@ export type VexaMeetingParticipantsResponse = {
 
 export type CreateBotInput = {
   platform: BotPlatform;
-  nativeMeetingId: string;
+  nativeMeetingId?: string;
+  /** URL bruta — Vexa extrai id/passcode (Teams legacy / meetup-join). */
+  meetingUrl?: string;
   botName?: string;
   language?: string;
   passcode?: string;
@@ -91,26 +93,36 @@ export type SetBotScreenInput = {
 };
 
 export async function createBot(input: CreateBotInput): Promise<VexaMeeting> {
+  if (!input.meetingUrl && !input.nativeMeetingId) {
+    throw new Error("createBot exige nativeMeetingId ou meetingUrl.");
+  }
+
   const voiceAgent = input.voiceAgentEnabled ?? true;
   const wantsCamera =
     input.cameraEnabled ??
     (input.platform === "google_meet" || input.platform === "zoom");
 
+  const body: Record<string, unknown> = {
+    platform: input.platform,
+    bot_name: input.botName ?? formatBotDisplayName(null),
+    language: input.language ?? "pt",
+    recording_enabled: true,
+    transcribe_enabled: true,
+    transcription_tier: "realtime",
+    voice_agent_enabled: voiceAgent,
+    camera_enabled: wantsCamera,
+  };
+
+  if (input.meetingUrl) {
+    body.meeting_url = input.meetingUrl;
+  } else {
+    body.native_meeting_id = input.nativeMeetingId;
+    if (input.passcode) body.passcode = input.passcode;
+  }
+
   const res = await vexaFetch("/bots", {
     method: "POST",
-    body: JSON.stringify({
-      platform: input.platform,
-      native_meeting_id: input.nativeMeetingId,
-      bot_name: input.botName ?? formatBotDisplayName(null),
-      language: input.language ?? "pt",
-      passcode: input.passcode,
-      recording_enabled: true,
-      transcribe_enabled: true,
-      transcription_tier: "realtime",
-      voice_agent_enabled: voiceAgent,
-      // Não documentado na API da Vexa; tolerado/ignorado se não suportado.
-      camera_enabled: wantsCamera,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
