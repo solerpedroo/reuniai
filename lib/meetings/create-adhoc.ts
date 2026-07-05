@@ -41,7 +41,7 @@ function defaultTitle(platformLabel: string, timezone: string): string {
   return `Reunião ${platformLabel} · ${formatMeetingTime(new Date().toISOString(), timezone)}`;
 }
 
-/** Cria reunião ad-hoc (fora do calendário) e opcionalmente envia o bot. */
+/** Cria reunião ad-hoc (link colado) e opcionalmente envia o bot — mesma sessão ao vivo das agendadas. */
 export async function createAdhocMeeting(
   admin: AdminClient,
   userId: string,
