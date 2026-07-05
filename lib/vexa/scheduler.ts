@@ -16,6 +16,29 @@ import {
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+type StartBotMeeting = Pick<
+  Meeting,
+  | "id"
+  | "user_id"
+  | "meeting_url"
+  | "platform"
+  | "status"
+  | "prefer_native_transcript"
+  | "native_artifact_id"
+  | "calendar_event_id"
+>;
+
+type ScheduleBotRow = StartBotMeeting & Pick<Meeting, "title">;
+
+/** Marca início da sessão ao vivo no despacho do bot (auto-saída e contagem). */
+function shouldMarkBotSessionStart(meeting: Pick<Meeting, "calendar_event_id" | "status">): boolean {
+  return (
+    !meeting.calendar_event_id ||
+    meeting.status === "scheduled" ||
+    meeting.status === "failed"
+  );
+}
+
 /** Quanto tempo antes do início o bot tenta entrar. */
 const LEAD_MINUTES = 5;
 /** Janela de tolerância para reuniões que já começaram. */
@@ -27,16 +50,7 @@ export type StartBotResult =
 
 export async function startBotForMeeting(
   admin: AdminClient,
-  meeting: Pick<
-    Meeting,
-    | "id"
-    | "user_id"
-    | "meeting_url"
-    | "platform"
-    | "status"
-    | "prefer_native_transcript"
-    | "native_artifact_id"
-  >
+  meeting: StartBotMeeting
 ): Promise<StartBotResult> {
   if (["bot_joining", "recording", "processing"].includes(meeting.status)) {
     return { ok: false, reason: "Bot já está ativo ou em processamento nesta reunião." };
@@ -118,6 +132,9 @@ export async function startBotForMeeting(
       status: initialStatus,
       recall_bot_id: parsed.nativeMeetingId,
       error_message: null,
+      ...(shouldMarkBotSessionStart(meeting)
+        ? { started_at: new Date().toISOString() }
+        : {}),
     })
     .eq("id", meeting.id);
 
@@ -144,7 +161,7 @@ export async function scheduleBotsForUpcomingMeetings(
   const { data: meetings, error } = await admin
     .from("meetings")
     .select(
-      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id"
+      "id, user_id, title, meeting_url, status, platform, prefer_native_transcript, native_artifact_id, calendar_event_id"
     )
     .eq("status", "scheduled")
     .not("meeting_url", "is", null)
@@ -153,19 +170,7 @@ export async function scheduleBotsForUpcomingMeetings(
 
   if (error) throw error;
 
-  const rows = (meetings ?? []) as Array<
-    Pick<
-      Meeting,
-      | "id"
-      | "user_id"
-      | "title"
-      | "meeting_url"
-      | "status"
-      | "platform"
-      | "prefer_native_transcript"
-      | "native_artifact_id"
-    >
-  >;
+  const rows = (meetings ?? []) as ScheduleBotRow[];
   if (rows.length === 0) return { candidates: 0, started: 0, skipped: 0 };
 
   const userIds = [...new Set(rows.map((r) => r.user_id))];
