@@ -214,7 +214,9 @@ export async function getMeetingParticipants(
   platform: BotPlatform,
   nativeMeetingId: string
 ): Promise<VexaMeetingParticipantsResponse> {
-  const res = await vexaFetch(`/bots/${platform}/${nativeMeetingId}/participants`);
+  const res = await vexaFetch(
+    `/bots/${platform}/${encodeURIComponent(nativeMeetingId)}/participants`
+  );
   if (!res.ok) {
     throw new Error(`Vexa getMeetingParticipants falhou: ${res.status} ${await res.text()}`);
   }
