@@ -164,7 +164,7 @@ export function DecisionsRegistryView({
         ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="surface-card p-4">
           <p className="text-xs text-muted-foreground">Decisões únicas</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">{registry.totalDecisions}</p>

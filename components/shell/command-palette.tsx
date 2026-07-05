@@ -300,7 +300,7 @@ function CommandPaletteDialog() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: -4 }}
             transition={{ duration: MOTION.duration.base, ease: easePremium }}
-            className="surface-modal fixed left-1/2 top-[18%] z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl"
+            className="surface-modal fixed left-1/2 top-[max(0.75rem,env(safe-area-inset-top))] z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl sm:top-[18%] sm:w-[calc(100%-2rem)]"
           >
             <div className="border-b border-border/70 p-3">
               <div className="relative">
@@ -420,6 +420,24 @@ export function CommandTrigger({ className }: { className?: string }) {
       >
         {shortcut}
       </kbd>
+    </button>
+  );
+}
+
+export function CommandTriggerIcon({ className }: { className?: string }) {
+  const { toggle } = useCommandPalette();
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label="Buscar ou executar"
+      className={cn(
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/60 text-muted-foreground transition-colors hover:border-brand/25 hover:bg-background hover:text-foreground lg:hidden",
+        className
+      )}
+    >
+      <MagnifyingGlass size={18} />
     </button>
   );
 }

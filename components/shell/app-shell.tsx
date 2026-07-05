@@ -8,7 +8,11 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { getNavItem } from "@/components/shell/nav-config";
-import { CommandPaletteProvider, CommandTrigger } from "@/components/shell/command-palette";
+import {
+  CommandPaletteProvider,
+  CommandTrigger,
+  CommandTriggerIcon,
+} from "@/components/shell/command-palette";
 import { AssistantFab } from "@/components/shell/assistant-fab";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggleButton } from "@/components/shell/theme-toggle-button";
@@ -71,8 +75,8 @@ export function AppShell({
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col lg:pl-[260px]">
-          <header className="glass sticky top-0 z-30 border-b border-border/70">
-            <div className="flex h-16 items-center gap-3 px-4 lg:px-8">
+          <header className="glass sticky top-0 z-30 border-b border-border/70 pt-[env(safe-area-inset-top,0px)]">
+            <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3 sm:px-4 lg:px-8">
               <Button
                 variant="ghost"
                 size="icon"
@@ -97,10 +101,14 @@ export function AppShell({
                 >
                   {current.label}
                 </motion.p>
-                <p className="truncate text-xs text-muted-foreground">{current.description}</p>
+                <p className="hidden truncate text-xs text-muted-foreground sm:block">
+                  {current.description}
+                </p>
               </div>
 
-              <div className="ml-auto flex shrink-0 items-center gap-1.5">
+              <CommandTriggerIcon />
+
+              <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <ThemeToggleButton />
                 <NotificationBell />
                 <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
@@ -110,12 +118,12 @@ export function AppShell({
           </header>
 
           <PageTransition>
-            <div id="main-content" className="flex-1 px-4 py-6 lg:px-8">
+            <div id="main-content" className="flex-1 px-3 py-4 pb-fab sm:px-4 sm:py-6 lg:px-8">
               {children}
             </div>
           </PageTransition>
 
-          <footer className="mt-auto border-t border-border/70 px-4 py-4 lg:px-8">
+          <footer className="mt-auto border-t border-border/70 px-3 py-4 pr-16 sm:px-4 lg:px-8 lg:pr-8">
             <p className="text-xs text-muted-foreground">ReuniAI · {PRODUCT_TAGLINE}</p>
           </footer>
         </div>
