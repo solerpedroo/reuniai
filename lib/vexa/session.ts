@@ -3,13 +3,15 @@ import "server-only";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { getRunningBots, getMeetingParticipants, getTranscript, getVexaMeeting } from "@/lib/vexa/client";
 import {
-  countHumanParticipants,
   getLastHumanTranscriptActivityMs,
   isCapturingVexaStatus,
   isJoiningVexaStatus,
   reconcileVexaLifecycleStatus,
   resolveAutoLeaveAt,
+  resolveAutoLeaveReferenceMs,
+  resolveSessionHumanCount,
 } from "@/lib/vexa/meeting-state";
+import { logStructured } from "@/lib/logging/structured";
 import { pickPrimaryAudioMedia } from "@/lib/vexa/recordings";
 import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
 
@@ -59,27 +61,38 @@ export async function getMeetingSessionStatus(
 
   let humanCount: number | null = null;
   let autoLeaveAt: string | null = null;
-  const lastHumanActivityMs = getLastHumanTranscriptActivityMs(transcript.segments ?? []);
+  const segments = transcript.segments ?? [];
+  const lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
+  const referenceMs = resolveAutoLeaveReferenceMs(vexaMeeting?.start_time, startedAt);
 
-  if (connected) {
+  if (containerRunning) {
+    let participantsResponse: Awaited<ReturnType<typeof getMeetingParticipants>> | null = null;
+
     try {
-      const participants = await getMeetingParticipants(platform, nativeMeetingId);
-      humanCount = countHumanParticipants(participants);
-      autoLeaveAt = resolveAutoLeaveAt({
-        vexaStatus: lifecycleStatus,
-        meetingStartedAt: startedAt ?? null,
-        humanCount,
-        lastHumanActivityMs,
+      participantsResponse = await getMeetingParticipants(platform, nativeMeetingId);
+    } catch (err) {
+      logStructured("warn", "session.participants_unavailable", {
+        platform,
+        nativeMeetingId,
+        message: err instanceof Error ? err.message : String(err),
       });
-    } catch {
-      humanCount = null;
-      autoLeaveAt = null;
     }
+
+    humanCount = resolveSessionHumanCount(participantsResponse, segments, lastHumanActivityMs);
+
+    autoLeaveAt = resolveAutoLeaveAt({
+      vexaStatus: lifecycleStatus,
+      referenceMs,
+      humanCount,
+      lastHumanActivityMs,
+    });
   }
 
   return {
     connected,
+    containerRunning,
     vexaStatus: lifecycleStatus,
+    vexaStartTime: vexaMeeting?.start_time ?? null,
     transcription: {
       enabled: true,
       active: transcriptionActive,
