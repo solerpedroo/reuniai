@@ -140,7 +140,7 @@ export function JoinMeetingDialog({
               id="meeting-url"
               value={meetingUrl}
               onChange={(e) => setMeetingUrl(e.target.value)}
-              placeholder="https://meet.google.com/abc-defg-hij"
+              placeholder="https://meet.google.com/... ou link do Teams/Zoom"
               className="h-11 border-brand/20 bg-background/80 transition-shadow focus-visible:ring-brand/30"
               autoComplete="off"
               autoFocus
