@@ -103,7 +103,8 @@ export async function startBotForMeeting(
   try {
     vexaMeeting = await createBot({
       platform: parsed.platform,
-      nativeMeetingId: parsed.nativeMeetingId,
+      nativeMeetingId: parsed.meetingUrl ? undefined : parsed.nativeMeetingId,
+      meetingUrl: parsed.meetingUrl,
       passcode: parsed.passcode,
       language,
       botName,
@@ -114,14 +115,15 @@ export async function startBotForMeeting(
     return { ok: false, reason: err instanceof Error ? err.message : "Falha ao criar bot." };
   }
 
+  const resolvedNativeId = vexaMeeting.native_meeting_id || parsed.nativeMeetingId;
   const initialStatus = mapVexaStatus(vexaMeeting.status) ?? "bot_joining";
 
   // Branding (câmera) via after() — Vercel mantém a função viva após a resposta HTTP.
   after(async () => {
-    const result = await applyBotBranding(parsed.platform, parsed.nativeMeetingId);
+    const result = await applyBotBranding(parsed.platform, resolvedNativeId);
     if (result.errors.length > 0 || !result.avatar) {
       console.warn(
-        `[bot-branding] ${parsed.platform}/${parsed.nativeMeetingId}: avatar=${result.avatar} screen=${result.screen} — ${result.errors.join(" | ") || "câmera não aplicada"}`
+        `[bot-branding] ${parsed.platform}/${resolvedNativeId}: avatar=${result.avatar} screen=${result.screen} — ${result.errors.join(" | ") || "câmera não aplicada"}`
       );
     }
   });
@@ -130,7 +132,7 @@ export async function startBotForMeeting(
     .from("meetings")
     .update({
       status: initialStatus,
-      recall_bot_id: parsed.nativeMeetingId,
+      recall_bot_id: resolvedNativeId,
       error_message: null,
       ...(shouldMarkBotSessionStart(meeting)
         ? { started_at: new Date().toISOString() }
@@ -142,7 +144,7 @@ export async function startBotForMeeting(
     return { ok: false, reason: "Bot criado, mas falhou ao atualizar a reunião." };
   }
 
-  return { ok: true, nativeMeetingId: parsed.nativeMeetingId };
+  return { ok: true, nativeMeetingId: resolvedNativeId };
 }
 
 export type ScheduleSummary = {
