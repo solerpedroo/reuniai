@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { RECORDINGS_BUCKET, resolveRecordingPath } from "@/lib/meetings/recording";
 import { resolveMeetingRecording } from "@/lib/meetings/resolve-recording";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -39,28 +38,10 @@ export async function GET(
     return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
   }
 
-  if (resolved.source === "proxy") {
-    return NextResponse.json({
-      source: "proxy",
-      url: `/api/meetings/${id}/recording/stream`,
-      contentType: resolved.contentType ?? "audio/wav",
-      durationSeconds: resolved.durationSeconds ?? null,
-    });
-  }
-
-  const path = resolved.storagePath ?? resolveRecordingPath(meeting);
-  const { data, error } = await supabase.storage
-    .from(RECORDINGS_BUCKET)
-    .createSignedUrl(path, 60 * 60);
-
-  if (error || !data?.signedUrl) {
-    return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
-  }
-
   return NextResponse.json({
-    source: "supabase",
-    url: data.signedUrl,
-    contentType: "audio/mp4",
-    durationSeconds: null,
+    source: resolved.source,
+    url: `/api/meetings/${id}/recording/stream`,
+    contentType: resolved.contentType ?? "audio/wav",
+    durationSeconds: resolved.durationSeconds ?? null,
   });
 }
