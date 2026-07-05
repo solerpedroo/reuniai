@@ -1,5 +1,7 @@
 export type MeetingSessionStatus = {
   connected: boolean;
+  /** Container Docker do bot em execução (independente do status Vexa). */
+  containerRunning: boolean;
   vexaStatus: string | null;
   transcription: {
     enabled: boolean;
@@ -17,4 +19,6 @@ export type MeetingSessionStatus = {
     /** ISO — quando o bot sairá se a sala continuar vazia. */
     autoLeaveAt: string | null;
   };
+  /** start_time reportado pelo Vexa (referência do grace period). */
+  vexaStartTime: string | null;
 };
