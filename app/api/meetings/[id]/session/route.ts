@@ -99,7 +99,7 @@ export async function GET(
     // Sala vazia com bot ainda na call — encerra sem esperar o cron de 5 min.
     if (
       (meeting.status === "recording" || meeting.status === "bot_joining") &&
-      session.connected &&
+      session.containerRunning &&
       session.vexaStatus
     ) {
       const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
@@ -107,7 +107,8 @@ export async function GET(
         nativeMeetingId,
         vexaStatus: session.vexaStatus,
         meetingStartedAt: meeting.started_at,
-        containerUp: true,
+        vexaStartTime: session.vexaStartTime,
+        containerUp: session.containerRunning,
         dbStatus: meeting.status,
       });
       if (autoLeave.autoLeft) {
