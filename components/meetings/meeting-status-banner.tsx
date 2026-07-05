@@ -64,15 +64,18 @@ export function MeetingStatusBanner({
                           : "Gravação pendente"
                   }
                 />
-                {liveSession.participants.humanCount != null && (
+                {(liveSession.participants.humanCount != null ||
+                  liveSession.containerRunning) && (
                   <SessionBadge
-                    ok={liveSession.participants.humanCount > 0}
+                    ok={(liveSession.participants.humanCount ?? 0) > 0}
                     label={
-                      liveSession.participants.humanCount === 0
-                        ? "Sala vazia"
-                        : liveSession.participants.humanCount === 1
-                          ? "1 pessoa na call"
-                          : `${liveSession.participants.humanCount} pessoas na call`
+                      liveSession.participants.humanCount == null
+                        ? "Contando participantes…"
+                        : liveSession.participants.humanCount === 0
+                          ? "Sala vazia"
+                          : liveSession.participants.humanCount === 1
+                            ? "1 pessoa na call"
+                            : `${liveSession.participants.humanCount} pessoas na call`
                     }
                   />
                 )}
