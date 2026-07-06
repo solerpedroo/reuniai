@@ -28,6 +28,7 @@ import {
   CalendarX,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 
 export type NavItem = {
   href: string;
@@ -36,7 +37,7 @@ export type NavItem = {
   icon: Icon;
 };
 
-export const NAV_PRIMARY_ITEMS: NavItem[] = [
+const NAV_PRIMARY_ALL: NavItem[] = [
   {
     href: "/",
     label: "Visão geral",
@@ -128,6 +129,10 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     icon: Trophy,
   },
 ];
+
+export const NAV_PRIMARY_ITEMS: NavItem[] = NAV_PRIMARY_ALL.filter(
+  (item) => UI_FEATURE_VISIBILITY.calendarIntegrations || item.href !== "/calendario"
+);
 
 /** Ondas 41–50 — bibliotecas e hubs cross-meeting. */
 export const NAV_LIBRARY_ITEMS: NavItem[] = [
@@ -221,7 +226,9 @@ export const NAV_ACCOUNT_ITEMS: NavItem[] = [
   {
     href: "/configuracoes",
     label: "Configurações",
-    description: "Calendário, auto-join e integrações",
+    description: UI_FEATURE_VISIBILITY.calendarIntegrations
+      ? "Calendário, auto-join e integrações"
+      : "Conta, retenção e integrações",
     icon: Gear,
   },
 ];
@@ -350,7 +357,9 @@ export function getNavItem(pathname: string): NavItem {
     return {
       href: "/integracoes",
       label: "Integrações",
-      description: "Slack, Notion e webhooks",
+      description: UI_FEATURE_VISIBILITY.slackIntegration
+        ? "Slack, Notion e webhooks"
+        : "Notion e webhooks",
       icon: NAV_ITEMS.find((item) => item.href === "/configuracoes")!.icon,
     };
   }
