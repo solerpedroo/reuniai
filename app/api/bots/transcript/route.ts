@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { ingestMeetingTranscript } from "@/lib/pipeline/ingest-transcript";
 import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,6 +17,11 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  if (isRateLimited({ key: `transcript-reprocess:${user.id}`, ...RATE_LIMITS.transcriptReprocess })) {
+    const { error, status } = rateLimitResponse("Muitos reprocessamentos em pouco tempo.");
+    return NextResponse.json({ error }, { status });
   }
 
   let meetingId: string | undefined;
