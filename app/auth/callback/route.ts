@@ -13,6 +13,8 @@ type CookieToSet = {
 function safeNextPath(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
   if (next.startsWith("/login") || next.startsWith("/signup")) return "/";
+  if (next.startsWith("/api") || next.startsWith("/auth")) return "/";
+  if (/[\0-\x1f\\]/.test(next)) return "/";
   return next;
 }
 
