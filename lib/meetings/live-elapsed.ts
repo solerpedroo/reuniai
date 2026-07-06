@@ -1,8 +1,12 @@
-/** Tempo decorrido desde o início da reunião (ms), usado na captura ao vivo. */
-export function getLiveElapsedMs(startedAt: string, now = Date.now()): number {
-  const startMs = new Date(startedAt).getTime();
-  if (!Number.isFinite(startMs)) return 0;
-  return Math.max(0, now - startMs);
+import type { Meeting } from "@/lib/supabase/types";
+import { getBotSessionElapsedMs } from "@/lib/meetings/bot-session-time";
+
+/** Tempo decorrido desde o bot entrou na call (ms), usado na captura ao vivo. */
+export function getLiveElapsedMs(
+  meeting: Pick<Meeting, "started_at"> & { bot_session_started_at?: string | null },
+  now = Date.now()
+): number {
+  return getBotSessionElapsedMs(meeting, now);
 }
 
 import { BOT_ACTIVE_STATUSES } from "@/lib/meetings/bot-lifecycle";
