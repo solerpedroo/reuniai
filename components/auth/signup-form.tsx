@@ -36,6 +36,7 @@ import { signupProfileSchema, signupSecuritySchema } from "@/lib/auth/signup-sch
 import { getDefaultTimezone, TIMEZONE_OPTIONS } from "@/lib/auth/timezones";
 import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { createClient } from "@/lib/supabase/client";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import { USER_LOCALES } from "@/lib/profile/locale";
 import { cn } from "@/lib/utils";
 
@@ -195,8 +196,12 @@ export function SignupForm() {
 
       {step === 0 && (
         <>
-          <OAuthButton label="Cadastrar com Google" />
-          <AuthDivider label="ou preencha seus dados" />
+          {UI_FEATURE_VISIBILITY.googleAuth && (
+            <>
+              <OAuthButton label="Cadastrar com Google" />
+              <AuthDivider label="ou preencha seus dados" />
+            </>
+          )}
 
           <div className="space-y-4">
             <AuthField id="displayName" label="Nome completo" icon={UserCircle}>
