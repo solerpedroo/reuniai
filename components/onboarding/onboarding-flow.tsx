@@ -24,8 +24,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 
-const STEPS = [
+const STEPS_ALL = [
   {
     title: "Bem-vindo ao ReuniAI",
     description:
@@ -47,6 +48,11 @@ const STEPS = [
       "Conecte o Google Calendar para o bot encontrar suas reuniões. Você pode fazer isso agora ou depois.",
   },
 ] as const;
+
+const STEPS = STEPS_ALL.filter((_, index) => {
+  if (UI_FEATURE_VISIBILITY.calendarIntegrations) return true;
+  return index !== 2 && index !== 3;
+});
 
 const WELCOME_FEATURES = [
   {
@@ -235,7 +241,7 @@ export function OnboardingFlow() {
                 </div>
               )}
 
-              {step === 2 && (
+              {UI_FEATURE_VISIBILITY.calendarIntegrations && step === 2 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between rounded-xl border border-border/80 bg-muted/15 p-4">
                     <div className="space-y-1">
@@ -282,7 +288,7 @@ export function OnboardingFlow() {
                 </div>
               )}
 
-              {step === 3 && (
+              {UI_FEATURE_VISIBILITY.calendarIntegrations && step === 3 && (
                 <div className="relative overflow-hidden rounded-xl border border-border/80 bg-muted/15 px-6 py-10 text-center">
                   <div
                     aria-hidden
