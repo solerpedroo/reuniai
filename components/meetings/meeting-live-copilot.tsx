@@ -42,7 +42,7 @@ export function MeetingLiveCopilot({
   session?: MeetingSessionResponse | null;
 }) {
   const [segments, setSegments] = useState<LiveTranscriptSegment[]>([]);
-  const [elapsedMs, setElapsedMs] = useState(() => getLiveElapsedMs(meeting.started_at));
+  const [elapsedMs, setElapsedMs] = useState(() => getLiveElapsedMs(meeting));
   const [decisions, setDecisions] = useState<LiveDecision[]>([]);
   const [captureMode, setCaptureMode] = useState<CaptureMode>(null);
   const [captureText, setCaptureText] = useState("");
@@ -55,11 +55,11 @@ export function MeetingLiveCopilot({
 
   useEffect(() => {
     if (!live) return;
-    const tick = () => setElapsedMs(getLiveElapsedMs(meeting.started_at));
+    const tick = () => setElapsedMs(getLiveElapsedMs(meeting));
     tick();
     const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
-  }, [live, meeting.started_at]);
+  }, [live, meeting.bot_session_started_at, meeting.started_at]);
 
   useEffect(() => {
     if (!live) return;
