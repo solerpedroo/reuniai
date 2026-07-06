@@ -14,6 +14,7 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DailyBriefing } from "@/lib/briefing/daily-briefing";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import { cn } from "@/lib/utils";
 
 function formatCountdown(minutes: number): string {
@@ -204,20 +205,22 @@ export function DailyBriefingView({ briefing }: { briefing: DailyBriefing }) {
             <p className="mt-1 text-2xl font-semibold tabular-nums">{briefing.reviewPending}</p>
           </Link>
 
-          <Link href="/calendario" className="rounded-md border p-3 hover:bg-muted/40">
-            <p className="flex items-center gap-1.5 text-sm font-medium">
-              <CalendarBlank size={16} />
-              Carga da semana
-            </p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">
-              {briefing.calendarLoadScore != null ? `${briefing.calendarLoadScore}/100` : "—"}
-            </p>
-            {!briefing.calendarConnected ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Conecte o calendário para análise completa
+          {UI_FEATURE_VISIBILITY.calendarIntegrations ? (
+            <Link href="/calendario" className="rounded-md border p-3 hover:bg-muted/40">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <CalendarBlank size={16} />
+                Carga da semana
               </p>
-            ) : null}
-          </Link>
+              <p className="mt-1 text-2xl font-semibold tabular-nums">
+                {briefing.calendarLoadScore != null ? `${briefing.calendarLoadScore}/100` : "—"}
+              </p>
+              {!briefing.calendarConnected ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Conecte o calendário para análise completa
+                </p>
+              ) : null}
+            </Link>
+          ) : null}
         </div>
       </CollapsibleBlock>
 
