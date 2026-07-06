@@ -4,6 +4,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import { recordingStoragePath } from "@/lib/supabase/types";
 import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
 import { persistMeetingSegments } from "@/lib/pipeline/ingest-segments";
+import { contentTypeFromFilename } from "@/lib/meetings/recording-content-type";
 import { transcribeUploadedAudio } from "@/lib/pipeline/transcribe-upload";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -37,7 +38,10 @@ export async function processImportedRecording(
 
   const { error: uploadError } = await admin.storage
     .from("recordings")
-    .upload(storagePath, fileBuffer, { upsert: true, contentType: "application/octet-stream" });
+    .upload(storagePath, fileBuffer, {
+      upsert: true,
+      contentType: contentTypeFromFilename(filename),
+    });
 
   if (uploadError) {
     return { ok: false, error: uploadError.message };

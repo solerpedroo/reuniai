@@ -16,8 +16,5 @@ export function meetingHasRecording(
 ) {
   if (isVexaRecordingPath(meeting.recording_path)) return true;
   if (isSupabaseRecordingPath(meeting.recording_path)) return true;
-  return (
-    Boolean(meeting.recall_bot_id) &&
-    (meeting.status === "completed" || meeting.status === "partial")
-  );
+  return false;
 }

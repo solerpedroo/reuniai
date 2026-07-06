@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Meeting } from "@/lib/supabase/types";
+import { contentTypeFromFilename } from "@/lib/meetings/recording-content-type";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import {
   isSupabaseRecordingPath,
@@ -32,13 +33,18 @@ export async function resolveMeetingRecording(
 ): Promise<ResolvedRecording | null> {
   const vexaFromPath = parseVexaRecordingRef(meeting.recording_path);
   if (vexaFromPath) {
-    return { source: "proxy", vexaRef: vexaFromPath };
+    return {
+      source: "proxy",
+      vexaRef: vexaFromPath,
+      contentType: "audio/wav",
+    };
   }
 
   if (isSupabaseRecordingPath(meeting.recording_path)) {
     return {
       source: "supabase",
       storagePath: meeting.recording_path!,
+      contentType: contentTypeFromFilename(meeting.recording_path!),
     };
   }
 
