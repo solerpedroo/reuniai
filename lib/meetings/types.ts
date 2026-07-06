@@ -88,11 +88,18 @@ export function formatMeetingTime(iso: string, timezone?: string): string {
   }).format(new Date(iso));
 }
 
-/** Duração de uma reunião a partir de duration_ms ou do intervalo started/ended. */
-export function getMeetingDurationMs(meeting: Pick<Meeting, "duration_ms" | "started_at" | "ended_at">): number | null {
+/** Duração de uma reunião a partir de duration_ms ou do intervalo real da sessão do bot. */
+export function getMeetingDurationMs(
+  meeting: Pick<Meeting, "duration_ms" | "started_at" | "ended_at"> & {
+    bot_session_started_at?: string | null;
+  }
+): number | null {
   if (typeof meeting.duration_ms === "number") return meeting.duration_ms;
   if (meeting.ended_at) {
-    return new Date(meeting.ended_at).getTime() - new Date(meeting.started_at).getTime();
+    const startMs = meeting.bot_session_started_at
+      ? new Date(meeting.bot_session_started_at).getTime()
+      : new Date(meeting.started_at).getTime();
+    return new Date(meeting.ended_at).getTime() - startMs;
   }
   return null;
 }
