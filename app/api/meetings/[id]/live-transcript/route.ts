@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fetchLiveTranscript } from "@/lib/meetings/live-transcript";
+import { resolveBotSessionStartedAt } from "@/lib/meetings/bot-session-time";
 import { getLiveElapsedMs, isLiveMeetingStatus } from "@/lib/meetings/live-elapsed";
-import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
+import { isRateLimited, rateLimitResponse } from "@/lib/rate-limit";
 import type { Meeting } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -29,12 +30,18 @@ export async function GET(
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, status, meeting_url, recall_bot_id, started_at")
+    .select("id, user_id, status, meeting_url, recall_bot_id, started_at, bot_session_started_at")
     .eq("id", id)
     .maybeSingle<
       Pick<
         Meeting,
-        "id" | "user_id" | "status" | "meeting_url" | "recall_bot_id" | "started_at"
+        | "id"
+        | "user_id"
+        | "status"
+        | "meeting_url"
+        | "recall_bot_id"
+        | "started_at"
+        | "bot_session_started_at"
       >
     >();
 
@@ -47,15 +54,16 @@ export async function GET(
   }
 
   try {
+    const sessionStartedAt = resolveBotSessionStartedAt(meeting);
     const payload = await fetchLiveTranscript({
       meetingUrl: meeting.meeting_url,
       recallBotId: meeting.recall_bot_id,
-      meetingStartedAt: meeting.started_at,
+      meetingStartedAt: sessionStartedAt,
     });
 
     return NextResponse.json({
       ...payload,
-      elapsed_ms: getLiveElapsedMs(meeting.started_at),
+      elapsed_ms: getLiveElapsedMs(meeting),
     });
   } catch (err) {
     return NextResponse.json(
