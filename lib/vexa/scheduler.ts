@@ -128,14 +128,17 @@ export async function startBotForMeeting(
     }
   });
 
+  const sessionStartedAt = new Date().toISOString();
+
   const { error } = await admin
     .from("meetings")
     .update({
       status: initialStatus,
       recall_bot_id: resolvedNativeId,
       error_message: null,
+      bot_session_started_at: sessionStartedAt,
       ...(shouldMarkBotSessionStart(meeting)
-        ? { started_at: new Date().toISOString() }
+        ? { started_at: sessionStartedAt }
         : {}),
     })
     .eq("id", meeting.id);
@@ -167,6 +170,7 @@ export async function scheduleBotsForUpcomingMeetings(
     )
     .eq("status", "scheduled")
     .not("meeting_url", "is", null)
+    .not("calendar_event_id", "is", null)
     .gte("started_at", lowerBound)
     .lte("started_at", upperBound);
 
