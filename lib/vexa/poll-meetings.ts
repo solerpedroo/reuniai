@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
+import { resolveBotSessionStartedAt } from "@/lib/meetings/bot-session-time";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { stopBot, getTranscript } from "@/lib/vexa/client";
 import { tryAutoLeaveEmptyMeeting } from "@/lib/vexa/auto-leave";
@@ -54,7 +55,7 @@ function resolvePollFailureReason(
 export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetingsSummary> {
   const { data: meetings } = await admin
     .from("meetings")
-    .select("id, recall_bot_id, meeting_url, status, started_at")
+    .select("id, recall_bot_id, meeting_url, status, started_at, bot_session_started_at")
     .in("status", ["bot_joining", "recording", "processing"])
     .not("recall_bot_id", "is", null);
 
@@ -92,15 +93,17 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       }
     }
 
+    const sessionStartedAt = resolveBotSessionStartedAt(meeting);
+
     let vexaStatus = resolveVexaMeetingStatus({
       vexaMeeting,
       container,
       dbStatus: meeting.status,
-      meetingStartedAt: meeting.started_at,
+      meetingStartedAt: sessionStartedAt,
       hasTranscriptSegments,
     });
 
-    const elapsedMs = Date.now() - new Date(meeting.started_at).getTime();
+    const elapsedMs = Date.now() - new Date(sessionStartedAt).getTime();
     vexaStatus = await refineVexaMeetingStatus(
       parsed.platform,
       nativeId,
@@ -126,7 +129,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
         platform: parsed.platform,
         nativeMeetingId: nativeId,
         vexaStatus,
-        meetingStartedAt: meeting.started_at,
+        meetingStartedAt: sessionStartedAt,
         vexaStartTime: vexaMeeting?.start_time,
         containerUp: Boolean(container?.containerUp),
         dbStatus: meeting.status,
@@ -142,7 +145,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       nativeMeetingId: nativeId,
       vexaStatus,
       endTime: vexaMeeting?.end_time,
-      startTime: vexaMeeting?.start_time ?? meeting.started_at,
+      startTime: vexaMeeting?.start_time ?? sessionStartedAt,
       reason:
         vexaStatus === "failed" && meeting.status === "bot_joining"
           ? resolvePollFailureReason(vexaMeeting, vexaStatus) ??
@@ -170,7 +173,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       try {
         await finalizeStoppedMeeting(admin, parsed.platform, nativeId, {
           endTime: vexaMeeting?.end_time ?? new Date().toISOString(),
-          startTime: vexaMeeting?.start_time ?? meeting.started_at,
+          startTime: vexaMeeting?.start_time ?? sessionStartedAt,
         });
         processed += 1;
       } catch (err) {
