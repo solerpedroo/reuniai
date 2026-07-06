@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { IntegrationEvent } from "@/lib/integrations/types";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 
 type SlackState = {
   connected: boolean;
@@ -51,12 +52,15 @@ export function IntegrationSettings() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    const slackPromise = UI_FEATURE_VISIBILITY.slackIntegration
+      ? fetch("/api/integrations/slack")
+      : Promise.resolve(null);
     const [slackRes, notionRes, hooksRes] = await Promise.all([
-      fetch("/api/integrations/slack"),
+      slackPromise,
       fetch("/api/integrations/notion"),
       fetch("/api/integrations/webhooks"),
     ]);
-    if (slackRes.ok) setSlack((await slackRes.json()) as SlackState);
+    if (slackRes?.ok) setSlack((await slackRes.json()) as SlackState);
     if (notionRes.ok) setNotion((await notionRes.json()) as NotionState);
     if (hooksRes.ok) {
       const data = (await hooksRes.json()) as { webhooks: WebhookRow[] };
@@ -144,60 +148,62 @@ export function IntegrationSettings() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <SlackIcon size={18} />
-            Slack
-          </CardTitle>
-          <CardDescription>Digest pós-reunião no canal escolhido</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {!slack?.connected ? (
-            <Button asChild size="sm">
-              <a href="/api/integrations/slack/connect">
-                <SlackIcon size={16} />
-                Conectar Slack
-              </a>
-            </Button>
-          ) : (
-            <>
-              <p className="text-sm font-medium">{slack.team_name}</p>
-              {slack.channels.length > 0 ? (
-                <div className="space-y-2">
-                  <Label>Canal de digest</Label>
-                  <Select
-                    value={slack.channel_id ?? undefined}
-                    onValueChange={(value) => {
-                      const ch = slack.channels.find((c) => c.id === value);
-                      if (ch) void saveSlackChannel(ch.id, ch.name);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um canal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {slack.channels.map((ch) => (
-                        <SelectItem key={ch.id} value={ch.id}>
-                          #{ch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Convide o app ReuniAI a um canal no Slack para listá-lo aqui.
-                </p>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => void disconnectSlack()}>
-                <LinkBreak size={14} />
-                Desconectar
+      {UI_FEATURE_VISIBILITY.slackIntegration ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <SlackIcon size={18} />
+              Slack
+            </CardTitle>
+            <CardDescription>Digest pós-reunião no canal escolhido</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!slack?.connected ? (
+              <Button asChild size="sm">
+                <a href="/api/integrations/slack/connect">
+                  <SlackIcon size={16} />
+                  Conectar Slack
+                </a>
               </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <>
+                <p className="text-sm font-medium">{slack.team_name}</p>
+                {slack.channels.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label>Canal de digest</Label>
+                    <Select
+                      value={slack.channel_id ?? undefined}
+                      onValueChange={(value) => {
+                        const ch = slack.channels.find((c) => c.id === value);
+                        if (ch) void saveSlackChannel(ch.id, ch.name);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um canal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {slack.channels.map((ch) => (
+                          <SelectItem key={ch.id} value={ch.id}>
+                            #{ch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Convide o app ReuniAI a um canal no Slack para listá-lo aqui.
+                  </p>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => void disconnectSlack()}>
+                  <LinkBreak size={14} />
+                  Desconectar
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
