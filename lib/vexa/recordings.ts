@@ -51,9 +51,10 @@ export function pickPrimaryAudioMedia(
 ): VexaRecordingRef | null {
   const recordings = (transcript.recordings ?? []) as VexaRecording[];
 
-  for (const recording of recordings) {
+  for (const recording of [...recordings].reverse()) {
     const recordingId = toId(recording.id);
     if (!recordingId) continue;
+    if (recording.status && recording.status !== "completed") continue;
 
     const mediaFiles = recording.media_files ?? [];
     const audioFiles = mediaFiles.filter((file) => (file.type ?? "audio") === "audio");
