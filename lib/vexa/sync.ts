@@ -3,6 +3,7 @@ import "server-only";
 import type { Database } from "@/lib/supabase/database.types";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { MeetingStatus } from "@/lib/supabase/types";
+import { resolveDurationStartMs } from "@/lib/meetings/bot-session-time";
 import { notifyBotJoinFailed } from "@/lib/notifications/bot-failed";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -49,7 +50,7 @@ export async function applyMeetingStatus(
 
   const { data: meeting } = await admin
     .from("meetings")
-    .select("id, user_id, title, started_at, status")
+    .select("id, user_id, title, started_at, bot_session_started_at, status")
     .eq("recall_bot_id", input.nativeMeetingId)
     .order("started_at", { ascending: false })
     .limit(1)
@@ -58,6 +59,7 @@ export async function applyMeetingStatus(
       user_id: string;
       title: string;
       started_at: string;
+      bot_session_started_at: string | null;
       status: MeetingStatus;
     }>();
 
@@ -94,7 +96,9 @@ export async function applyMeetingStatus(
   if (endingLiveBot || nextStatus === "completed") {
     const endIso = input.endTime ?? new Date().toISOString();
     patch.ended_at = endIso;
-    const startMs = new Date(input.startTime ?? meeting.started_at).getTime();
+    const startMs = input.startTime
+      ? new Date(input.startTime).getTime()
+      : resolveDurationStartMs(meeting);
     const endMs = new Date(endIso).getTime();
     if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
       patch.duration_ms = endMs - startMs;
