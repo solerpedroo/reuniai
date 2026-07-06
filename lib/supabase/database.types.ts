@@ -110,6 +110,7 @@ export type Database = {
           calendar_recurring_event_id: string | null;
           title: string;
           started_at: string;
+          bot_session_started_at: string | null;
           ended_at: string | null;
           platform: Database["public"]["Enums"]["meeting_platform"];
           meeting_url: string | null;
@@ -135,6 +136,7 @@ export type Database = {
           calendar_recurring_event_id?: string | null;
           title: string;
           started_at: string;
+          bot_session_started_at?: string | null;
           ended_at?: string | null;
           platform?: Database["public"]["Enums"]["meeting_platform"];
           meeting_url?: string | null;
@@ -160,6 +162,7 @@ export type Database = {
           calendar_recurring_event_id?: string | null;
           title?: string;
           started_at?: string;
+          bot_session_started_at?: string | null;
           ended_at?: string | null;
           platform?: Database["public"]["Enums"]["meeting_platform"];
           meeting_url?: string | null;
