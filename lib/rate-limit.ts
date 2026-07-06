@@ -21,6 +21,8 @@ export const RATE_LIMITS = {
   chat: { limit: 20, windowMs: 60_000 },
   assistant: { limit: 15, windowMs: 60_000 },
   bot: { limit: 10, windowMs: 60_000 },
+  session: { limit: 60, windowMs: 60_000 },
+  transcriptReprocess: { limit: 5, windowMs: 60_000 },
   followUpGenerate: { limit: 5, windowMs: 60_000 },
   followUpSend: { limit: 5, windowMs: 60_000 },
   search: { limit: 30, windowMs: 60_000 },
