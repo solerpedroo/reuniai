@@ -10,9 +10,10 @@ import {
 } from "@phosphor-icons/react";
 import { ReuniaiLogo } from "@/components/brand/reuniai-logo";
 import { PRODUCT_NAME } from "@/lib/brand/config";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import { cn } from "@/lib/utils";
 
-const JOURNEY_STEPS = [
+const JOURNEY_STEPS_ALL = [
   {
     id: "welcome",
     icon: Sparkle,
@@ -38,6 +39,11 @@ const JOURNEY_STEPS = [
     detail: "Conecte o Google Calendar quando quiser",
   },
 ] as const;
+
+const JOURNEY_STEPS = JOURNEY_STEPS_ALL.filter((step) => {
+  if (UI_FEATURE_VISIBILITY.calendarIntegrations) return true;
+  return step.id !== "calendar" && step.id !== "bot";
+});
 
 type OnboardingShowcaseProps = {
   activeStep: number;
