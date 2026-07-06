@@ -4,6 +4,10 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Meeting } from "@/lib/supabase/types";
 import { previewMeetingUrlInput } from "@/lib/meetings/normalize-meeting-url";
 import { formatMeetingTime } from "@/lib/meetings/types";
+import {
+  isActionableBotJoinFailure,
+  notifyBotJoinFailed,
+} from "@/lib/notifications/bot-failed";
 import { startBotForMeeting } from "@/lib/vexa/scheduler";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -73,7 +77,21 @@ export async function createAdhocMeeting(
     if (shouldStartBot && existing.status === "scheduled") {
       const botResult = await startBotForMeeting(admin, existing);
       botStarted = botResult.ok;
-      if (!botResult.ok) botError = botResult.reason;
+      if (!botResult.ok) {
+        botError = botResult.reason;
+        if (isActionableBotJoinFailure(botResult.reason)) {
+          try {
+            await notifyBotJoinFailed(admin, {
+              userId,
+              meetingId: existing.id,
+              meetingTitle: existing.title,
+              reason: botResult.reason,
+            });
+          } catch (err) {
+            console.error("Falha ao notificar bot ad-hoc reutilizado (não bloqueante):", err);
+          }
+        }
+      }
     } else if (existing.status === "bot_joining" || existing.status === "recording") {
       botStarted = true;
     }
@@ -118,7 +136,21 @@ export async function createAdhocMeeting(
   if (shouldStartBot) {
     const botResult = await startBotForMeeting(admin, meeting);
     botStarted = botResult.ok;
-    if (!botResult.ok) botError = botResult.reason;
+    if (!botResult.ok) {
+      botError = botResult.reason;
+      if (isActionableBotJoinFailure(botResult.reason)) {
+        try {
+          await notifyBotJoinFailed(admin, {
+            userId,
+            meetingId: meeting.id,
+            meetingTitle: meeting.title,
+            reason: botResult.reason,
+          });
+        } catch (err) {
+          console.error("Falha ao notificar bot ad-hoc (não bloqueante):", err);
+        }
+      }
+    }
   }
 
   return {
