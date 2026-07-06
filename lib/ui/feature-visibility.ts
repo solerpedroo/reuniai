@@ -2,4 +2,5 @@
 export const UI_FEATURE_VISIBILITY = {
   calendarIntegrations: false,
   slackIntegration: false,
+  googleAuth: false,
 } as const;
