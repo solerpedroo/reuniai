@@ -1,6 +1,7 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { Meeting, MeetingPlatform, MeetingStatus } from "@/lib/supabase/types";
 import { getMeetingDurationMs } from "@/lib/meetings/types";
+import { toIlikeContainsPattern } from "@/lib/search/escape-ilike";
 import type { MeetingsCursor } from "@/lib/meetings/queries";
 import type { Tag } from "@/lib/workflow/types";
 import {
@@ -46,7 +47,7 @@ async function getMeetingIdsByParticipant(
   supabase: Client,
   participant: string
 ): Promise<Set<string>> {
-  const pattern = `%${participant.trim()}%`;
+  const pattern = toIlikeContainsPattern(participant);
   const [emailRes, nameRes] = await Promise.all([
     supabase.from("participants").select("meeting_id").ilike("email", pattern),
     supabase.from("participants").select("meeting_id").ilike("name", pattern),
