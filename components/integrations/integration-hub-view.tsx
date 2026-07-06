@@ -6,6 +6,7 @@ import { ArrowSquareOut, CheckCircle, Plugs, XCircle } from "@phosphor-icons/rea
 import { toast } from "sonner";
 import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { Button } from "@/components/ui/button";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import { formatNotificationTimestamp } from "@/lib/notifications/format-relative-time";
 import type { IntegrationLogEntry } from "@/lib/integrations/hub";
 import { cn } from "@/lib/utils";
@@ -52,15 +53,17 @@ export function IntegrationHubView({
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={testing === "slack"}
-          onClick={() => void testProvider("slack", "Slack")}
-        >
-          Testar Slack
-        </Button>
+        {UI_FEATURE_VISIBILITY.slackIntegration ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={testing === "slack"}
+            onClick={() => void testProvider("slack", "Slack")}
+          >
+            Testar Slack
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"
