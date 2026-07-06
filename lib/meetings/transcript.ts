@@ -19,6 +19,8 @@ export async function getTranscriptSegments(
 
 /** Formata milissegundos como `m:ss` ou `h:mm:ss`. */
 export function formatTimestamp(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "0:00";
+
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
