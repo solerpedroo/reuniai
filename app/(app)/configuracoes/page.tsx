@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { buildBotDisplayName } from "@/lib/brand/bot-name";
 import { getCalendarConnection } from "@/lib/calendar/queries";
 import { createClient } from "@/lib/supabase/server";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import type { AnalysisTemplateId } from "@/lib/analysis/template-types";
 import { parseTemplateId } from "@/lib/analysis/template-types";
 import { parseUserLocale, type UserLocale } from "@/lib/profile/locale";
@@ -83,8 +84,12 @@ export default async function ConfiguracoesPage({
     }
   }
 
-  const googleConnection = await getCalendarConnection(supabase, "google");
-  const outlookConnection = await getCalendarConnection(supabase, "outlook");
+  const googleConnection = UI_FEATURE_VISIBILITY.calendarIntegrations
+    ? await getCalendarConnection(supabase, "google")
+    : null;
+  const outlookConnection = UI_FEATURE_VISIBILITY.calendarIntegrations
+    ? await getCalendarConnection(supabase, "outlook")
+    : null;
   const email = user?.email ?? "—";
   const metadata = user?.user_metadata as { full_name?: string; name?: string } | undefined;
   const botDisplayName = buildBotDisplayName({
@@ -93,13 +98,13 @@ export default async function ConfiguracoesPage({
     metadataFullName: metadata?.full_name ?? metadata?.name,
   });
 
-  let banner = calendar ? CALENDAR_MESSAGES[calendar] : undefined;
+  let banner = calendar && UI_FEATURE_VISIBILITY.calendarIntegrations ? CALENDAR_MESSAGES[calendar] : undefined;
   if (banner && provider === "outlook" && calendar === "connected") {
     banner = { tone: "ok", text: "Outlook Calendar conectado e sincronizado." };
   } else if (banner && provider === "google" && calendar === "connected") {
     banner = { tone: "ok", text: "Google Calendar conectado e sincronizado." };
   }
-  if (!banner && slack) {
+  if (!banner && slack && UI_FEATURE_VISIBILITY.slackIntegration) {
     banner = {
       ...STATUS_MESSAGES[slack],
       text: slack === "connected" ? "Slack conectado." : STATUS_MESSAGES[slack].text,
@@ -116,7 +121,11 @@ export default async function ConfiguracoesPage({
     <div>
       <PageHeader
         title="Configurações"
-        description="Calendários, auto-join, transcripts nativos, retenção e notificações."
+        description={
+          UI_FEATURE_VISIBILITY.calendarIntegrations
+            ? "Calendários, auto-join, transcripts nativos, retenção e notificações."
+            : "Conta, retenção, notificações e integrações."
+        }
         meta="Conta"
       />
 
@@ -145,39 +154,53 @@ export default async function ConfiguracoesPage({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendários</CardTitle>
-            <CardDescription>Google e Outlook — sync paralelo de reuniões</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CalendarConnections
-              google={{
-                connected: Boolean(googleConnection),
-                email: googleConnection?.email ?? null,
-                lastSyncedAt: googleConnection?.last_synced_at ?? null,
-              }}
-              outlook={{
-                connected: Boolean(outlookConnection),
-                email: outlookConnection?.email ?? null,
-                lastSyncedAt: outlookConnection?.last_synced_at ?? null,
-              }}
-            />
-          </CardContent>
-        </Card>
+        {UI_FEATURE_VISIBILITY.calendarIntegrations ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Calendários</CardTitle>
+              <CardDescription>Google e Outlook — sync paralelo de reuniões</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CalendarConnections
+                google={{
+                  connected: Boolean(googleConnection),
+                  email: googleConnection?.email ?? null,
+                  lastSyncedAt: googleConnection?.last_synced_at ?? null,
+                }}
+                outlook={{
+                  connected: Boolean(outlookConnection),
+                  email: outlookConnection?.email ?? null,
+                  lastSyncedAt: outlookConnection?.last_synced_at ?? null,
+                }}
+              />
+            </CardContent>
+          </Card>
+        ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Auto-join do bot</CardTitle>
-            <CardDescription>
-              ReuniAI entra automaticamente nas calls (exceto Teams/Meet com transcript nativo)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <AutoJoinToggle initialEnabled={autoJoin} />
-            <BotBrandingPreview botDisplayName={botDisplayName} />
-          </CardContent>
-        </Card>
+        {UI_FEATURE_VISIBILITY.calendarIntegrations ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Auto-join do bot</CardTitle>
+              <CardDescription>
+                ReuniAI entra automaticamente nas calls (exceto Teams/Meet com transcript nativo)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <AutoJoinToggle initialEnabled={autoJoin} />
+              <BotBrandingPreview botDisplayName={botDisplayName} />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Bot nas reuniões</CardTitle>
+              <CardDescription>Identidade do bot ao entrar nas calls</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BotBrandingPreview botDisplayName={botDisplayName} />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -223,7 +246,11 @@ export default async function ConfiguracoesPage({
               <Plugs size={18} aria-hidden />
               Integrações
             </CardTitle>
-            <CardDescription>Slack, Notion e webhooks outbound</CardDescription>
+            <CardDescription>
+              {UI_FEATURE_VISIBILITY.slackIntegration
+                ? "Slack, Notion e webhooks outbound"
+                : "Notion e webhooks outbound"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" size="sm">
