@@ -72,9 +72,15 @@ export async function POST(
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, status, started_at")
+    .select("id, user_id, status, started_at, bot_session_started_at")
     .eq("id", meetingId)
-    .maybeSingle<{ id: string; user_id: string; status: string; started_at: string }>();
+    .maybeSingle<{
+      id: string;
+      user_id: string;
+      status: string;
+      started_at: string;
+      bot_session_started_at: string | null;
+    }>();
 
   if (!meeting || meeting.user_id !== user.id) {
     return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
@@ -92,7 +98,7 @@ export async function POST(
     );
   }
 
-  const capturedAtMs = parsed.data.captured_at_ms ?? getLiveElapsedMs(meeting.started_at);
+  const capturedAtMs = parsed.data.captured_at_ms ?? getLiveElapsedMs(meeting);
 
   const admin = createAdminClient();
   const { data, error } = await admin
