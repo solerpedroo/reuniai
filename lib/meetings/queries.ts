@@ -1,6 +1,7 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting } from "@/lib/supabase/types";
 import { getMeetingDurationMs } from "@/lib/meetings/types";
+import { toIlikeContainsPattern } from "@/lib/search/escape-ilike";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -96,7 +97,7 @@ export async function searchMeetings(
   }
 
   const limit = options.limit ?? 50;
-  const pattern = `%${query}%`;
+  const pattern = toIlikeContainsPattern(query);
 
   const [titleRes, segmentRes] = await Promise.all([
     supabase.from("meetings").select("*").ilike("title", pattern),
