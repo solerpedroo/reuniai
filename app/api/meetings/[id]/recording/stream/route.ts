@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { RECORDINGS_BUCKET } from "@/lib/meetings/recording";
-import { resolveMeetingRecording } from "@/lib/meetings/resolve-recording";
+import {
+  resolveMeetingRecording,
+  type ResolvedRecording,
+} from "@/lib/meetings/resolve-recording";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { fetchRecordingMediaRaw } from "@/lib/vexa/client";
@@ -12,7 +15,41 @@ const FORWARD_RESPONSE_HEADERS = [
   "content-length",
   "content-range",
   "accept-ranges",
+  "content-disposition",
 ] as const;
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+async function fetchResolvedRecordingMedia(
+  resolved: ResolvedRecording,
+  admin: AdminClient,
+  rangeHeaders?: HeadersInit
+): Promise<Response> {
+  if (resolved.source === "proxy" && resolved.vexaRef) {
+    return fetchRecordingMediaRaw(
+      resolved.vexaRef.recordingId,
+      resolved.vexaRef.mediaFileId,
+      rangeHeaders
+    );
+  }
+
+  if (resolved.source === "supabase" && resolved.storagePath) {
+    const { data: signed, error: signError } = await admin.storage
+      .from(RECORDINGS_BUCKET)
+      .createSignedUrl(resolved.storagePath, 60 * 60);
+
+    if (signError || !signed?.signedUrl) {
+      return new Response(null, { status: 404 });
+    }
+
+    return fetch(signed.signedUrl, {
+      headers: rangeHeaders,
+      cache: "no-store",
+    });
+  }
+
+  return new Response(null, { status: 404 });
+}
 
 export async function GET(
   request: NextRequest,
@@ -40,7 +77,7 @@ export async function GET(
   }
 
   const admin = createAdminClient();
-  const resolved = await resolveMeetingRecording(admin, meeting);
+  let resolved = await resolveMeetingRecording(admin, meeting);
 
   if (!resolved) {
     return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
@@ -49,33 +86,17 @@ export async function GET(
   const range = request.headers.get("range");
   const rangeHeaders = range ? { Range: range } : undefined;
 
-  let mediaResponse: Response;
-  let contentType = resolved.contentType ?? "audio/wav";
+  let mediaResponse = await fetchResolvedRecordingMedia(resolved, admin, rangeHeaders);
 
-  if (resolved.source === "proxy" && resolved.vexaRef) {
-    mediaResponse = await fetchRecordingMediaRaw(
-      resolved.vexaRef.recordingId,
-      resolved.vexaRef.mediaFileId,
-      rangeHeaders
-    );
-    const upstreamType = mediaResponse.headers.get("content-type");
-    if (upstreamType) contentType = upstreamType;
-  } else if (resolved.source === "supabase" && resolved.storagePath) {
-    const { data: signed, error: signError } = await admin.storage
-      .from(RECORDINGS_BUCKET)
-      .createSignedUrl(resolved.storagePath, 60 * 60);
-
-    if (signError || !signed?.signedUrl) {
-      return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
+  if (!mediaResponse.ok && mediaResponse.status !== 206 && resolved.source === "proxy") {
+    const refreshed = await resolveMeetingRecording(admin, meeting, { forceRefresh: true });
+    if (refreshed?.vexaRef) {
+      resolved = refreshed;
+      mediaResponse = await fetchResolvedRecordingMedia(refreshed, admin, rangeHeaders);
     }
-
-    mediaResponse = await fetch(signed.signedUrl, {
-      headers: rangeHeaders,
-      cache: "no-store",
-    });
-  } else {
-    return NextResponse.json({ error: "Gravação não disponível" }, { status: 404 });
   }
+
+  let contentType = resolved.contentType ?? "audio/wav";
 
   if (!mediaResponse.ok && mediaResponse.status !== 206) {
     return NextResponse.json(
@@ -84,12 +105,19 @@ export async function GET(
     );
   }
 
+  const upstreamType = mediaResponse.headers.get("content-type");
+  if (upstreamType) contentType = upstreamType;
+
   const headers = new Headers();
   headers.set("Content-Type", contentType);
 
   for (const name of FORWARD_RESPONSE_HEADERS) {
     const value = mediaResponse.headers.get(name);
     if (value) headers.set(name, value);
+  }
+
+  if (!headers.has("accept-ranges") && (mediaResponse.status === 200 || mediaResponse.status === 206)) {
+    headers.set("Accept-Ranges", "bytes");
   }
 
   headers.set("Cache-Control", "private, no-store");
