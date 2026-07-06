@@ -11,6 +11,7 @@ import {
   parseVector,
 } from "@/lib/embeddings/generate";
 import { searchMeetings } from "@/lib/meetings/queries";
+import { toIlikeContainsPattern } from "@/lib/search/escape-ilike";
 import type {
   GlobalSearchOptions,
   SearchModeFilter,
@@ -200,7 +201,7 @@ async function textSearch(
       .from("transcript_segments")
       .select("id, start_ms, speaker_label, text")
       .eq("meeting_id", meeting.id)
-      .ilike("text", `%${query}%`)
+      .ilike("text", toIlikeContainsPattern(query))
       .order("sequence", { ascending: true })
       .limit(2);
 
