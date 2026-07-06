@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { createClient } from "@/lib/supabase/client";
+import { UI_FEATURE_VISIBILITY } from "@/lib/ui/feature-visibility";
 import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
@@ -87,9 +88,12 @@ export function LoginForm({ nextPath, authError }: LoginFormProps) {
         </div>
       )}
 
-      <OAuthButton />
-
-      <AuthDivider />
+      {UI_FEATURE_VISIBILITY.googleAuth && (
+        <>
+          <OAuthButton />
+          <AuthDivider />
+        </>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <AuthField id="email" label="E-mail" icon={EnvelopeSimple}>
