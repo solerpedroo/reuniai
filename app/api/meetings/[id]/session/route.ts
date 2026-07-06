@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveBotSessionStartedAt } from "@/lib/meetings/bot-session-time";
 import { BOT_ACTIVE_STATUSES } from "@/lib/meetings/bot-lifecycle";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { tryAutoLeaveEmptyMeeting } from "@/lib/vexa/auto-leave";
 import { getMeetingSessionStatus } from "@/lib/vexa/session";
@@ -10,6 +12,17 @@ import { applyMeetingStatus, mapVexaStatus } from "@/lib/vexa/sync";
 import type { Meeting } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
+
+type SessionMeeting = Pick<
+  Meeting,
+  | "id"
+  | "user_id"
+  | "status"
+  | "recall_bot_id"
+  | "meeting_url"
+  | "started_at"
+  | "bot_session_started_at"
+>;
 
 export async function GET(
   _request: NextRequest,
@@ -26,13 +39,16 @@ export async function GET(
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
+  if (isRateLimited({ key: `session:${user.id}`, ...RATE_LIMITS.session })) {
+    const { error, status } = rateLimitResponse("Muitas consultas de sessão. Aguarde um instante.");
+    return NextResponse.json({ error }, { status });
+  }
+
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, status, recall_bot_id, meeting_url, started_at")
+    .select("id, user_id, status, recall_bot_id, meeting_url, started_at, bot_session_started_at")
     .eq("id", id)
-    .maybeSingle<
-      Pick<Meeting, "id" | "user_id" | "status" | "recall_bot_id" | "meeting_url" | "started_at">
-    >();
+    .maybeSingle<SessionMeeting>();
 
   if (!meeting || meeting.user_id !== user.id) {
     return NextResponse.json({ error: "Reunião não encontrada" }, { status: 404 });
@@ -48,6 +64,7 @@ export async function GET(
 
   const parsed = meeting.meeting_url ? parseMeetingUrl(meeting.meeting_url) : null;
   const nativeMeetingId = meeting.recall_bot_id ?? parsed?.nativeMeetingId;
+  const sessionStartedAt = resolveBotSessionStartedAt(meeting);
 
   if (!parsed || !nativeMeetingId) {
     return NextResponse.json({
@@ -61,14 +78,13 @@ export async function GET(
     const session = await getMeetingSessionStatus(
       parsed.platform,
       nativeMeetingId,
-      meeting.started_at
+      sessionStartedAt
     );
 
     const admin = createAdminClient();
     const lifecycleStatus = session.vexaStatus;
     let synced = false;
 
-    // Vexa já ativo mas DB ainda em "entrando".
     if (
       meeting.status === "bot_joining" &&
       lifecycleStatus &&
@@ -77,12 +93,11 @@ export async function GET(
       await applyMeetingStatus(admin, {
         nativeMeetingId,
         vexaStatus: lifecycleStatus,
-        startTime: meeting.started_at,
+        startTime: sessionStartedAt,
       });
       synced = true;
     }
 
-    // Falha de entrada reportada pelo Vexa.
     if (
       (meeting.status === "bot_joining" || meeting.status === "recording") &&
       lifecycleStatus === "failed"
@@ -90,13 +105,12 @@ export async function GET(
       await applyMeetingStatus(admin, {
         nativeMeetingId,
         vexaStatus: "failed",
-        startTime: meeting.started_at,
+        startTime: sessionStartedAt,
         reason: "O bot não conseguiu concluir a gravação.",
       });
       return NextResponse.json({ live: false, synced: true, session });
     }
 
-    // Sala vazia com bot ainda na call — encerra sem esperar o cron de 5 min.
     if (
       (meeting.status === "recording" || meeting.status === "bot_joining") &&
       session.containerRunning &&
@@ -106,7 +120,7 @@ export async function GET(
         platform: parsed.platform,
         nativeMeetingId,
         vexaStatus: session.vexaStatus,
-        meetingStartedAt: meeting.started_at,
+        meetingStartedAt: sessionStartedAt,
         vexaStartTime: session.vexaStartTime,
         containerUp: session.containerRunning,
         dbStatus: meeting.status,
@@ -116,7 +130,6 @@ export async function GET(
       }
     }
 
-    // Bot saiu (container down) mas DB ainda indica bot ativo.
     const botDisconnected =
       !session.connected ||
       lifecycleStatus === "completed" ||
@@ -128,7 +141,7 @@ export async function GET(
     ) {
       await finalizeStoppedMeeting(admin, parsed.platform, nativeMeetingId, {
         endTime: new Date().toISOString(),
-        startTime: meeting.started_at,
+        startTime: sessionStartedAt,
       });
       return NextResponse.json({ live: false, synced: true, session });
     }
