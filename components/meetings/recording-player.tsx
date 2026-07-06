@@ -14,20 +14,41 @@ import { cn } from "@/lib/utils";
 
 const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const;
 
+function parseAudioDurationMs(seconds: number): number | null {
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  return Math.round(seconds * 1000);
+}
+
+function resolveDurationMs(
+  ...candidates: Array<number | null | undefined>
+): number {
+  for (const candidate of candidates) {
+    if (candidate != null && Number.isFinite(candidate) && candidate > 0) {
+      return Math.round(candidate);
+    }
+  }
+  return 0;
+}
+
 export function RecordingPlayer({
   meetingId,
   currentTimeMs,
   onTimeUpdate,
   onSeek,
+  fallbackDurationMs,
   className,
 }: {
   meetingId: string;
   currentTimeMs: number;
   onTimeUpdate: (ms: number) => void;
   onSeek: (ms: number) => void;
+  /** Duração conhecida quando o `<audio>` não expõe metadados (stream sem Content-Length). */
+  fallbackDurationMs?: number;
   className?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const pendingSeekMs = useRef(0);
+  const apiDurationMs = useRef<number | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +56,28 @@ export function RecordingPlayer({
   const [durationMs, setDurationMs] = useState(0);
   const [muted, setMuted] = useState(false);
   const [rateIndex, setRateIndex] = useState(1);
+  const [ready, setReady] = useState(false);
+
+  const applyDuration = useCallback(
+    (audioSeconds: number | null | undefined) => {
+      const next = resolveDurationMs(
+        audioSeconds != null ? audioSeconds * 1000 : null,
+        apiDurationMs.current,
+        fallbackDurationMs
+      );
+      if (next > 0) setDurationMs(next);
+    },
+    [fallbackDurationMs]
+  );
+
+  useEffect(() => {
+    pendingSeekMs.current = currentTimeMs;
+  }, [currentTimeMs]);
+
+  useEffect(() => {
+    const initial = resolveDurationMs(fallbackDurationMs);
+    if (initial > 0) setDurationMs(initial);
+  }, [fallbackDurationMs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +85,9 @@ export function RecordingPlayer({
     async function load() {
       setLoading(true);
       setError(null);
+      setReady(false);
+      apiDurationMs.current = null;
+
       try {
         const res = await fetch(`/api/meetings/${meetingId}/recording`);
         const data = await res.json().catch(() => ({}));
@@ -49,7 +95,19 @@ export function RecordingPlayer({
           if (!cancelled) setError(data.error ?? "Gravação indisponível");
           return;
         }
-        if (!cancelled) setUrl(data.url);
+        if (!data.url || typeof data.url !== "string") {
+          if (!cancelled) setError("Gravação indisponível");
+          return;
+        }
+
+        if (typeof data.durationSeconds === "number" && data.durationSeconds > 0) {
+          apiDurationMs.current = Math.round(data.durationSeconds * 1000);
+        }
+
+        if (!cancelled) {
+          setUrl(data.url);
+          applyDuration(null);
+        }
       } catch {
         if (!cancelled) setError("Falha ao carregar gravação");
       } finally {
@@ -61,26 +119,31 @@ export function RecordingPlayer({
     return () => {
       cancelled = true;
     };
-  }, [meetingId]);
+  }, [meetingId, applyDuration]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !url) return;
-    const diff = Math.abs(audio.currentTime * 1000 - currentTimeMs);
-    if (audio.paused || diff > 250) {
-      audio.currentTime = currentTimeMs / 1000;
+    if (!audio || !url || !ready) return;
+
+    const maxMs = durationMs > 0 ? durationMs : undefined;
+    const targetMs = maxMs != null ? Math.min(pendingSeekMs.current, maxMs) : pendingSeekMs.current;
+    const diff = Math.abs(audio.currentTime * 1000 - targetMs);
+    if (diff > 250) {
+      audio.currentTime = targetMs / 1000;
     }
-  }, [currentTimeMs, url]);
+  }, [currentTimeMs, url, ready, durationMs]);
 
   const handleSeek = useCallback(
     (ms: number) => {
+      const clamped =
+        durationMs > 0 ? Math.min(Math.max(0, ms), durationMs) : Math.max(0, ms);
       const audio = audioRef.current;
       if (audio) {
-        audio.currentTime = ms / 1000;
+        audio.currentTime = clamped / 1000;
       }
-      onSeek(ms);
+      onSeek(clamped);
     },
-    [onSeek]
+    [durationMs, onSeek]
   );
 
   const togglePlay = useCallback(async () => {
@@ -132,7 +195,8 @@ export function RecordingPlayer({
     );
   }
 
-  const progress = durationMs > 0 ? (currentTimeMs / durationMs) * 100 : 0;
+  const sliderMax = durationMs > 0 ? durationMs : Math.max(currentTimeMs, 1);
+  const sliderValue = durationMs > 0 ? Math.min(currentTimeMs, durationMs) : currentTimeMs;
 
   return (
     <div className={cn("surface-card space-y-3 p-4", className)}>
@@ -141,19 +205,45 @@ export function RecordingPlayer({
         src={url}
         muted={muted}
         preload="metadata"
-        onLoadedMetadata={(e) => setDurationMs(e.currentTarget.duration * 1000)}
-        onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime * 1000)}
+        onLoadedMetadata={(e) => {
+          const resolved = resolveDurationMs(
+            parseAudioDurationMs(e.currentTarget.duration),
+            apiDurationMs.current,
+            fallbackDurationMs
+          );
+          if (resolved > 0) setDurationMs(resolved);
+          setReady(true);
+          const targetMs = pendingSeekMs.current;
+          if (targetMs > 0) {
+            e.currentTarget.currentTime =
+              resolved > 0 ? Math.min(targetMs, resolved) / 1000 : targetMs / 1000;
+          }
+        }}
+        onDurationChange={(e) => {
+          applyDuration(parseAudioDurationMs(e.currentTarget.duration));
+        }}
+        onTimeUpdate={(e) => {
+          const ms = e.currentTarget.currentTime * 1000;
+          onTimeUpdate(durationMs > 0 ? Math.min(ms, durationMs) : ms);
+        }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}
         onError={() => {
           setPlaying(false);
+          setReady(false);
           setError("Erro ao reproduzir a gravação.");
         }}
       />
 
       <div className="flex items-center gap-2">
-        <Button type="button" size="icon" variant="brand" className="size-9 shrink-0" onClick={() => void togglePlay()}>
+        <Button
+          type="button"
+          size="icon"
+          variant="brand"
+          className="size-9 shrink-0"
+          onClick={() => void togglePlay()}
+        >
           {playing ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
         </Button>
 
@@ -161,15 +251,15 @@ export function RecordingPlayer({
           <input
             type="range"
             min={0}
-            max={durationMs || 1}
-            value={currentTimeMs}
+            max={sliderMax}
+            value={sliderValue}
             onChange={(e) => handleSeek(Number(e.target.value))}
             className="h-1.5 w-full cursor-pointer accent-brand"
             aria-label="Posição da gravação"
           />
           <div className="mt-1 flex justify-between text-[11px] tabular-nums text-muted-foreground">
-            <span>{formatTimestamp(currentTimeMs)}</span>
-            <span>{formatTimestamp(durationMs)}</span>
+            <span>{formatTimestamp(sliderValue)}</span>
+            <span>{durationMs > 0 ? formatTimestamp(durationMs) : "--:--"}</span>
           </div>
         </div>
 
@@ -197,16 +287,6 @@ export function RecordingPlayer({
         >
           {muted ? <SpeakerSlash size={16} /> : <SpeakerHigh size={16} />}
         </Button>
-      </div>
-
-      <div
-        className="h-1 overflow-hidden rounded-full bg-muted"
-        role="progressbar"
-        aria-valuenow={Math.round(progress)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div className="h-full bg-brand transition-all" style={{ width: `${progress}%` }} />
       </div>
     </div>
   );
