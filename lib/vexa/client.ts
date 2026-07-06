@@ -277,6 +277,37 @@ export async function setBotScreen(
   }
 }
 
+export type VexaRecordingDownload = {
+  download_url?: string;
+  filename?: string;
+  content_type?: string;
+  file_size_bytes?: number;
+};
+
+/** Presigned URL para playback direto no browser (S3/MinIO). */
+export async function fetchRecordingMediaDownload(
+  recordingId: string,
+  mediaFileId: string
+): Promise<VexaRecordingDownload | null> {
+  const res = await vexaFetch(
+    `/recordings/${encodeURIComponent(recordingId)}/media/${encodeURIComponent(mediaFileId)}/download`
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<VexaRecordingDownload>;
+}
+
+/** Verifica se a mídia ainda existe no Vexa (download ou raw parcial). */
+export async function isVexaRecordingMediaAvailable(
+  recordingId: string,
+  mediaFileId: string
+): Promise<boolean> {
+  const download = await fetchRecordingMediaDownload(recordingId, mediaFileId);
+  if (download?.download_url?.startsWith("http")) return true;
+
+  const res = await fetchRecordingMediaRaw(recordingId, mediaFileId, { Range: "bytes=0-1" });
+  return res.ok || res.status === 206;
+}
+
 /** Stream autenticado de mídia (suporta Range para seek no player). */
 export async function fetchRecordingMediaRaw(
   recordingId: string,
