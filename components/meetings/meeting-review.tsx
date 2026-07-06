@@ -58,6 +58,13 @@ export function MeetingReview({
   const talkTime = useMemo(() => computeTalkTime(segments), [segments]);
   const liveSession = useMeetingSessionContext();
 
+  const recordingDurationMs = useMemo(() => {
+    if (meeting.duration_ms && meeting.duration_ms > 0) return meeting.duration_ms;
+    const lastSegment = segments.at(-1);
+    if (lastSegment?.end_ms && lastSegment.end_ms > 0) return lastSegment.end_ms;
+    return undefined;
+  }, [meeting.duration_ms, segments]);
+
   const seek = useCallback((ms: number) => {
     setCurrentTimeMs(ms);
     setHighlightMs(ms);
@@ -89,6 +96,7 @@ export function MeetingReview({
           currentTimeMs={currentTimeMs}
           onTimeUpdate={setCurrentTimeMs}
           onSeek={seek}
+          fallbackDurationMs={recordingDurationMs}
         />
       )}
 
