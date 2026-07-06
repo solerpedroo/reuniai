@@ -9,6 +9,7 @@ import {
 import type { CommandSearchHit } from "@/lib/command/types";
 import { getReviewQueueCounts } from "@/lib/review/review-queue";
 import { formatMeetingDateTime } from "@/lib/meetings/types";
+import { toIlikeContainsPattern } from "@/lib/search/escape-ilike";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -237,7 +238,7 @@ export async function searchCommandPalette(
     return getContextualActions(supabase);
   }
 
-  const pattern = `%${term}%`;
+  const pattern = toIlikeContainsPattern(term);
   const [meetings, tasks, participants, keywordActions] = await Promise.all([
     searchMeetings(supabase, pattern),
     searchTasks(supabase, pattern),
