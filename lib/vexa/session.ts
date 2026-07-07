@@ -78,7 +78,12 @@ export async function getMeetingSessionStatus(
       });
     }
 
-    humanCount = resolveSessionHumanCount(participantsResponse, segments, lastHumanActivityMs);
+    humanCount = resolveSessionHumanCount(
+      participantsResponse,
+      segments,
+      lastHumanActivityMs,
+      lifecycleStatus
+    );
 
     autoLeaveAt = resolveAutoLeaveAt({
       vexaStatus: lifecycleStatus,
