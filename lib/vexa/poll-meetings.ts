@@ -126,6 +126,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     // Sala vazia: encerra o bot proativamente.
     if (meeting.status === "recording" || meeting.status === "bot_joining") {
       const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
+        meetingId: meeting.id,
         platform: parsed.platform,
         nativeMeetingId: nativeId,
         vexaStatus,
