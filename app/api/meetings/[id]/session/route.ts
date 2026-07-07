@@ -75,13 +75,14 @@ export async function GET(
   }
 
   try {
+    const admin = createAdminClient();
     const session = await getMeetingSessionStatus(
       parsed.platform,
       nativeMeetingId,
-      sessionStartedAt
+      sessionStartedAt,
+      { meetingId: meeting.id, admin }
     );
 
-    const admin = createAdminClient();
     const lifecycleStatus = session.vexaStatus;
     let synced = false;
 
@@ -117,6 +118,7 @@ export async function GET(
       session.vexaStatus
     ) {
       const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
+        meetingId: meeting.id,
         platform: parsed.platform,
         nativeMeetingId,
         vexaStatus: session.vexaStatus,
