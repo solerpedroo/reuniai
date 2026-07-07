@@ -88,15 +88,21 @@ export function resolveSessionHumanCount(
   apiResponse: VexaMeetingParticipantsResponse | null,
   segments: VexaTranscriptSegment[],
   lastHumanActivityMs: number | null,
-  vexaStatus?: string | null
+  vexaStatus?: string | null,
+  stickyRosterNames: string[] = []
 ): number | null {
+  const stickyCount = stickyRosterNames.length;
   const fromTranscript = countHumanSpeakersFromTranscript(segments);
+  const fromApi = apiResponse ? countHumanParticipants(apiResponse) : 0;
+  const fromParticipantTotal =
+    apiResponse && apiResponse.participant_count >= 2
+      ? Math.max(0, apiResponse.participant_count - 1)
+      : 0;
+
+  const resolved = Math.max(stickyCount, fromApi, fromTranscript, fromParticipantTotal);
+  if (resolved > 0) return resolved;
 
   if (apiResponse) {
-    const fromApi = countHumanParticipants(apiResponse);
-    if (fromApi > 0) return fromApi;
-    if (fromTranscript > 0) return fromTranscript;
-
     if (
       isParticipantCountUncertain(apiResponse) &&
       (isCapturingVexaStatus(vexaStatus ?? "") || isJoiningVexaStatus(vexaStatus ?? ""))
@@ -116,7 +122,7 @@ export function resolveSessionHumanCount(
   const inferred = inferHumanCountFromTranscript(lastHumanActivityMs);
   if (inferred > 0) return inferred;
 
-  return null;
+  return stickyCount > 0 ? stickyCount : null;
 }
 
 /**
@@ -331,7 +337,12 @@ export async function shouldAutoLeaveEmptyMeeting(
   platform: BotPlatform,
   nativeMeetingId: string,
   vexaStatus: string,
-  referenceMs: number
+  referenceMs: number,
+  stickyRosterNames: string[] = [],
+  prefetched?: {
+    participants: VexaMeetingParticipantsResponse | null;
+    segments: VexaTranscriptSegment[];
+  }
 ): Promise<boolean> {
   const inLobby = isJoiningVexaStatus(vexaStatus);
   if (!isCapturingVexaStatus(vexaStatus) && !inLobby) return false;
@@ -342,23 +353,41 @@ export async function shouldAutoLeaveEmptyMeeting(
   let lastHumanActivityMs: number | null = null;
 
   try {
-    const participants = await getMeetingParticipants(platform, nativeMeetingId);
-    const humanCount = countPresentHumanParticipants(participants);
-    if (humanCount > 0) return false;
+    let participants: VexaMeetingParticipantsResponse | null;
+    let segments: VexaTranscriptSegment[];
+
+    if (prefetched) {
+      participants = prefetched.participants;
+      segments = prefetched.segments;
+    } else {
+      participants = await getMeetingParticipants(platform, nativeMeetingId);
+      const transcript = await getTranscript(platform, nativeMeetingId);
+      segments = transcript.segments ?? [];
+    }
+
+    lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
+
+    const humanCount = resolveSessionHumanCount(
+      participants,
+      segments,
+      lastHumanActivityMs,
+      vexaStatus,
+      stickyRosterNames
+    );
+    if (humanCount != null && humanCount > 0) return false;
 
     if (inLobby) {
       return activeForMs >= EMPTY_LOBBY_MIN_MS;
     }
 
-    if (isParticipantCountUncertain(participants)) {
+    if (countHumanSpeakersFromTranscript(segments) > 0) {
       return false;
     }
 
-    const transcript = await getTranscript(platform, nativeMeetingId);
-    const segments = transcript.segments ?? [];
-    lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
-
-    if (countHumanSpeakersFromTranscript(segments) > 0) {
+    if (
+      (!participants || isParticipantCountUncertain(participants)) &&
+      stickyRosterNames.length === 0
+    ) {
       return false;
     }
 
