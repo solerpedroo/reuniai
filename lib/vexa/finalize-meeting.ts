@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
+import { clearLiveRosterNames } from "@/lib/meetings/live-roster";
 import { resolveDurationStartMs } from "@/lib/meetings/bot-session-time";
 import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
 
@@ -60,6 +61,8 @@ export async function finalizeStoppedMeeting(
     .maybeSingle<{ id: string }>();
 
   if (!claimed) return;
+
+  await clearLiveRosterNames(admin, meeting.id);
 
   try {
     await processMeetingByNativeId(admin, platform, nativeMeetingId);
