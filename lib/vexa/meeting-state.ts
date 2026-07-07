@@ -22,8 +22,6 @@ export const JOINING_GRACE_MS = 3 * 60_000;
 export const JOINING_TIMEOUT_MS = 15 * 60_000;
 /** Tempo mínimo no lobby vazio antes de desistir da entrada. */
 export const EMPTY_LOBBY_MIN_MS = 60_000;
-/** Janela sem last_seen na API de participantes = considerado ausente da call. */
-export const PARTICIPANT_PRESENCE_MS = 90_000;
 
 const JOINING_STATUSES = new Set(["requested", "joining", "awaiting_admission"]);
 const CAPTURING_STATUSES = new Set(["active", "stopping"]);
@@ -55,23 +53,20 @@ export function countHumanParticipants(
   return Math.max(0, response.participant_count - 1);
 }
 
-/** Humanos ainda presentes — usa last_seen quando disponível (auto-saída). */
+/** Humanos ainda presentes — mesma regra da UI (lista atual do Vexa). */
 export function countPresentHumanParticipants(
   response: VexaMeetingParticipantsResponse
 ): number {
-  const participants = response.participants ?? [];
-  const now = Date.now();
-  if (participants.length > 0) {
-    return participants.filter((participant) => {
-      if (isLikelyBotParticipant(participant.name)) return false;
-      if (participant.last_seen) {
-        return now - new Date(participant.last_seen).getTime() <= PARTICIPANT_PRESENCE_MS;
-      }
-      return true;
-    }).length;
-  }
+  return countHumanParticipants(response);
+}
 
-  return Math.max(0, response.participant_count - 1);
+/** Lista vazia + count≤1: Vexa ainda não detectou humanos (ex.: muted/câmera off). */
+export function isParticipantCountUncertain(
+  response: VexaMeetingParticipantsResponse
+): boolean {
+  const participants = response.participants ?? [];
+  if (participants.length > 0) return false;
+  return response.participant_count <= 1;
 }
 
 /** Falantes humanos distintos na transcrição (fallback quando a API falha). */
@@ -92,19 +87,36 @@ export function countHumanSpeakersFromTranscript(segments: VexaTranscriptSegment
 export function resolveSessionHumanCount(
   apiResponse: VexaMeetingParticipantsResponse | null,
   segments: VexaTranscriptSegment[],
-  lastHumanActivityMs: number | null
-): number {
+  lastHumanActivityMs: number | null,
+  vexaStatus?: string | null
+): number | null {
   const fromTranscript = countHumanSpeakersFromTranscript(segments);
 
   if (apiResponse) {
     const fromApi = countHumanParticipants(apiResponse);
     if (fromApi > 0) return fromApi;
     if (fromTranscript > 0) return fromTranscript;
+
+    if (
+      isParticipantCountUncertain(apiResponse) &&
+      (isCapturingVexaStatus(vexaStatus ?? "") || isJoiningVexaStatus(vexaStatus ?? ""))
+    ) {
+      return null;
+    }
+
+    if (lastHumanActivityMs != null && Date.now() - lastHumanActivityMs < EMPTY_ROOM_GRACE_MS) {
+      return 1;
+    }
+
     return fromApi;
   }
 
   if (fromTranscript > 0) return fromTranscript;
-  return inferHumanCountFromTranscript(lastHumanActivityMs);
+
+  const inferred = inferHumanCountFromTranscript(lastHumanActivityMs);
+  if (inferred > 0) return inferred;
+
+  return null;
 }
 
 /**
@@ -335,15 +347,24 @@ export async function shouldAutoLeaveEmptyMeeting(
     if (humanCount > 0) return false;
 
     if (inLobby) {
-      return true;
+      return activeForMs >= EMPTY_LOBBY_MIN_MS;
+    }
+
+    if (isParticipantCountUncertain(participants)) {
+      return false;
     }
 
     const transcript = await getTranscript(platform, nativeMeetingId);
     const segments = transcript.segments ?? [];
     lastHumanActivityMs = getLastHumanTranscriptActivityMs(segments);
 
+    if (countHumanSpeakersFromTranscript(segments) > 0) {
+      return false;
+    }
+
+    // Só encerra após humanos terem falado e ficado ausentes — não assume vazio em call silenciosa.
     if (lastHumanActivityMs == null) {
-      return activeForMs >= EMPTY_ROOM_GRACE_MS;
+      return false;
     }
 
     return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_GRACE_MS;
@@ -369,7 +390,7 @@ export async function shouldAutoLeaveEmptyMeeting(
     }
 
     if (lastHumanActivityMs == null) {
-      return activeForMs >= EMPTY_ROOM_GRACE_MS;
+      return false;
     }
 
     return Date.now() - lastHumanActivityMs >= EMPTY_ROOM_GRACE_MS;
@@ -393,10 +414,9 @@ export function resolveAutoLeaveAt(input: {
     return new Date(input.referenceMs + EMPTY_LOBBY_MIN_MS).toISOString();
   }
 
-  const leaveAtMs =
-    input.lastHumanActivityMs != null
-      ? input.lastHumanActivityMs + EMPTY_ROOM_GRACE_MS
-      : input.referenceMs + EMPTY_ROOM_GRACE_MS;
+  if (input.lastHumanActivityMs == null) {
+    return null;
+  }
 
-  return new Date(leaveAtMs).toISOString();
+  return new Date(input.lastHumanActivityMs + EMPTY_ROOM_GRACE_MS).toISOString();
 }
