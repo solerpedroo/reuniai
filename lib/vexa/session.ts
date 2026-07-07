@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
+import type { createAdminClient } from "@/lib/supabase/admin";
+import { syncLiveRosterNames } from "@/lib/meetings/live-roster";
 import { getRunningBots, getMeetingParticipants, getTranscript, getVexaMeeting } from "@/lib/vexa/client";
 import {
   getLastHumanTranscriptActivityMs,
@@ -17,11 +19,17 @@ import type { MeetingSessionStatus } from "@/lib/vexa/session-types";
 
 export type { MeetingSessionStatus };
 
+type SessionContext = {
+  meetingId?: string;
+  admin?: ReturnType<typeof createAdminClient>;
+};
+
 /** Confirma se o bot está na call, transcrevendo e/ou gravando áudio. */
 export async function getMeetingSessionStatus(
   platform: BotPlatform,
   nativeMeetingId: string,
-  startedAt?: string | null
+  startedAt?: string | null,
+  context?: SessionContext
 ): Promise<MeetingSessionStatus> {
   const [runningBots, transcript, vexaMeeting] = await Promise.all([
     getRunningBots().catch(() => []),
@@ -78,11 +86,22 @@ export async function getMeetingSessionStatus(
       });
     }
 
+    let stickyRosterNames: string[] = [];
+    if (context?.meetingId && context.admin) {
+      stickyRosterNames = await syncLiveRosterNames(
+        context.admin,
+        context.meetingId,
+        participantsResponse,
+        segments
+      );
+    }
+
     humanCount = resolveSessionHumanCount(
       participantsResponse,
       segments,
       lastHumanActivityMs,
-      lifecycleStatus
+      lifecycleStatus,
+      stickyRosterNames
     );
 
     autoLeaveAt = resolveAutoLeaveAt({
