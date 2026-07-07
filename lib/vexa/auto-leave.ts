@@ -3,13 +3,16 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { logStructured } from "@/lib/logging/structured";
+import { syncLiveRosterNames } from "@/lib/meetings/live-roster";
 import { stopBot } from "@/lib/vexa/client";
 import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { shouldAutoLeaveEmptyMeeting, resolveAutoLeaveReferenceMs } from "@/lib/vexa/meeting-state";
+import { getMeetingParticipants, getTranscript } from "@/lib/vexa/client";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 export type AutoLeaveMeetingInput = {
+  meetingId: string;
   platform: BotPlatform;
   nativeMeetingId: string;
   vexaStatus: string;
@@ -41,11 +44,32 @@ export async function tryAutoLeaveEmptyMeeting(
   }
 
   const referenceMs = resolveAutoLeaveReferenceMs(input.vexaStartTime, input.meetingStartedAt);
+
+  let participantsResponse = null;
+  let segments: Awaited<ReturnType<typeof getTranscript>>["segments"] = [];
+  try {
+    participantsResponse = await getMeetingParticipants(input.platform, input.nativeMeetingId);
+    const transcript = await getTranscript(input.platform, input.nativeMeetingId);
+    segments = transcript.segments ?? [];
+  } catch {
+    participantsResponse = null;
+    segments = [];
+  }
+
+  const stickyRosterNames = await syncLiveRosterNames(
+    admin,
+    input.meetingId,
+    participantsResponse,
+    segments
+  );
+
   const shouldLeave = await shouldAutoLeaveEmptyMeeting(
     input.platform,
     input.nativeMeetingId,
     input.vexaStatus,
-    referenceMs
+    referenceMs,
+    stickyRosterNames,
+    { participants: participantsResponse, segments }
   );
 
   if (!shouldLeave) {
