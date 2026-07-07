@@ -118,6 +118,7 @@ export type Database = {
           recall_bot_id: string | null;
           duration_ms: number | null;
           recording_path: string | null;
+          live_roster_names: string[];
           error_message: string | null;
           transcript_source: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id: string | null;
@@ -144,6 +145,7 @@ export type Database = {
           recall_bot_id?: string | null;
           duration_ms?: number | null;
           recording_path?: string | null;
+          live_roster_names?: string[];
           error_message?: string | null;
           transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id?: string | null;
@@ -170,6 +172,7 @@ export type Database = {
           recall_bot_id?: string | null;
           duration_ms?: number | null;
           recording_path?: string | null;
+          live_roster_names?: string[];
           error_message?: string | null;
           transcript_source?: Database["public"]["Enums"]["transcript_source"] | null;
           native_artifact_id?: string | null;
