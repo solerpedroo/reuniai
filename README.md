@@ -2,7 +2,7 @@
 
 **Ouve. Transcreve. Analisa. Potencializa.**
 
-SaaS de inteligência de reuniões para **Google Meet, Zoom e Microsoft Teams**. Um bot entra na call, grava e transcreve em tempo real; depois a IA extrai resumo executivo, decisões, action items, follow-ups e insights — tudo pesquisável e acionável num único lugar.
+Inteligência de reuniões para **Google Meet, Zoom e Microsoft Teams**. Um bot entra na call, grava e transcreve em tempo real; depois a IA extrai resumo executivo, decisões, action items, follow-ups e insights — tudo pesquisável e acionável num único lugar.
 
 Projeto pessoal full-stack: Next.js 15, Supabase, Vexa e LLMs.
 
