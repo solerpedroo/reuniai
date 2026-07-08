@@ -60,7 +60,13 @@ export async function POST(request: NextRequest) {
   }
 
   const activeStatuses = new Set(["bot_joining", "recording"]);
+  const admin = createAdminClient();
+
   if (!activeStatuses.has(meeting.status)) {
+    await finalizeStoppedMeeting(admin, parsed.platform, meeting.recall_bot_id, {
+      endTime: new Date().toISOString(),
+      startTime: meeting.started_at,
+    });
     return NextResponse.json({ ok: true, alreadyStopped: true });
   }
 
@@ -81,7 +87,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const admin = createAdminClient();
   await finalizeStoppedMeeting(admin, parsed.platform, meeting.recall_bot_id, {
     endTime: new Date().toISOString(),
     startTime: meeting.bot_session_started_at ?? meeting.started_at,

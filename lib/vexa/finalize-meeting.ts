@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
+import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { clearLiveRosterNames } from "@/lib/meetings/live-roster";
 import { resolveDurationStartMs } from "@/lib/meetings/bot-session-time";
 import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
@@ -17,9 +18,28 @@ type FinalizeMeetingRow = {
   bot_session_started_at: string | null;
 };
 
+const STUCK_RETRY_MIN_AGE_MS = 2 * 60_000;
+const STUCK_RETRY_MAX_AGE_MS = 48 * 60 * 60_000;
+
+const LIVE_STATUSES = new Set(["bot_joining", "recording"]);
+const STUCK_TERMINAL_STATUSES = new Set(["processing", "completed", "partial"]);
+
+async function runMeetingPipeline(
+  admin: AdminClient,
+  platform: BotPlatform,
+  nativeMeetingId: string
+): Promise<void> {
+  try {
+    await processMeetingByNativeId(admin, platform, nativeMeetingId);
+  } catch (err) {
+    console.error("Falha ao processar reunião encerrada:", err);
+  }
+}
+
 /**
  * Marca a reunião como encerrada e dispara ingestão + análise.
  * Claim atômico evita pipeline duplicado (webhook + poll + session em paralelo).
+ * Reentra em reuniões já encerradas sem transcrição (ex.: bot removido manualmente).
  */
 export async function finalizeStoppedMeeting(
   admin: AdminClient,
@@ -53,6 +73,14 @@ export async function finalizeStoppedMeeting(
     return;
   }
 
+  const isLive = LIVE_STATUSES.has(meeting.status);
+  const isStuckWithoutTranscript =
+    !isLive && STUCK_TERMINAL_STATUSES.has(meeting.status);
+
+  if (!isLive && !isStuckWithoutTranscript) {
+    return;
+  }
+
   const startMs = resolveDurationStartMs(meeting);
   const endMs = new Date(endIso).getTime();
   const durationMs =
@@ -65,7 +93,7 @@ export async function finalizeStoppedMeeting(
     ...(durationMs != null ? { duration_ms: durationMs } : {}),
   };
 
-  if (meeting.status === "bot_joining" || meeting.status === "recording") {
+  if (isLive) {
     const { data: claimed } = await admin
       .from("meetings")
       .update({ status: "processing", ...endPatch })
@@ -75,21 +103,55 @@ export async function finalizeStoppedMeeting(
       .maybeSingle<{ id: string }>();
 
     if (!claimed) return;
-  } else if (meeting.status === "processing" || meeting.status === "partial") {
+  } else {
     await admin
       .from("meetings")
       .update({ status: "processing", ...endPatch })
       .eq("id", meeting.id)
-      .in("status", ["processing", "partial"]);
-  } else {
-    return;
+      .in("status", ["processing", "partial", "completed"]);
   }
 
   await clearLiveRosterNames(admin, meeting.id);
+  await runMeetingPipeline(admin, platform, nativeMeetingId);
+}
 
-  try {
-    await processMeetingByNativeId(admin, platform, nativeMeetingId);
-  } catch (err) {
-    console.error("Falha ao processar reunião encerrada:", err);
+/**
+ * Reprocessa reuniões encerradas há alguns minutos que ainda não têm transcrição.
+ * Cobre casos em que o poll marcou `completed` antes de ingerir os segmentos.
+ */
+export async function retryStuckMeetingTranscripts(
+  admin: AdminClient
+): Promise<{ retried: number }> {
+  const now = Date.now();
+  const minEnded = new Date(now - STUCK_RETRY_MAX_AGE_MS).toISOString();
+
+  const { data: meetings } = await admin
+    .from("meetings")
+    .select("id, meeting_url, recall_bot_id, ended_at")
+    .in("status", ["processing", "completed", "partial"])
+    .not("recall_bot_id", "is", null)
+    .not("ended_at", "is", null)
+    .gte("ended_at", minEnded);
+
+  let retried = 0;
+
+  for (const meeting of meetings ?? []) {
+    if (!meeting.ended_at || !meeting.recall_bot_id) continue;
+
+    const endedMs = new Date(meeting.ended_at).getTime();
+    if (!Number.isFinite(endedMs) || now - endedMs < STUCK_RETRY_MIN_AGE_MS) {
+      continue;
+    }
+
+    const segmentCount = await countMeetingTranscriptSegments(admin, meeting.id);
+    if (segmentCount > 0) continue;
+
+    const parsed = meeting.meeting_url ? parseMeetingUrl(meeting.meeting_url) : null;
+    if (!parsed) continue;
+
+    await runMeetingPipeline(admin, parsed.platform, meeting.recall_bot_id);
+    retried += 1;
   }
+
+  return { retried };
 }
