@@ -179,6 +179,18 @@ export async function ingestMeetingWithFallback(
         ? "Conecte o Google Calendar com escopo Meet ou use o bot Vexa."
         : "Verifique se o bot entrou na reunião ou se há gravação nativa disponível.";
 
+  const vexaAuthFailed = errors.some(
+    (msg) => msg.includes("(401)") || msg.includes("Invalid API key")
+  );
+
+  if (vexaAuthFailed) {
+    throw new TranscriptUnavailableError(
+      "Chave Vexa rejeitada (401). Gere novas chaves em vexa.ai/account, " +
+        "configure VEXA_BOT_API_KEY e VEXA_TX_API_KEY no .env.local, rode npm run vexa:key-test " +
+        "(precisa retornar 200) e reinicie o servidor. Se conta nova também falhar, contate o suporte Vexa."
+    );
+  }
+
   throw new TranscriptUnavailableError(
     `Não foi possível obter a transcrição. ${platformHint}${errors.length ? ` Detalhes: ${errors.join("; ")}` : ""}`
   );
