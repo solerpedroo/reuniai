@@ -69,23 +69,27 @@ async function resolveFromVexaTranscript(
 async function resolveCachedVexaRef(
   vexaRef: VexaRecordingRef
 ): Promise<ResolvedRecording | null> {
-  const available = await isVexaRecordingMediaAvailable(
-    vexaRef.recordingId,
-    vexaRef.mediaFileId
-  );
-  if (!available) return null;
+  try {
+    const available = await isVexaRecordingMediaAvailable(
+      vexaRef.recordingId,
+      vexaRef.mediaFileId
+    );
+    if (!available) return null;
 
-  const download = await fetchRecordingMediaDownload(
-    vexaRef.recordingId,
-    vexaRef.mediaFileId
-  );
+    const download = await fetchRecordingMediaDownload(
+      vexaRef.recordingId,
+      vexaRef.mediaFileId
+    );
 
-  return {
-    source: "proxy",
-    vexaRef,
-    contentType: download?.content_type ?? recordingContentType(vexaRef),
-    durationSeconds: vexaRef.durationSeconds,
-  };
+    return {
+      source: "proxy",
+      vexaRef,
+      contentType: download?.content_type ?? recordingContentType(vexaRef),
+      durationSeconds: vexaRef.durationSeconds,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function resolveMeetingRecording(
