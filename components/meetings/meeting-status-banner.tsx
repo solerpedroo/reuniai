@@ -138,7 +138,8 @@ export function MeetingStatusBanner({
     return (
       <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400">
         <WarningCircle size={16} className="shrink-0" />
-        Transcrição parcial disponível (o bot pode ter sido removido antes do fim).
+        Transcrição incompleta — o bot pode ter sido removido antes do fim. Use “Buscar
+        transcrição” se ainda não aparecer.
       </div>
     );
   }
