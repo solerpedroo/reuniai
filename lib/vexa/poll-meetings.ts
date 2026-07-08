@@ -2,10 +2,14 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { resolveBotSessionStartedAt } from "@/lib/meetings/bot-session-time";
+import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
 import { stopBot, getTranscript } from "@/lib/vexa/client";
 import { tryAutoLeaveEmptyMeeting } from "@/lib/vexa/auto-leave";
-import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
+import {
+  finalizeStoppedMeeting,
+  retryStuckMeetingTranscripts,
+} from "@/lib/vexa/finalize-meeting";
 import {
   getRunningBotsByNativeId,
   getVexaMeetingsByNativeId,
@@ -23,6 +27,7 @@ export type PollMeetingsSummary = {
   updated: number;
   autoLeft: number;
   processed: number;
+  retried: number;
 };
 
 function meetingKey(platform: string, nativeMeetingId: string): string {
@@ -48,6 +53,21 @@ function resolvePollFailureReason(
   return "O bot encerrou com falha no provedor de transcrição.";
 }
 
+async function tryFinalizeStoppedMeeting(
+  admin: AdminClient,
+  platform: BotPlatform,
+  nativeId: string,
+  options: { endTime?: string; startTime?: string | null }
+): Promise<boolean> {
+  try {
+    await finalizeStoppedMeeting(admin, platform, nativeId, options);
+    return true;
+  } catch (err) {
+    console.error("Falha ao processar reunião (poll):", err);
+    return false;
+  }
+}
+
 /**
  * Sincroniza status das reuniões ativas com o Vexa, encerra bots em salas vazias
  * e dispara o pipeline quando a reunião termina.
@@ -60,7 +80,8 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     .not("recall_bot_id", "is", null);
 
   if (!meetings || meetings.length === 0) {
-    return { tracked: 0, updated: 0, autoLeft: 0, processed: 0 };
+    const { retried } = await retryStuckMeetingTranscripts(admin);
+    return { tracked: 0, updated: 0, autoLeft: 0, processed: 0, retried };
   }
 
   const [vexaMeetingsByNative, runningBotsByNative] = await Promise.all([
@@ -112,6 +133,13 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       elapsedMs
     );
 
+    const finalizeOptions = {
+      endTime: vexaMeeting?.end_time ?? new Date().toISOString(),
+      startTime: vexaMeeting?.start_time ?? sessionStartedAt,
+    };
+    const mappedStatus = mapVexaStatus(vexaStatus);
+    const isLiveBot = meeting.status === "recording" || meeting.status === "bot_joining";
+
     // Bot ainda na call enquanto DB já está em processamento → força saída.
     if (meeting.status === "processing" && container?.containerUp) {
       try {
@@ -124,7 +152,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     }
 
     // Sala vazia: encerra o bot proativamente.
-    if (meeting.status === "recording" || meeting.status === "bot_joining") {
+    if (isLiveBot) {
       const autoLeave = await tryAutoLeaveEmptyMeeting(admin, {
         meetingId: meeting.id,
         platform: parsed.platform,
@@ -142,6 +170,43 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       }
     }
 
+    // Finaliza antes de applyMeetingStatus quando o bot encerra — mesmo fluxo do webhook.
+    if (isLiveBot && mappedStatus === "completed") {
+      if (await tryFinalizeStoppedMeeting(admin, parsed.platform, nativeId, finalizeOptions)) {
+        processed += 1;
+      }
+      continue;
+    }
+
+    if (isLiveBot && mappedStatus === "failed") {
+      if (await tryFinalizeStoppedMeeting(admin, parsed.platform, nativeId, finalizeOptions)) {
+        processed += 1;
+      }
+
+      const result = await applyMeetingStatus(admin, {
+        nativeMeetingId: nativeId,
+        vexaStatus,
+        endTime: vexaMeeting?.end_time,
+        startTime: vexaMeeting?.start_time ?? sessionStartedAt,
+        reason:
+          meeting.status === "bot_joining"
+            ? resolvePollFailureReason(vexaMeeting, vexaStatus) ??
+              "O bot não conseguiu entrar na reunião a tempo."
+            : resolvePollFailureReason(vexaMeeting, vexaStatus),
+      });
+      if (result.updated) updated += 1;
+
+      if (container?.containerUp) {
+        try {
+          await stopBot(parsed.platform, nativeId);
+          autoLeft += 1;
+        } catch (err) {
+          console.error("Falha ao remover bot após falha de entrada:", err);
+        }
+      }
+      continue;
+    }
+
     const result = await applyMeetingStatus(admin, {
       nativeMeetingId: nativeId,
       vexaStatus,
@@ -156,7 +221,7 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
     if (result.updated) updated += 1;
 
     // Reaplica câmera enquanto gravando — virtual camera no Meet é intermitente.
-    if (vexaStatus === "active" && (meeting.status === "recording" || meeting.status === "bot_joining")) {
+    if (vexaStatus === "active" && isLiveBot) {
       scheduleBotBranding(parsed.platform, nativeId, { skipWait: true, quickRetry: true });
     }
 
@@ -169,19 +234,14 @@ export async function pollActiveMeetings(admin: AdminClient): Promise<PollMeetin
       }
     }
 
-    const mappedStatus = mapVexaStatus(vexaStatus);
     if (mappedStatus === "completed" || mappedStatus === "failed") {
-      try {
-        await finalizeStoppedMeeting(admin, parsed.platform, nativeId, {
-          endTime: vexaMeeting?.end_time ?? new Date().toISOString(),
-          startTime: vexaMeeting?.start_time ?? sessionStartedAt,
-        });
+      if (await tryFinalizeStoppedMeeting(admin, parsed.platform, nativeId, finalizeOptions)) {
         processed += 1;
-      } catch (err) {
-        console.error("Falha ao processar reunião (poll):", err);
       }
     }
   }
 
-  return { tracked: meetings.length, updated, autoLeft, processed };
+  const { retried } = await retryStuckMeetingTranscripts(admin);
+
+  return { tracked: meetings.length, updated, autoLeft, processed, retried };
 }
