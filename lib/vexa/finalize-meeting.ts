@@ -4,7 +4,9 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 import { clearLiveRosterNames } from "@/lib/meetings/live-roster";
 import { resolveDurationStartMs } from "@/lib/meetings/bot-session-time";
+import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
 import { processMeetingByNativeId } from "@/lib/pipeline/process-meeting";
+import { countMeetingTranscriptSegments } from "@/lib/vexa/retry-pending-transcript";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -37,7 +39,17 @@ export async function finalizeStoppedMeeting(
 
   if (!meeting) return;
 
-  if (["processing", "completed", "partial", "failed"].includes(meeting.status)) {
+  const segmentCount = await countMeetingTranscriptSegments(admin, meeting.id);
+
+  if (meeting.status === "failed") return;
+  if (meeting.status === "completed" && segmentCount > 0) return;
+
+  if (segmentCount > 0) {
+    try {
+      await analyzeMeetingById(admin, meeting.id);
+    } catch (err) {
+      console.error("Falha ao analisar reunião com transcrição existente:", err);
+    }
     return;
   }
 
@@ -48,19 +60,30 @@ export async function finalizeStoppedMeeting(
       ? endMs - startMs
       : null;
 
-  const { data: claimed } = await admin
-    .from("meetings")
-    .update({
-      status: "processing",
-      ended_at: endIso,
-      ...(durationMs != null ? { duration_ms: durationMs } : {}),
-    })
-    .eq("id", meeting.id)
-    .in("status", ["bot_joining", "recording"])
-    .select("id")
-    .maybeSingle<{ id: string }>();
+  const endPatch = {
+    ended_at: endIso,
+    ...(durationMs != null ? { duration_ms: durationMs } : {}),
+  };
 
-  if (!claimed) return;
+  if (meeting.status === "bot_joining" || meeting.status === "recording") {
+    const { data: claimed } = await admin
+      .from("meetings")
+      .update({ status: "processing", ...endPatch })
+      .eq("id", meeting.id)
+      .in("status", ["bot_joining", "recording"])
+      .select("id")
+      .maybeSingle<{ id: string }>();
+
+    if (!claimed) return;
+  } else if (meeting.status === "processing" || meeting.status === "partial") {
+    await admin
+      .from("meetings")
+      .update({ status: "processing", ...endPatch })
+      .eq("id", meeting.id)
+      .in("status", ["processing", "partial"]);
+  } else {
+    return;
+  }
 
   await clearLiveRosterNames(admin, meeting.id);
 
