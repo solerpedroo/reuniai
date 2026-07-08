@@ -3,15 +3,75 @@ import "server-only";
 import { formatBotDisplayName } from "@/lib/brand/bot-name";
 import type { BotPlatform } from "@/lib/meetings/meeting-url";
 
-function getConfig() {
-  const base = process.env.VEXA_API_BASE ?? "https://api.cloud.vexa.ai";
-  const apiKey = process.env.VEXA_API_KEY;
-  if (!apiKey) throw new Error("VEXA_API_KEY não configurada.");
-  return { base: base.replace(/\/$/, ""), apiKey };
+type VexaKeyRole = "bot" | "tx" | "any";
+
+function getBaseUrl(): string {
+  return (process.env.VEXA_API_BASE ?? "https://api.cloud.vexa.ai").replace(/\/$/, "");
 }
 
-async function vexaFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const { base, apiKey } = getConfig();
+function resolveVexaApiKey(role: VexaKeyRole): string {
+  const fallback = process.env.VEXA_API_KEY?.trim();
+  const botKey = process.env.VEXA_BOT_API_KEY?.trim() || fallback;
+  const txKey = process.env.VEXA_TX_API_KEY?.trim() || fallback;
+
+  if (role === "bot") {
+    if (!botKey) throw new Error("VEXA_BOT_API_KEY ou VEXA_API_KEY não configurada.");
+    return botKey;
+  }
+  if (role === "tx") {
+    if (!txKey) throw new Error("VEXA_TX_API_KEY ou VEXA_API_KEY não configurada.");
+    return txKey;
+  }
+  const anyKey = fallback || txKey || botKey;
+  if (!anyKey) {
+    throw new Error(
+      "Nenhuma chave Vexa configurada (VEXA_API_KEY, VEXA_BOT_API_KEY ou VEXA_TX_API_KEY)."
+    );
+  }
+  return anyKey;
+}
+
+function inferKeyRole(path: string): VexaKeyRole {
+  if (
+    path.startsWith("/transcripts") ||
+    path.startsWith("/meetings") ||
+    path.startsWith("/recordings")
+  ) {
+    return "tx";
+  }
+  if (path.startsWith("/bots") || path.startsWith("/user/")) return "bot";
+  return "any";
+}
+
+/** Mensagem amigável para erros de auth do Vexa Cloud. */
+export function formatVexaApiError(status: number, body: string, context: string): string {
+  const detail = body.trim().slice(0, 300);
+  if (status === 401) {
+    return (
+      `${context} falhou: chave Vexa inválida ou expirada (401). ` +
+      "Confirme em vexa.ai/account, rode npm run vexa:key-test e reinicie o servidor. " +
+      "Plano gratuito: chaves duram ~1h. Se persistir com conta nova, contate o suporte Vexa. " +
+      (detail ? `Resposta: ${detail}` : "")
+    );
+  }
+  if (status === 403) {
+    return (
+      `${context} falhou: escopo da chave insuficiente (403). ` +
+      "Tokens vxa_bot_* só gerenciam bots; vxa_tx_* só leem transcrições. " +
+      "Use VEXA_BOT_API_KEY + VEXA_TX_API_KEY no .env.local ou um token legacy com ambos os escopos. " +
+      (detail ? `Resposta: ${detail}` : "")
+    );
+  }
+  return `${context} falhou: ${status} ${detail}`;
+}
+
+async function vexaFetch(
+  path: string,
+  init: RequestInit = {},
+  role: VexaKeyRole = inferKeyRole(path)
+): Promise<Response> {
+  const base = getBaseUrl();
+  const apiKey = resolveVexaApiKey(role);
   return fetch(`${base}${path}`, {
     ...init,
     headers: {
@@ -174,7 +234,9 @@ export async function getTranscript(
 ): Promise<VexaTranscriptResponse> {
   const res = await vexaFetch(`/transcripts/${platform}/${nativeMeetingId}`);
   if (!res.ok) {
-    throw new Error(`Vexa getTranscript falhou: ${res.status} ${await res.text()}`);
+    throw new Error(
+      formatVexaApiError(res.status, await res.text(), "Vexa getTranscript")
+    );
   }
   return res.json();
 }
@@ -314,7 +376,8 @@ export async function fetchRecordingMediaRaw(
   mediaFileId: string,
   requestHeaders?: HeadersInit
 ): Promise<Response> {
-  const { base, apiKey } = getConfig();
+  const base = getBaseUrl();
+  const apiKey = resolveVexaApiKey("tx");
   const headers = new Headers(requestHeaders);
   headers.set("X-API-Key", apiKey);
 
