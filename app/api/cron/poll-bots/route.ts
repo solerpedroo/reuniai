@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pollActiveMeetings } from "@/lib/vexa/poll-meetings";
+import { retryMeetingsPendingTranscript } from "@/lib/vexa/retry-pending-transcript";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,8 +16,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const admin = createAdminClient();
-    const summary = await pollActiveMeetings(admin);
-    return NextResponse.json({ ok: true, ...summary });
+    const [summary, transcriptRetry] = await Promise.all([
+      pollActiveMeetings(admin),
+      retryMeetingsPendingTranscript(admin),
+    ]);
+    return NextResponse.json({ ok: true, ...summary, transcriptRetry });
   } catch (err) {
     console.error("Falha ao consultar bots:", err);
     return NextResponse.json({ error: "Falha ao consultar bots" }, { status: 500 });
