@@ -7,6 +7,7 @@ import { finalizeStoppedMeeting } from "@/lib/vexa/finalize-meeting";
 import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   const { data: meeting } = await supabase
     .from("meetings")
-    .select("id, user_id, meeting_url, recall_bot_id, started_at, status")
+    .select("id, user_id, meeting_url, recall_bot_id, started_at, bot_session_started_at, status")
     .eq("id", meetingId)
     .maybeSingle<{
       id: string;
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       meeting_url: string | null;
       recall_bot_id: string | null;
       started_at: string;
+      bot_session_started_at: string | null;
       status: string;
     }>();
 
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   await finalizeStoppedMeeting(admin, parsed.platform, meeting.recall_bot_id, {
     endTime: new Date().toISOString(),
-    startTime: meeting.started_at,
+    startTime: meeting.bot_session_started_at ?? meeting.started_at,
   });
 
   return NextResponse.json({ ok: true, botWasRunning: botRunning });
