@@ -45,6 +45,19 @@ export function toSegmentRows(meetingId: string, segments: NormalizedSegment[]):
   return rows;
 }
 
+const INSERT_BATCH_SIZE = 250;
+
+async function insertSegmentRows(
+  admin: AdminClient,
+  rows: SegmentInsert[]
+): Promise<void> {
+  for (let i = 0; i < rows.length; i += INSERT_BATCH_SIZE) {
+    const batch = rows.slice(i, i + INSERT_BATCH_SIZE);
+    const { error } = await admin.from("transcript_segments").insert(batch);
+    if (error) throw error;
+  }
+}
+
 /**
  * Persiste segmentos normalizados na reunião (idempotente).
  */
@@ -64,8 +77,7 @@ export async function persistMeetingSegments(
   await admin.from("transcript_segments").delete().eq("meeting_id", meetingId);
 
   if (rows.length > 0) {
-    const { error } = await admin.from("transcript_segments").insert(rows);
-    if (error) throw error;
+    await insertSegmentRows(admin, rows);
   }
 
   if (rows.length > 0) {
@@ -76,19 +88,22 @@ export async function persistMeetingSegments(
       .maybeSingle<{ user_id: string }>();
 
     if (meeting) {
-      try {
-        await applySpeakerMappingsToMeeting(admin, meetingId, meeting.user_id);
-      } catch (err) {
-        console.error("Falha ao aplicar speaker mappings (não bloqueante):", err);
+      const mappingWork = applySpeakerMappingsToMeeting(admin, meetingId, meeting.user_id).catch(
+        (err) => {
+          console.error("Falha ao aplicar speaker mappings (não bloqueante):", err);
+        }
+      );
+      // Reuniões longas: evita timeout na rota enquanto atualiza milhares de labels.
+      if (rows.length <= 200) {
+        await mappingWork;
       }
     }
   }
 
   const ingestOutcome: IngestResult["status"] = rows.length > 0 ? "completed" : "partial";
-  const dbStatus = rows.length > 0 ? "processing" : "partial";
   await admin
     .from("meetings")
-    .update({ status: dbStatus, transcript_source: transcriptSource })
+    .update({ status: "processing", transcript_source: transcriptSource })
     .eq("id", meetingId);
 
   return { segments: rows.length, status: ingestOutcome, transcriptSource };
