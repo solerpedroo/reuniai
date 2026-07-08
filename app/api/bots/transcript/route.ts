@@ -1,13 +1,16 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { parseMeetingUrl } from "@/lib/meetings/meeting-url";
-import { ingestMeetingTranscript } from "@/lib/pipeline/ingest-transcript";
 import { analyzeMeetingById } from "@/lib/pipeline/analyze-meeting";
+import {
+  ingestMeetingWithFallback,
+  TranscriptUnavailableError,
+} from "@/lib/pipeline/ingest-fallback";
 import { isRateLimited, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -61,15 +64,37 @@ export async function POST(request: NextRequest) {
 
   try {
     const admin = createAdminClient();
-    const result = await ingestMeetingTranscript(admin, {
-      meetingId: meeting.id,
-      platform: parsed.platform,
-      nativeMeetingId: meeting.recall_bot_id,
+    const result = await ingestMeetingWithFallback(admin, meeting.id);
+
+    if (result.segments === 0) {
+      return NextResponse.json(
+        { error: "Nenhum trecho disponível ainda no provedor de transcrição." },
+        { status: 422 }
+      );
+    }
+
+    after(async () => {
+      try {
+        await analyzeMeetingById(admin, meeting.id);
+      } catch (err) {
+        console.error("Análise em background após ingestão manual:", err);
+      }
     });
-    const analysis = await analyzeMeetingById(admin, meeting.id);
-    return NextResponse.json({ ok: true, ...result, analysis: analysis.status });
+
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      analysis: "scheduled",
+    });
   } catch (err) {
     console.error("Erro ao processar reunião:", err);
-    return NextResponse.json({ error: "Falha ao processar reunião" }, { status: 500 });
+
+    if (err instanceof TranscriptUnavailableError) {
+      return NextResponse.json({ error: err.message }, { status: 422 });
+    }
+
+    const message =
+      err instanceof Error ? err.message.slice(0, 500) : "Falha ao processar reunião";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
