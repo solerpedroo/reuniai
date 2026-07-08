@@ -11,6 +11,7 @@ export const maxDuration = 120;
 
 const END_BUFFER_MS = 10 * 60_000;
 const MAX_AGE_MS = 24 * 60 * 60_000;
+const VEXA_RETRY_MIN_AGE_MS = 2 * 60_000;
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -27,12 +28,12 @@ export async function GET(request: NextRequest) {
   const { data: meetings, error } = await admin
     .from("meetings")
     .select(
-      "id, user_id, platform, started_at, ended_at, prefer_native_transcript, native_artifact_id, status"
+      "id, user_id, platform, started_at, ended_at, prefer_native_transcript, native_artifact_id, recall_bot_id, status"
     )
-    .in("status", ["scheduled", "recording", "bot_joining", "processing"])
+    .in("status", ["scheduled", "recording", "bot_joining", "processing", "completed", "partial"])
     .gte("started_at", cutoffStart)
     .or(
-      "prefer_native_transcript.eq.true,and(platform.eq.teams,native_artifact_id.not.is.null)"
+      "prefer_native_transcript.eq.true,and(platform.eq.teams,native_artifact_id.not.is.null),and(recall_bot_id.not.is.null,ended_at.not.is.null)"
     );
 
   if (error) {
@@ -48,7 +49,8 @@ export async function GET(request: NextRequest) {
       ? new Date(meeting.ended_at).getTime()
       : new Date(meeting.started_at).getTime() + 60 * 60_000;
 
-    if (endMs + END_BUFFER_MS > now) {
+    const endBufferMs = meeting.recall_bot_id ? VEXA_RETRY_MIN_AGE_MS : END_BUFFER_MS;
+    if (endMs + endBufferMs > now) {
       skipped += 1;
       continue;
     }
