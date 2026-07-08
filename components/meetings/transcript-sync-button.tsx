@@ -25,7 +25,9 @@ export function TranscriptSyncButton({ meetingId }: { meetingId: string }) {
       }
       toast.success(
         data?.segments > 0
-          ? `Transcrição atualizada (${data.segments} trechos).`
+          ? `Transcrição atualizada (${data.segments} trechos).${
+              data?.analysis === "scheduled" ? " Análise por IA em andamento." : ""
+            }`
           : "Sem trechos disponíveis ainda."
       );
       router.refresh();
