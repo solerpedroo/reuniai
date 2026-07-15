@@ -1,68 +1,68 @@
 # ReuniAI
 
-**Ouve. Transcreve. Analisa. Potencializa.**
+**Listen. Transcribe. Analyze. Action.**
 
-Inteligência de reuniões para **Google Meet, Zoom e Microsoft Teams**. Um bot entra na call, grava e transcreve em tempo real; depois a IA extrai resumo executivo, decisões, action items, follow-ups e insights — tudo pesquisável e acionável num único lugar.
+Meeting intelligence platform for **Google Meet, Zoom, and Microsoft Teams**. A headless bot joins your calls, records, and transcribes audio in real-time, then leverages LLMs to extract executive summaries, decisions, action items, follow-ups, and key insights — making all meeting content searchable and actionable in a single workspace.
 
-Projeto pessoal full-stack: Next.js 15, Supabase, Vexa e LLMs.
-
----
-
-## O que o ReuniAI faz
-
-| Etapa | O que acontece |
-|-------|----------------|
-| **Entrada** | Você cola o link da reunião ou importa uma gravação |
-| **Bot** | O ReuniAI entra na call com nome personalizado e câmera de marca |
-| **Ao vivo** | Transcrição em tempo real, copilot, captura de decisões e contagem de participantes |
-| **Pós-call** | Pipeline automático: ingestão → resumo → action items → embeddings → notificações |
-| **Ação** | Chat sobre a reunião, tarefas, follow-ups, compartilhamento, export PDF/Notion |
-
-### Destaques
-
-- **Reunião espontânea** — cole o link e o bot entra na hora (`Nova reunião`)
-- **Importação** — upload de áudio/vídeo para transcrição offline
-- **IA contextual** — chat por reunião, assistente cross-meeting e ensaio de conversas difíceis
-- **Workflow completo** — fila de revisão, prep, follow-ups, atas, clips e links públicos
-- **Privacidade** — RLS no Supabase, redaction de PII em compartilhamentos, retenção configurável
-- **Integrações** — Notion (export), webhooks outbound; calendário e Slack implementados no backend (UI temporariamente oculta)
+Built with Next.js 15, Supabase, Vexa, and LLM orchestration.
 
 ---
 
-## Como funciona
+## Core Workflow
 
-**Fluxo ad-hoc (principal hoje):** `POST /api/meetings` → `startBotForMeeting` → webhook/poll Vexa → `finalizeStoppedMeeting` → análise LLM.
+| Stage | Action |
+|-------|--------|
+| **Input** | Paste a calendar link (Meet/Zoom/Teams) or upload an existing audio/video recording. |
+| **Bot Ingestion** | A headless bot joins the meeting with a customizable name and branded profile. |
+| **Live Stream** | Real-time transcription, co-pilot assistance, decision logging, and participant analytics. |
+| **Post-Call Pipeline** | Automatic pipeline: ingestion &rarr; transcription &rarr; semantic analysis &rarr; email alerts. |
+| **Action Hub** | Interactive AI chat per meeting, tasks, follow-ups, secure sharing, and Notion exports. |
 
-**Fluxo agendado (backend pronto):** sync de calendário → cron `schedule-bots` → mesmo pipeline. UI de calendário desabilitada via feature flag até configuração OAuth completa.
+### Key Product Features
+
+- **Ad-hoc Meetings** — Paste any valid link and send the bot immediately (`New Meeting`).
+- **File Imports** — Upload audio or video files for asynchronous offline transcription.
+- **Contextual AI Chat** — Chat with a specific meeting, query across multiple meetings, or simulate challenging conversations.
+- **Workflow Automation** — Action item review queue, meeting briefs, automated follow-up emails, public summaries, and clips.
+- **Privacy & Security** — Strict Row-Level Security (RLS) on Supabase, PII redaction for shared links, and customizable data retention.
+- **Integrations** — Outbound Notion sync, webhooks; calendar sync and Slack digests fully implemented in the backend (UI toggles available).
 
 ---
 
-## Stack
+## Architecture Flow
 
-| Camada | Tecnologia |
+**Ad-hoc Flow (Primary):** `POST /api/meetings` &rarr; `startBotForMeeting` &rarr; Vexa webhook/polling &rarr; `finalizeStoppedMeeting` &rarr; LLM analysis &rarr; Notification.
+
+**Scheduled Flow (Backend Ready):** Calendar sync cron &rarr; `schedule-bots` &rarr; bot join pipeline. Calendar dashboard is toggled off via UI feature flag until full OAuth configuration is completed.
+
+---
+
+## Technical Stack
+
+| Layer | Technologies |
 |--------|------------|
-| Frontend | Next.js 15 App Router, React 19, TypeScript, Tailwind v4, shadcn/ui, Motion |
-| Backend | Route Handlers, Server Actions, Zod |
-| Banco & Auth | Supabase (Postgres + RLS + Storage) |
-| Bot & STT | [Vexa](https://vexa.ai) (Whisper) |
-| IA | Groq / OpenAI / Anthropic (fallback automático por env) |
-| Embeddings | OpenAI-compatible (RAG opcional) |
-| Email | Gmail SMTP ou Resend |
-| Deploy | Vercel + GitHub Actions (crons) |
+| **Frontend** | Next.js 15 App Router, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, Framer Motion |
+| **Backend** | Next.js Route Handlers, React Server Actions, Zod Validation |
+| **Database & Auth** | Supabase (PostgreSQL + Row-Level Security + Storage Buckets) |
+| **Bot & STT** | [Vexa API](https://vexa.ai) (Whisper-based Transcription) |
+| **AI Layer** | Groq &middot; OpenAI &middot; Anthropic (Dynamic fallback routing based on availability) |
+| **Vector Search** | OpenAI-compatible embeddings for RAG-powered cross-meeting query |
+| **Notifications** | NodeMailer (SMTP) or Resend API |
+| **Hosting** | Vercel + GitHub Actions (for scheduled crons) |
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
 - **Node.js 20+**
-- **Conta Supabase** (projeto cloud ou CLI local)
-- **Chave Vexa** — [vexa.ai/account](https://vexa.ai/account)
-- **Chave LLM** — Groq, OpenAI ou Anthropic (pelo menos uma)
-- *(Opcional)* Supabase CLI para migrations locais
+- **Supabase Account** (Cloud project or local CLI development)
+- **Vexa API Key** — [vexa.ai/account](https://vexa.ai/account)
+- **LLM Provider Key** — Groq, OpenAI, or Anthropic (at least one configured)
+- *(Optional)* Supabase CLI for database migration management
 
 ---
 
-## Setup local
+## Local Setup
 
 ```bash
 git clone https://github.com/solerpedroo/reuniai.git
@@ -71,92 +71,92 @@ npm install
 cp .env.local.example .env.local
 ```
 
-### Variáveis mínimas para rodar
+### Minimum Environment Variables
 
-Edite `.env.local` com:
+Edit `.env.local` with your local credentials:
 
 ```env
-# Supabase (obrigatório)
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# App
+# Application URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Bot de reunião (obrigatório para gravar calls)
+# Vexa Bot Configuration
 VEXA_API_KEY=
 VEXA_WEBHOOK_SECRET=
 
-# IA (pelo menos uma)
+# LLM Providers (Configure at least one)
 GROQ_API_KEY=
 # OPENAI_API_KEY=
 # ANTHROPIC_API_KEY=
 
-# Crons locais / GitHub Actions
+# Scheduled Crons / Actions Secret
 CRON_SECRET=
 
-# Tokens OAuth criptografados (calendário, integrações)
+# Cryptographic Keys (For storing encrypted OAuth tokens)
 ENCRYPTION_KEY=
 ```
 
-Gere `ENCRYPTION_KEY` (32 bytes em hex):
+Generate a secure 32-byte hex string for `ENCRYPTION_KEY`:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Banco de dados
+### Database Initialization
 
 ```bash
-# Projeto cloud
-supabase link --project-ref <seu-project-ref>
+# Link to your Supabase cloud project
+supabase link --project-ref <your-project-ref>
 npm run db:push
 
-# Ou local
+# Or start a local Supabase stack
 supabase start
 npm run db:reset
 ```
 
-Regenerar tipos após mudar o schema:
+Regenerate local database types after schema changes:
 
 ```bash
 npm run gen:types
 ```
 
-### Branding do bot (opcional)
+### Bot Branding (Optional)
 
 ```bash
-npm run db:push      # bucket brand no Storage
-npm run brand:upload # envia avatar para URL pública estável
+npm run db:push      # Verifies the brand bucket in Supabase storage
+npm run brand:upload # Uploads the bot avatar to a stable public URL
 ```
 
-### Subir o app
+### Run the Application
 
 ```bash
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000), crie uma conta e use **Nova reunião** para colar um link do Meet/Zoom/Teams.
+Open [http://localhost:3000](http://localhost:3000), register a new account, and use **New Meeting** to invite the bot to a Google Meet, Zoom, or Teams call.
 
 ---
 
-## Variáveis de ambiente
+## Environment Reference
 
-Referência completa em [`.env.local.example`](.env.local.example).
+Check [`.env.local.example`](.env.local.example) for a complete list of environment variables.
 
-| Grupo | Variáveis | Quando precisa |
-|-------|-----------|----------------|
-| **Core** | `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL` | Sempre |
-| **Bot** | `VEXA_API_KEY`, `VEXA_WEBHOOK_SECRET`, `CRON_SECRET` | Gravar reuniões |
-| **IA** | `GROQ_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`, `LLM_PROVIDER` | Resumos e chat |
-| **Embeddings** | `EMBEDDINGS_API_KEY` | Busca semântica (opcional) |
-| **Email** | `GMAIL_*` ou `RESEND_*` | Notificações e digest |
-| **Calendário** | `GOOGLE_CALENDAR_*`, `MICROSOFT_*`, `ENCRYPTION_KEY` | Sync Google/Outlook *(backend)* |
-| **Integrações** | `NOTION_*`, `SLACK_*` | Export Notion / digest Slack |
-| **Push** | `NEXT_PUBLIC_VAPID_*`, `VAPID_*` | Web Push no browser |
+| Scope | Variables | Description |
+|-------|-----------|-------------|
+| **Core** | `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL` | Required for basic execution |
+| **Bot Engine** | `VEXA_API_KEY`, `VEXA_WEBHOOK_SECRET`, `CRON_SECRET` | Required for recording live meetings |
+| **AI Orchestrator** | `GROQ_API_KEY` / `OPENAI_API_KEY` / `LLM_PROVIDER` | Required for summaries, action items, and chat |
+| **Embeddings** | `EMBEDDINGS_API_KEY` | Required for vector similarity search |
+| **Email** | `GMAIL_*` or `RESEND_*` | Required for meeting digests and email updates |
+| **Calendar Sync** | `GOOGLE_CALENDAR_*`, `MICROSOFT_*`, `ENCRYPTION_KEY` | Required for Google Calendar/Outlook sync (backend) |
+| **Integrations** | `NOTION_*`, `SLACK_*` | Export to Notion and outbound Slack alerts |
+| **Push Alerts** | `NEXT_PUBLIC_VAPID_*`, `VAPID_*` | Web Push notifications for browsers |
 
-Configure o webhook Vexa apontando para produção:
+Register your production URL webhook with Vexa:
 
 ```bash
 npm run vexa:webhook
@@ -164,106 +164,95 @@ npm run vexa:webhook
 
 ---
 
-## Deploy (Vercel)
+## Deployment (Vercel)
 
-1. Importe o repo na Vercel
-2. Configure todas as env vars do `.env.local.example`
-3. `npm run db:push` no Supabase de produção
-4. Defina secrets no GitHub (`Settings → Secrets → Actions`):
-   - `APP_URL` — URL de produção (sem barra final)
-   - `CRON_SECRET` — mesmo valor da env na Vercel
+1. Connect your repository to Vercel.
+2. Populate the Environment Variables using the production keys.
+3. Run `npm run db:push` to apply your PostgreSQL migrations to the production Supabase database.
+4. Set up the following GitHub Secrets (`Settings → Secrets → Actions`):
+   - `APP_URL` — Production deployment URL (without trailing slash).
+   - `CRON_SECRET` — Matching the CRON_SECRET configured on Vercel.
 
-### Crons
+### Cron Job Scheduling
 
-| Origem | Jobs |
-|--------|------|
-| **Vercel** (`vercel.json`) | Retention diário, digest semanal (email) |
-| **GitHub Actions** (`.github/workflows/cron.yml`) | Sync calendário, schedule/poll bots, prep, lembretes — a cada 5 min |
+| Source | Job Type | Schedule |
+|--------|----------|----------|
+| **Vercel** (`vercel.json`) | Data retention cleaner, weekly digests | Daily / Weekly |
+| **GitHub Actions** (`.github/workflows/cron.yml`) | Calendar sync, bot polling, reminders | Every 5 minutes |
 
-Os endpoints `/api/cron/*` e `/api/webhooks/*` autenticam com `Authorization: Bearer CRON_SECRET` ou segredo do provedor.
+All `/api/cron/*` and `/api/webhooks/*` endpoints authenticate using a Bearer token verification (`Authorization: Bearer CRON_SECRET`).
 
 ---
 
-## Estrutura do projeto
+## Directory Structure
 
 ```
 app/
-  (app)/          # Páginas autenticadas (reuniões, hoje, tarefas, …)
-  (auth)/         # Login e signup
-  api/            # Route handlers (bot, meetings, cron, webhooks, …)
-  s/[token]       # Compartilhamento público read-only
-  c/[token]       # Clips públicos
+  (app)/          # Authenticated routes (meetings, home, tasks, settings)
+  (auth)/         # Auth flows (login, signup)
+  api/            # Route handlers (Vexa webhooks, bot management, cron endpoints)
+  s/[token]       # Public, read-only shareable meetings
+  c/[token]       # Public, shareable meeting clips
 
-components/       # UI (meetings, dashboard, shell, settings, …)
+components/       # UI Components (dashboard, meeting details, settings)
 lib/
-  vexa/           # Bot lifecycle (scheduler, poll, finalize)
-  pipeline/       # Ingestão + análise LLM pós-reunião
-  meetings/       # CRUD, chat, export, live session
-  llm/            # Cliente multi-provedor
-  supabase/       # Clients, types, middleware auth
-  ui/             # Feature flags de visibilidade
+  vexa/           # Vexa bot lifecycle handlers
+  pipeline/       # Post-meeting ingestion + LLM pipeline
+  meetings/       # CRUD operations, chat interface, export wrappers
+  llm/            # Multi-provider client wrapper
+  supabase/       # Client configurations, type definitions, auth middlewares
+  ui/             # Feature flags and UI logic
 
-supabase/migrations/   # Schema Postgres + RLS
-scripts/               # Seed, RLS test, brand upload, webhook Vexa
-.github/workflows/     # Crons (Hobby Vercel workaround)
-middleware.ts          # Refresh de sessão Supabase
+supabase/migrations/   # Database schemas, constraints, and RLS rules
+scripts/               # Seed scripts, RLS checks, avatar uploads
+.github/workflows/     # CI workflows and periodic crons
+middleware.ts          # Supabase session refresher
 ```
 
 ---
 
-## Scripts npm
+## Available Scripts
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Dev server (Turbopack) |
-| `npm run build` | Build de produção |
-| `npm run start` | Servidor de produção |
-| `npm run lint` | ESLint |
-| `npm run db:push` | Aplica migrations no Supabase linkado |
-| `npm run db:reset` | Reset local + migrations |
-| `npm run db:seed` | Seed de reuniões de exemplo |
-| `npm run gen:types` | Regenera `database.types.ts` |
-| `npm run brand:upload` | Upload do avatar do bot no Storage |
-| `npm run vexa:webhook` | Registra webhook Vexa na URL de produção |
-| `npm run test:isolation` | Testa isolamento RLS entre usuários |
-
----
-
-## Segurança
-
-- **RLS** em todas as tabelas de usuário — cada conta só vê seus dados
-- **Tokens OAuth** criptografados com AES-256-GCM (`ENCRYPTION_KEY`)
-- **Webhooks** validados por Bearer secret + dedupe em `webhook_events`
-- **Rate limiting** in-memory nas rotas de bot, chat, busca e export
-- **SSRF** bloqueado em webhooks outbound (URLs privadas rejeitadas)
-- **Compartilhamento** via tokens com expiração, revogação e redaction opcional de PII
-
-Testes manuais de RLS: `supabase/tests/rls_isolation_notes.sql` e `npm run test:isolation`.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Runs the local development server (Turbopack enabled) |
+| `npm run build` | Builds the application for production deployment |
+| `npm run start` | Starts the production Next.js server |
+| `npm run lint` | Runs the static code analysis check (ESLint) |
+| `npm run db:push` | Deploys schema migrations to your linked Supabase project |
+| `npm run db:reset` | Wipes the database and recreates schemas locally |
+| `npm run db:seed` | Populates the database with realistic seed data |
+| `npm run gen:types` | Regenerates TS typings based on active Supabase schemas |
+| `npm run brand:upload` | Uploads the branding avatar assets to Supabase Storage |
+| `npm run vexa:webhook` | Submits your production webhook endpoint to Vexa |
+| `npm run test:isolation` | Performs automated tests verifying RLS tenant isolation |
 
 ---
 
-## Feature flags (UI)
+## Security & Privacy
 
-Integrações em desenvolvimento podem ser ocultadas sem remover o backend:
+- **PostgreSQL Row-Level Security (RLS):** Active on all user tables, ensuring strict data isolation.
+- **Token Encryption:** Google Calendar and Microsoft Outlook OAuth access tokens are encrypted at rest using AES-256-GCM (`ENCRYPTION_KEY`).
+- **Webhook Protection:** Incoming webhooks verify Vexa signatures and deduplicate events using `webhook_events`.
+- **SSRF Prevention:** Local and loopback network interfaces are blocked from outbound webhook triggers.
+- **Data Sharing:** Public share links use cryptographically secure tokens with voluntary PII scrubbing and automatic expiration rules.
+
+---
+
+## Feature Flags (UI)
+
+Unfinished integrations can be easily toggled off in the frontend layout:
 
 ```typescript
 // lib/ui/feature-visibility.ts
 export const UI_FEATURE_VISIBILITY = {
-  calendarIntegrations: false,  // Google Calendar + Outlook
-  slackIntegration: false,        // Digest Slack
+  calendarIntegrations: false,  // Google Calendar + Outlook Sync
+  slackIntegration: false,        // Slack Digests
 } as const;
 ```
 
-Altere para `true` quando OAuth e credenciais estiverem configurados.
-
 ---
 
-## Autor
+## Author
 
-**Pedro** — projeto pessoal construído para demonstrar arquitetura SaaS real: bot de reunião, pipeline de IA, RLS, crons e integrações — do link colado ao follow-up enviado.
-
----
-
-<p align="center">
-  <strong>ReuniAI</strong> — transforme reuniões em memória organizada.
-</p>
+**Pedro Soler** — [GitHub](https://github.com/solerpedroo) &middot; [LinkedIn](https://www.linkedin.com/in/pedro-henrique-contardi-soler/)
